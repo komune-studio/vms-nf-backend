@@ -10,4 +10,14 @@ export default class EmployeeDAO {
 
         return result;
     }
+
+    static async getById(id : number) {
+        let result = employee.findFirst({
+            where: {
+                id
+            }
+        });
+
+        return result;
+    }
 }
