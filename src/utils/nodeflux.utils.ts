@@ -15,11 +15,33 @@ export default class Nodeflux {
         };
 
         try {
-            let response = await request(endpoint, "POST", body);
-            return response;
+            return await request(endpoint, "POST", body);
         } catch (e) {
             throw e;
         }
+    }
+
+    static async enrollEmployeeFace(id : number, image : string) {
+
+        let endpoint = process.env.NODEFLUX_API_URL;
+        let keyspace = process.env.NODEFLUX_KEYSPACE;
+
+        if (!endpoint) return null;
+        endpoint = `${endpoint}/face/enrollment`;
+
+        let body = {
+            image, keyspace,
+            "additional_params": {
+                "face_id": id.toString()
+            }
+        }
+
+        try {
+            return await request(endpoint, "POST", body);
+        } catch (e) {
+            throw e;
+        }
+
     }
 
     static async executeFaceRecognition(image : string) {
@@ -36,11 +58,9 @@ export default class Nodeflux {
         };
 
         try {
-            let response = await request(endpoint, "POST", body);
-            return response;
+            return await request(endpoint, "POST", body);
         } catch (e) {
             throw e;
         }
     }
-
 }

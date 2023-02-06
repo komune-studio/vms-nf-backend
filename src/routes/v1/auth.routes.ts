@@ -3,5 +3,8 @@ import AuthController from "../../controllers/auth.controller";
 
 export default function routesAuth(router : Router) {
     router.route('/login')
-        .get(AuthController.login);
+        .post(AuthController.login);
+
+    router.route('/generate-password')
+        .post(AuthController.generatePassword)
 }

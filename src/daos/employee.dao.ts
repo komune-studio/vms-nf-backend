@@ -4,20 +4,41 @@ const employee = PrismaService.getInstance().employee
 
 export default class EmployeeDAO {
     static async create(obj : any) {
-        let result = employee.create({
+        return employee.create({
             data: obj
         });
-
-        return result;
     }
 
     static async getById(id : number) {
-        let result = employee.findFirst({
+        return employee.findFirst({
             where: {
-                id
+                id: id,
+                modified_at: {
+                    not: null
+                }
             }
         });
+    }
 
-        return result;
+    static async update(id : number, obj : any) {
+        return employee.update({
+            data: {
+                ...obj,
+                modified_at: new Date()
+            },
+            where: {id}
+        });
+    }
+
+    static async delete(id : number) {
+        let now = new Date();
+
+        return employee.update({
+            data: {
+                deleted_at: now,
+                modified_at: now
+            },
+            where: {id}
+        });
     }
 }

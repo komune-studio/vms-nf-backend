@@ -1,5 +1,4 @@
 export default async function request(endpoint : string, method : string, body : any, additionalHeaders? : any) {
-
     let request : RequestInit = {
         method: method,
         headers: {
