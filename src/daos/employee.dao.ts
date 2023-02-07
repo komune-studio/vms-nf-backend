@@ -9,6 +9,23 @@ export default class EmployeeDAO {
         });
     }
 
+    static async getAll() {
+        return employee.findMany({
+            select: {
+                id: true,
+                name: true,
+                face_image: true,
+                created_at: true,
+                modified_at: true
+            },
+            where: {
+                deleted_at: {
+                    not: null
+                }
+            }
+        });
+    }
+
     static async getById(id : number) {
         return employee.findFirst({
             where: {

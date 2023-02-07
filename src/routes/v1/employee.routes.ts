@@ -6,6 +6,7 @@ import {authAdmin} from "../../middlewares/auth.middleware";
 
 export default function routesEmployee(router : Router) {
     router.route('/employees')
+        .get(authAdmin, EmployeeController.getAll)
         .post(authAdmin, upload.fields([{name: "ktp_image"}, {name: "face_image"}]), EmployeeController.create)
 
     router.route('/employee/:id')

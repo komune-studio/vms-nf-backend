@@ -64,6 +64,25 @@ export default class EmployeeController {
         }
     }
 
+    static async getAll(req : Req, res : Res, next : NextFunction) {
+        try {
+            let result = await EmployeeDAO.getAll();
+
+            let body = result.map(obj => ({
+                ...obj,
+                face_image: {
+                    type: obj.face_image ? obj.face_image.toString().split(';')[0] : undefined,
+                    base64: obj.face_image ? obj.face_image.toString().split(';')[1] : undefined,
+                }
+            }))
+
+            res.send(body);
+
+        } catch (e) {
+            return next(e)
+        }
+    }
+
     static async getById(req : Req, res : Res, next : NextFunction) {
         let {id} = req.params;
 
