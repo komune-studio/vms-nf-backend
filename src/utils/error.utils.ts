@@ -24,6 +24,11 @@ export class UnauthorizedError extends HTTPError {
         super(401, errorCode, message);
     }
 }
+export class InvalidCredentialsError extends HTTPError {
+    constructor(message : string | any, errorCode : string = "INVALID_CREDENTIALS") {
+        super(401, errorCode, message);
+    }
+}
 
 export class ForbiddenError extends HTTPError {
     constructor(message : string | any, errorCode : string = "FORBIDDEN_ACCESS_ERROR") {
@@ -40,6 +45,11 @@ export class NotFoundError extends HTTPError {
 export class ConflictError extends HTTPError {
     constructor(message : string | any, conflictingResource : string = "RESOURCE") {
         super(409, `${conflictingResource.toUpperCase()}_ALREADY_EXISTS`, message);
+    }
+}
+export class PayloadTooLargeError extends HTTPError {
+    constructor(message : string | any, errorCode : string = "PAYLOAD_TOO_LARGE") {
+        super(413, errorCode, message);
     }
 }
 

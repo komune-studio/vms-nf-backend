@@ -1,8 +1,11 @@
-import {NextFunction, Request, Response} from "express";
+import {NextFunction, Request as Req, Response as Res} from "express";
 import {HTTPError, InternalServerError} from "../utils/error.utils";
 
-export default function handleErrors(error : Error, req : Request, res : Response, _ : NextFunction) {
+export default function handleErrors(error : Error, req : Req, res : Res, _ : NextFunction) {
     let response : HTTPError;
+
+    if (error instanceof Response)
+        error.json().then(value => console.log(value));
 
     if (error instanceof HTTPError)
         response = error;

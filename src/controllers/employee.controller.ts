@@ -4,16 +4,16 @@ import EmployeeDAO from "../daos/employee.dao";
 import { fsUnlink } from "../utils/fs.utils";
 import IdentifAI from "../utils/identifai.utils";
 import Nodeflux from "../utils/nodeflux.utils";
-import {BadRequestError, NotFoundError} from "../utils/error.utils";
+import {BadRequestError, NotFoundError, PayloadTooLargeError} from "../utils/error.utils";
 
 export default class EmployeeController {
     static async create(req : Req, res : Res, next : NextFunction) {
         const files : any = req.files;
 
-        if (!files.ktp_image || !files.face_image) {
+        if (!files || !files.ktp_image || !files.face_image) {
             return next(new BadRequestError({
-                "ktp_image": !files.ktp_image ? "KTP image is not defined." : undefined,
-                "face_image": !files.face_image ? "Face image is not defined." : undefined,
+                "ktp_image": !files?.ktp_image ? "KTP image is not defined." : undefined,
+                "face_image": !files?.face_image ? "Face image is not defined." : undefined,
             }))
         }
 
@@ -24,11 +24,25 @@ export default class EmployeeController {
             }))
         }
 
+        if (files.ktp_image[0].mimetype !== "image/jpeg" || files.face_image[0].mimetype !== "image/jpeg") {
+            return next(new BadRequestError({
+                "ktp_image": files.ktp_image[0].mimetype !== "image/jpeg" ? "Unsupported media type." : undefined,
+                "face_image": files.face_image[0].mimetype !== "image/jpeg" ? "Unsupported media type." : undefined,
+            }))
+        }
+
+        if (files.ktp_image[0].size > 800000 || files.face_image[0].size > 800000) {
+            return next(new PayloadTooLargeError({
+                "ktp_image": files.ktp_image[0].size > 800000 ? "File size exceeded 800kB." : undefined,
+                "face_image": files.face_image[0].size > 800000 ? "File size exceeded 800kB." : undefined,
+            }))
+        }
+
         const ktp_image_base64 = fs.readFileSync(files.ktp_image[0].path, {encoding: "base64"});
         const ktp_image_mimetype = files.ktp_image[0].mimetype;
         const ktp_image = `${ktp_image_mimetype};${ktp_image_base64}`
 
-        const face_image_base64 = fs.readFileSync(files.ktp_image[0].path, {encoding: "base64"});
+        const face_image_base64 = fs.readFileSync(files.face_image[0].path, {encoding: "base64"});
         const face_image_mimetype = files.face_image[0].mimetype;
         const face_image = `${face_image_mimetype};${face_image_base64}`
 
@@ -44,6 +58,7 @@ export default class EmployeeController {
             }
 
             let result = await EmployeeDAO.create(body);
+            console.log(result)
             let enrollment = await Nodeflux.enrollEmployeeFace(result.id, face_image_base64)
 
             res.send({
@@ -59,8 +74,10 @@ export default class EmployeeController {
         } catch (e) {
             return next(e)
         } finally {
-            await fsUnlink(files.ktp_image[0].path);
-            await fsUnlink(files.face_image[0].path);
+            if (files.ktp_image)
+                await fsUnlink(files.ktp_image[0].path);
+            if (files.face_image)
+                await fsUnlink(files.face_image[0].path);
         }
     }
 

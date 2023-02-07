@@ -8,4 +8,21 @@ export default class AdminDAO {
             where: {email}
         });
     }
+
+    static async getAll() {
+        return admins.findMany({
+            select: {
+                id: true,
+                email: true,
+                created_at: true,
+                modified_at: true,
+            }
+        });
+    }
+
+    static async create(obj : any) {
+        return admins.create({
+            data: obj
+        });
+    }
 }

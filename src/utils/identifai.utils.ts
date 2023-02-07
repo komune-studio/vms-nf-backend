@@ -2,9 +2,6 @@ import request from "./api.utils";
 
 export default class IdentifAI {
 
-    private static authorizationKey : string;
-    private static timestamp : string;
-
     private static async generateKey() {
 
         let endpoint = process.env.IDENTIFAI_API_URL;
@@ -19,16 +16,16 @@ export default class IdentifAI {
             access_key: accessKey,
             secret_key: secretKey
         }
-        
+
         try {
 
             let result : any = await request(endpoint, "POST", body);
             let date = result.headers["x-nodeflux-timestamp"].split("T")[0];
 
-            this.authorizationKey = `NODEFLUX-HMAC-SHA256 Credential=${accessKey}/${date}/nodeflux.api.v1beta1.ImageAnalytic/StreamImageAnalytic, SignedHeaders=x-nodeflux-timestamp, Signature=${result.token}`
-            this.timestamp = result.headers["x-nodeflux-timestamp"];
+            let authorizationKey = `NODEFLUX-HMAC-SHA256 Credential=${accessKey}/${date}/nodeflux.api.v1beta1.ImageAnalytic/StreamImageAnalytic, SignedHeaders=x-nodeflux-timestamp, Signature=${result.token}`
+            let timestamp = result.headers["x-nodeflux-timestamp"];
 
-            console.log(`[IdentifAI] New Authorization Key generated: ${this.authorizationKey} ${this.timestamp}`);
+            return {authorizationKey, timestamp}
 
         } catch (e) {
             throw e;
@@ -41,9 +38,7 @@ export default class IdentifAI {
     
         if (!endpoint) return null;
 
-        if (!this.authorizationKey || !this.timestamp) {
-            await this.generateKey();
-        }
+        let generated = await this.generateKey()
 
         endpoint = `${endpoint}/syncv2/analytics/ocr-ktp`;
 
@@ -54,13 +49,12 @@ export default class IdentifAI {
         };
 
         let additionalHeaders = {
-            Authorization: this.authorizationKey,
-            "x-nodeflux-timestamp": this.timestamp
+            Authorization: generated?.authorizationKey,
+            "x-nodeflux-timestamp": generated?.timestamp
         }
         
         try {
-            let response = await request(endpoint, "POST", body, additionalHeaders);
-            return response;
+            return await request(endpoint, "POST", body, additionalHeaders);
         } catch (e) {
             throw e;
         }

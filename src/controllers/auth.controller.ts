@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-import {BadRequestError, UnauthorizedError} from "../utils/error.utils";
+import {BadRequestError, ConflictError, InvalidCredentialsError} from "../utils/error.utils";
 import AdminDAO from "../daos/admin.dao";
 import SecurityUtils from "../utils/security.utils";
 
@@ -26,13 +26,13 @@ export default class AuthController {
             let admin = await AdminDAO.getByEmail(email);
 
             if (admin === null) {
-                return next(new UnauthorizedError("Invalid credentials."));
+                return next(new InvalidCredentialsError("Invalid credentials."));
             }
 
             let passwordIsCorrect = SecurityUtils.comparePassword(admin.password, password, admin.salt);
 
             if (!passwordIsCorrect) {
-                return next(new UnauthorizedError("Invalid credentials."));
+                return next(new InvalidCredentialsError("Invalid credentials."));
             }
 
             let result : any = {
@@ -66,5 +66,43 @@ export default class AuthController {
             salt: salt,
             password: hash
         })
+    }
+
+    static async getAdmins(req : Request, res : Response, next : NextFunction) {
+        try {
+            let result = await AdminDAO.getAll();
+            res.send(result);
+        } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async createAdmin(req : Request, res : Response, next : NextFunction) {
+        let {email, password} = req.body;
+
+        if (!email || !password) {
+            return next(new BadRequestError({
+                email: !email ? "Email is not defined." : undefined,
+                password: !password ? "Password is not defined." : undefined,
+            }))
+        }
+
+        try {
+            let admin = await AdminDAO.getByEmail(email);
+            if (admin !== null) {
+                return next(new ConflictError("Email is already registered.", "email"));
+            }
+
+            let body : any = {email}
+
+            body.salt = SecurityUtils.generateSalt();
+            body.password = SecurityUtils.generatePassword(password, body.salt)
+
+            await AdminDAO.create(body);
+
+            res.send({success: true});
+        } catch (e) {
+            return next(e);
+        }
     }
 }

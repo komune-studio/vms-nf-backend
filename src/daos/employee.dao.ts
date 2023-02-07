@@ -19,9 +19,7 @@ export default class EmployeeDAO {
                 modified_at: true
             },
             where: {
-                deleted_at: {
-                    not: null
-                }
+                deleted_at: null
             }
         });
     }
@@ -30,9 +28,7 @@ export default class EmployeeDAO {
         return employee.findFirst({
             where: {
                 id: id,
-                modified_at: {
-                    not: null
-                }
+                deleted_at: null
             }
         });
     }
