@@ -9,6 +9,14 @@ export default class EmployeeDAO {
         });
     }
 
+    static async getAllCount() {
+        return employee.aggregate({
+            _count: {
+                id: true
+            }
+        });
+    }
+
     static async getAll() {
         return employee.findMany({
             select: {

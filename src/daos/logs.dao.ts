@@ -3,7 +3,7 @@ import PrismaService from "../services/prisma.service"
 const logs = PrismaService.getInstance().logs
 
 export default class LogsDao {
-    static async create(obj : any) {
+    static async create(obj: any) {
         let result = logs.create({
             data: obj
         });
@@ -11,7 +11,7 @@ export default class LogsDao {
         return result;
     }
 
-    static async getLatestByEmployeeId(employee_id : number) {
+    static async getLatestByEmployeeId(employee_id: number) {
         let result = logs.findFirst({
             where: {
                 employee_id
@@ -24,10 +24,10 @@ export default class LogsDao {
         return result;
     }
 
-    static async getAll() {
+    static async getAll(timestampDesc : boolean) {
         let result = logs.findMany({
             orderBy: {
-                timestamp: 'desc'
+                timestamp: timestampDesc ? 'desc' : 'asc'
             }, include: {
                 employee: {
                     select: {

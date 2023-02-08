@@ -135,7 +135,7 @@ export default class LogsController {
 
     static async getAll(req: Request, res: Res, next: NextFunction) {
         try {
-            let logs = await LogsDao.getAll();
+            let logs = await LogsDao.getAll(true);
 
             res.send(logs)
         } catch (e) {
