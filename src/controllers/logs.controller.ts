@@ -132,4 +132,24 @@ export default class LogsController {
             }
         }
     }
+
+    static async getAll(req: Request, res: Res, next: NextFunction) {
+        try {
+            let logs = await LogsDao.getAll();
+
+            res.send(logs)
+        } catch (e) {
+            if (e instanceof Response) {
+                const error = await e.json();
+
+                console.log(error)
+
+                return res.status(500).send(
+                    {
+                        ...error,
+                        error: error.description ? error.description : "Internal server error"
+                    })
+            }
+        }
+    }
 }

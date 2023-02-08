@@ -23,4 +23,20 @@ export default class LogsDao {
 
         return result;
     }
+
+    static async getAll() {
+        let result = logs.findMany({
+            orderBy: {
+                timestamp: 'desc'
+            }, include: {
+                employee: {
+                    select: {
+                        name: true
+                    }
+                }
+            },
+        })
+
+        return result;
+    }
 }
