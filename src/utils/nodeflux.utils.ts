@@ -17,7 +17,7 @@ export default class Nodeflux {
         try {
             return await request(endpoint, "POST", body);
         } catch (e) {
-            throw e;
+            console.log(e)
         }
     }
 

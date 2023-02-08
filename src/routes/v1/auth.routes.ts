@@ -7,7 +7,7 @@ export default function routesAuth(router : Router) {
         .post(AuthController.login);
 
     router.route('/generate-password')
-        .post(authAdmin, AuthController.generatePassword)
+        .post(AuthController.generatePassword)
 
     router.route('/admins')
         .get(authAdmin, AuthController.getAdmins)

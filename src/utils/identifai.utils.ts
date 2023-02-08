@@ -17,9 +17,12 @@ export default class IdentifAI {
             secret_key: secretKey
         }
 
+        console.log(body)
+
         try {
 
             let result : any = await request(endpoint, "POST", body);
+            console.log(result)
             let date = result.headers["x-nodeflux-timestamp"].split("T")[0];
 
             let authorizationKey = `NODEFLUX-HMAC-SHA256 Credential=${accessKey}/${date}/nodeflux.api.v1beta1.ImageAnalytic/StreamImageAnalytic, SignedHeaders=x-nodeflux-timestamp, Signature=${result.token}`

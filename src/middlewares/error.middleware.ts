@@ -12,6 +12,7 @@ export default function handleErrors(error : Error, req : Req, res : Res, _ : Ne
     else
         response = new InternalServerError(error.message);
 
+    // console.log(error);
     return res.status(response.statusCode).send({
         error: response.errorCode,
         message: response.message
