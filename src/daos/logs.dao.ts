@@ -24,7 +24,24 @@ export default class LogsDao {
         return result;
     }
 
-    static async getAll(timestampDesc : boolean) {
+    static async getAll(filter:any, timestampDesc : boolean) {
+        let where = {};
+
+        if(filter) {
+            const {start_date, end_date} = filter;
+
+            where = {
+                AND: [
+                    {
+                        timestamp: {gte: new Date(start_date)}
+                    },
+                    {
+                        timestamp: {lte: new Date(end_date)}
+                    }
+                ]
+            }
+        }
+
         let result = logs.findMany({
             orderBy: {
                 timestamp: timestampDesc ? 'desc' : 'asc'
@@ -34,7 +51,7 @@ export default class LogsDao {
                         name: true
                     }
                 }
-            },
+            }, where
         })
 
         return result;

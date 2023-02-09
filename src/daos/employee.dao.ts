@@ -8,11 +8,34 @@ export default class EmployeeDAO {
             data: obj
         });
     }
-
+// where: {
+//     OR: [
+//       {
+//         title: {
+//           contains: 'Prisma',
+//         },
+//       },
+//       {
+//         title: {
+//           contains: 'databases',
+//         },
+//       },
+//     ],
+//     AND: {
+//       published: false,
+//     },
+//   }
     static async getAllCount() {
         return employee.aggregate({
             _count: {
                 id: true
+            },
+            where: {
+                AND: [
+                    {
+                        deleted_at: {equals: null}
+                    }
+                ]
             }
         });
     }

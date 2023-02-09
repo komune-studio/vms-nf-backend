@@ -11,7 +11,8 @@ export default class UtilController {
             let employee = await EmployeeDAO.getAllCount();
             output.total_employee = employee._count.id;
 
-            let logs = await LogsDao.getAll(false);
+            let logs = await LogsDao.getAll(req.query, false);
+
             logs.forEach(data => {
                 // @ts-ignore
                 if (!output.daily_record[format(new Date(data.timestamp), 'dd MMM yyyy')]) {
@@ -33,6 +34,8 @@ export default class UtilController {
 
             res.send(output);
         } catch (e) {
+            console.log(e)
+
             return next(e);
         }
     }
