@@ -35,3 +35,16 @@ model logs {
   status      Int?
   employee    employee? @relation(fields: [employee_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_employee")
 }
+
+model event {
+  id          Int       @id @default(autoincrement())
+  type        String
+  stream_id     String
+  detection   Json
+  primary_image  Bytes?
+  secondary_image  Bytes?
+  result  Json?
+  status  String?
+  event_time  DateTime? @default(now())
+  created_at DateTime? @default(now())
+}

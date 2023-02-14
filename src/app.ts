@@ -35,7 +35,6 @@ app.use(handleErrors);
 
 (async () => {
     await PrismaService.initialize();
-    await Nodeflux.createKeyspace();
 
     app.listen(PORT, () => {
         console.log(`Server listening on port ${PORT}!`);
