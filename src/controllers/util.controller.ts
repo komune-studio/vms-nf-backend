@@ -75,6 +75,50 @@ export default class UtilController {
                     ]
                 })
 
+            const last30DaysEvent = await EventDAO.getAll(
+                {
+                    AND: [
+                        {
+                            event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
+                        },
+                        {
+                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                        },
+                        {
+                            status: {equals: 'KNOWN'}
+                        }
+                    ]
+                })
+
+            last30DaysEvent.forEach(data => {
+                // @ts-ignore
+                if (!output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]) {
+                    // @ts-ignore
+                    output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = 0
+                }
+
+
+                // @ts-ignore
+                output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]++;
+            })
+
+            const countByStreamId = await EventDAO.getCountGroupByStreamId(
+                {
+                    AND: [
+                        {
+                            event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
+                        },
+                        {
+                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                        },
+                        {
+                            status: {equals: 'KNOWN'}
+                        }
+                    ]
+                })
+
+            console.log(countByStreamId)
+
             res.send(output);
         } catch (e) {
             console.log(e)

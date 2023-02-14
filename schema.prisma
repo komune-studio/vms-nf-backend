@@ -48,3 +48,16 @@ model event {
   event_time  DateTime? @default(now())
   created_at DateTime? @default(now())
 }
+
+model enrolled_face {
+  id          Int       @id @default(autoincrement())
+  face_id        Int
+  name     String?
+  deleted_at   DateTime?
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  status String?
+  gender String?
+  birth_place String?
+  birth_date DateTime?
+}
