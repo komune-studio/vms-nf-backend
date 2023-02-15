@@ -1,6 +1,6 @@
 import PrismaService from "../services/prisma.service"
 
-const employee = PrismaService.getInstance().employee
+const employee = PrismaService.getVisionaire().employee
 
 export default class EmployeeDAO {
     static async create(obj : any) {

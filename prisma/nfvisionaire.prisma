@@ -1,10 +1,11 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/prisma/nfvisionaire"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_WITH_SCHEMA")
+  url      = env("DATABASE_URL_NFVISIONAIRE_WITH_SCHEMA")
 }
 
 model admin {
@@ -37,27 +38,27 @@ model logs {
 }
 
 model event {
-  id          Int       @id @default(autoincrement())
-  type        String
-  stream_id     String
-  detection   Json
-  primary_image  Bytes?
-  secondary_image  Bytes?
-  result  Json?
-  status  String?
-  event_time  DateTime? @default(now())
-  created_at DateTime? @default(now())
+  id              Int       @id @default(autoincrement())
+  type            String
+  stream_id       String
+  detection       Json
+  primary_image   Bytes?
+  secondary_image Bytes?
+  result          Json?
+  status          String?
+  event_time      DateTime? @default(now())
+  created_at      DateTime? @default(now())
 }
 
 model enrolled_face {
   id          Int       @id @default(autoincrement())
-  face_id        Int
-  name     String?
-  deleted_at   DateTime?
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-  status String?
-  gender String?
+  face_id     Int
+  name        String?
+  deleted_at  DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  status      String?
+  gender      String?
   birth_place String?
-  birth_date DateTime?
+  birth_date  DateTime?
 }

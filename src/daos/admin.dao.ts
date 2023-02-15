@@ -1,6 +1,6 @@
 import PrismaService from "../services/prisma.service";
 
-const admins = PrismaService.getInstance().admin;
+const admins = PrismaService.getVisionaire().admin;
 
 export default class AdminDAO {
     static async getByEmail(email : string) {

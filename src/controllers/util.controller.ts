@@ -3,6 +3,7 @@ import EventDAO from "../daos/event.dao";
 import LogsDao from "../daos/logs.dao";
 import {format, getTime, formatDistanceToNow} from 'date-fns';
 import moment from 'moment';
+import StreamDAO from "../daos/stream.dao";
 
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
@@ -117,13 +118,19 @@ export default class UtilController {
                         {
                             event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
                         },
-                        {
-                            status: {equals: 'KNOWN'}
-                        }
+                        // {
+                        //     status: {equals: 'KNOWN'}
+                        // }
                     ]
                 })
 
-            console.log(countByStreamId)
+            const streams = await StreamDAO.getStreams();
+
+            const result = countByStreamId.map(obj => ({
+                ...obj,
+                stream: streams.find(stream => stream.id = obj.stream_id)
+            }))
+            console.log(result)
 
             res.send(output);
         } catch (e) {

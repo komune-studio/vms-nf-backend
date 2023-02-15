@@ -1,6 +1,6 @@
 import PrismaService from "../services/prisma.service"
 
-const event = PrismaService.getInstance().event
+const event = PrismaService.getVisionaire().event
 
 export default class EventDAO {
     static async getCount(condition: any) {

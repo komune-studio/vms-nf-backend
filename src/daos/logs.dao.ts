@@ -1,6 +1,6 @@
 import PrismaService from "../services/prisma.service"
 
-const logs = PrismaService.getInstance().logs
+const logs = PrismaService.getVisionaire().logs
 
 export default class LogsDao {
     static async create(obj: any) {
