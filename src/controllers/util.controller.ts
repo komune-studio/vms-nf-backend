@@ -7,9 +7,7 @@ import moment from 'moment';
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
-            const output = {total_employee: 0, total_clock_in: 0, total_clock_out: 1, daily_record: {}}
-
-            console.log()
+            const output = {today: 0, yesterday: 0, last_7_days: 1, last_30_days: 0, daily_record: {}}
 
             //today's count
             const todaysCount = await EventDAO.getCount(
@@ -27,6 +25,8 @@ export default class UtilController {
                     ]
                 })
 
+            output.today = todaysCount._count.id;
+
             //yesterday's count
             const yesterdaysCount = await EventDAO.getCount(
                 {
@@ -42,6 +42,8 @@ export default class UtilController {
                         }
                     ]
                 })
+
+            output.yesterday = yesterdaysCount._count.id;
 
             //last 7 day's count
             const last7DaysCount = await EventDAO.getCount(
@@ -59,6 +61,8 @@ export default class UtilController {
                     ]
                 })
 
+            output.last_7_days = last7DaysCount._count.id;
+
             //last 30 day's count
             const last30DaysCount = await EventDAO.getCount(
                 {
@@ -74,6 +78,8 @@ export default class UtilController {
                         }
                     ]
                 })
+
+            output.last_30_days = last30DaysCount._count.id;
 
             const last30DaysEvent = await EventDAO.getAll(
                 {
