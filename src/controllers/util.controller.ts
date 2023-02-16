@@ -196,10 +196,12 @@ export default class UtilController {
 
             if (typeof visitor === "string") {
                 let result = await EventDAO.getTopVisitors(parseInt(visitor))
-                result = {
-                    ...result,
-                    num_visits: result.num_visits.toString()
-                }
+
+                // @ts-ignore
+                result.forEach((data, idx) => {
+                    result[idx].num_visits = parseInt(result[idx].num_visits)
+                })
+
                 res.send(result);
             }
 
@@ -207,6 +209,8 @@ export default class UtilController {
                 return next(new BadRequestError("Visitor bad format."))
             }
         } catch (e) {
+            console.log(e)
+
             return next(e);
         }
     }
