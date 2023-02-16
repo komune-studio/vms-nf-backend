@@ -195,7 +195,11 @@ export default class UtilController {
             if (!visitor) visitor = "10";
 
             if (typeof visitor === "string") {
-                const result = await EventDAO.getTopVisitors(parseInt(visitor))
+                let result = await EventDAO.getTopVisitors(parseInt(visitor))
+                result = {
+                    ...result,
+                    num_visits: result.num_visits.toString()
+                }
                 res.send(result);
             }
 
