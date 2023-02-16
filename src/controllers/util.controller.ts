@@ -4,6 +4,7 @@ import LogsDao from "../daos/logs.dao";
 import {format, getTime, formatDistanceToNow} from 'date-fns';
 import moment from 'moment';
 import StreamDAO from "../daos/stream.dao";
+import {BadRequestError} from "../utils/error.utils";
 
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
@@ -184,6 +185,24 @@ export default class UtilController {
         } catch (e) {
             console.log(e)
 
+            return next(e);
+        }
+    }
+
+    static async getTopVisitors(req : Request, res : Response, next : NextFunction) {
+        try {
+            let {visitor} = req.query;
+            if (!visitor) visitor = "10";
+
+            if (typeof visitor === "string") {
+                const result = await EventDAO.getTopVisitors(parseInt(visitor))
+                res.send(result);
+            }
+
+            else {
+                return next(new BadRequestError("Visitor bad format."))
+            }
+        } catch (e) {
             return next(e);
         }
     }
