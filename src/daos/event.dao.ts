@@ -15,7 +15,7 @@ export default class EventDAO {
     static async getAll(condition: any) {
         let result = event.findMany({
             orderBy: {
-                event_time: 'desc'
+                event_time: 'asc'
             },
             select: {event_time: true},
             where: condition

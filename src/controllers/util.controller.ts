@@ -8,7 +8,7 @@ import StreamDAO from "../daos/stream.dao";
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
-            const output = {today: 0, yesterday: 0, last_7_days: 1, last_30_days: 0, daily_record: {}}
+            const output = {today: 0, yesterday: 0, last_7_days: 1, last_30_days: 0, daily_record: {}, heatmap_data: {}, location_data: []}
 
             //today's count
             const todaysCount = await EventDAO.getCount(
@@ -94,7 +94,7 @@ export default class UtilController {
                         {
                             status: {equals: 'KNOWN'}
                         }
-                    ]
+                    ],
                 })
 
             last30DaysEvent.forEach(data => {
@@ -107,6 +107,41 @@ export default class UtilController {
 
                 // @ts-ignore
                 output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]++;
+            })
+
+            const thisWeeksEvent = await EventDAO.getAll(
+                {
+                    AND: [
+                        {
+                            event_time: {gte: moment().startOf('week').format('YYYY-MM-DDT00:00:00Z')}
+                        },
+                        {
+                            event_time: {lte: moment().endOf('week').format('YYYY-MM-DDT00:00:00Z')}
+                        },
+                        {
+                            status: {equals: 'KNOWN'}
+                        }
+                    ]
+                })
+
+            thisWeeksEvent.forEach(data => {
+                let key;
+
+                // console.log(moment(data.event_time).format('d'))
+                if(parseInt(moment(data.event_time).format('m')) > 0) {
+                    key = moment(data.event_time).format('YYYY-MM-DDTHH:01:00Z')
+                } else {
+                    key = moment(data.event_time).subtract(1, 'hour').format('YYYY-MM-DDTHH:01:00Z')
+                }
+
+                // @ts-ignore
+                if(!output.heatmap_data[key]) {
+                    // @ts-ignore
+                    output.heatmap_data[key] = 1;
+                } else {
+                    // @ts-ignore
+                    output.heatmap_data[key]++;
+                }
             })
 
             const countByStreamId = await EventDAO.getCountGroupByStreamId(
@@ -126,11 +161,24 @@ export default class UtilController {
 
             const streams = await StreamDAO.getStreams();
 
-            const result = countByStreamId.map(obj => ({
+            let result = countByStreamId.map(obj => ({
                 ...obj,
                 stream: streams.find(stream => stream.id = obj.stream_id)
             }))
-            console.log(result)
+
+            // @ts-ignore
+            result = result.filter(data => data.stream_id === data.stream.id)
+
+            // @ts-ignore
+            output.location_data = result.sort((a, b) => {
+                // @ts-ignore
+                if (a.stream.name < b.stream.name)
+                    return -1;
+                // @ts-ignore
+                if (a.stream.name > b.stream.name)
+                    return 1;
+                return 0;
+            });
 
             res.send(output);
         } catch (e) {
