@@ -153,10 +153,7 @@ export default class UtilController {
                         },
                         {
                             event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        // {
-                        //     status: {equals: 'KNOWN'}
-                        // }
+                        }
                     ]
                 })
 
