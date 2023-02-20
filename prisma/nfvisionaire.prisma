@@ -13,28 +13,9 @@ model admin {
   email       String    @unique @db.VarChar(32)
   password    String    @db.VarChar(86)
   salt        String    @db.VarChar(32)
+  role        String    @db.VarChar(10)
   created_at  DateTime? @default(now()) @db.Timestamp(6)
   modified_at DateTime? @default(now()) @db.Timestamp(6)
-}
-
-model employee {
-  id          Int       @id @default(autoincrement())
-  name        String
-  address     String
-  ktp_image   Bytes?
-  face_image  Bytes?
-  created_at  DateTime? @default(now()) @db.Timestamp(6)
-  modified_at DateTime? @default(now()) @db.Timestamp(6)
-  deleted_at  DateTime? @db.Timestamp(6)
-  logs        logs[]
-}
-
-model logs {
-  id          Int       @id @default(autoincrement())
-  employee_id Int?
-  timestamp   DateTime? @db.Timestamp(6)
-  status      Int?
-  employee    employee? @relation(fields: [employee_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_employee")
 }
 
 model event {

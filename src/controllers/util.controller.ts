@@ -1,6 +1,5 @@
 import {NextFunction, Request, Response} from "express";
 import EventDAO from "../daos/event.dao";
-import LogsDao from "../daos/logs.dao";
 import {format, getTime, formatDistanceToNow} from 'date-fns';
 import moment from 'moment';
 import StreamDAO from "../daos/stream.dao";

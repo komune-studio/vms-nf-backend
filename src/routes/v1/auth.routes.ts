@@ -12,4 +12,12 @@ export default function routesAuth(router : Router) {
     router.route('/admins')
         .get(authAdmin, AuthController.getAdmins)
         .post(authAdmin, AuthController.createAdmin)
+
+    router.route('/admin/:id')
+        .get(authAdmin, AuthController.getById)
+        .put(authAdmin, AuthController.update)
+        .delete(authAdmin, AuthController.deleteAdmin)
+
+    router.route('/admin/:id/change-password')
+        .post(authAdmin, AuthController.changePassword)
 }

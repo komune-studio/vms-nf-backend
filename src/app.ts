@@ -9,6 +9,7 @@ import handleErrors from "./middlewares/error.middleware";
 import PrismaService from "./services/prisma.service";
 import Nodeflux from "./utils/nodeflux.utils";
 import {NotFoundError} from "./utils/error.utils";
+import SecurityUtils from "./utils/security.utils";
 
 dotenv.config();
 
@@ -37,6 +38,15 @@ app.use(handleErrors);
     await PrismaService.initialize();
 
     app.listen(PORT, () => {
+        let salt = SecurityUtils.generateSalt();
+        let hash = SecurityUtils.generatePassword('test', salt);
+
+        console.log('salt')
+        console.log(salt)
+
+        console.log('hash')
+        console.log(hash)
+
         console.log(`Server listening on port ${PORT}!`);
     });
 })();

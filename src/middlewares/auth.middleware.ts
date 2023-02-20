@@ -30,7 +30,18 @@ function processToken(req : Request) {
 export function authAdmin(req : Request, res : Response, next : NextFunction) {
     try {
         processToken(req);
-        if (req.decoded.role !== "admin")
+        if (req.decoded.role !== "ADMIN")
+            return next(new ForbiddenError("User is not authorized to access this resource."))
+        next();
+    } catch (e) {
+        return next(e);
+    }
+}
+
+export function authAll(req : Request, res : Response, next : NextFunction) {
+    try {
+        processToken(req);
+        if (!req.decoded.role)
             return next(new ForbiddenError("User is not authorized to access this resource."))
         next();
     } catch (e) {

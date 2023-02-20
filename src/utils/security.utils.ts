@@ -11,11 +11,11 @@ export default class SecurityUtils {
         return crypto.randomBytes(24).toString("base64url");
     }
 
-    static generatePassword(password : string, salt : string, algorithm : Algorithm = Algorithm.SHA512) {
+    static generatePassword(password : string, salt : string, algorithm : Algorithm = Algorithm.SHA1) {
         let str = salt + password;
 
         if (algorithm === Algorithm.SHA1) {
-            return crypto.createHash('sha1').update(str).digest("base64url");
+            return crypto.createHash('sha1').update(str).digest("hex");
         }
         else if (algorithm === Algorithm.SHA256) {
             return crypto.createHash('sha256').update(str).digest("base64url");
