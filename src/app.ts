@@ -38,15 +38,6 @@ app.use(handleErrors);
     await PrismaService.initialize();
 
     app.listen(PORT, () => {
-        let salt = SecurityUtils.generateSalt();
-        let hash = SecurityUtils.generatePassword('test', salt);
-
-        console.log('salt')
-        console.log(salt)
-
-        console.log('hash')
-        console.log(hash)
-
         console.log(`Server listening on port ${PORT}!`);
     });
 })();
