@@ -11,6 +11,7 @@ datasource db {
 model admin {
   id          Int       @id @default(autoincrement())
   email       String    @unique @db.VarChar(32)
+  name        String    @db.VarChar(32)
   password    String    @db.VarChar(86)
   salt        String    @db.VarChar(32)
   role        String    @db.VarChar(10)
@@ -33,7 +34,7 @@ model event {
 
 model enrolled_face {
   id          Int       @id @default(autoincrement())
-  face_id     Int
+  face_id     BigInt    @db.BigInt
   name        String?
   deleted_at  DateTime?
   created_at  DateTime  @default(now())

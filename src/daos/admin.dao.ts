@@ -19,6 +19,7 @@ export default class AdminDAO {
         return admins.findMany({
             select: {
                 id: true,
+                name: true,
                 email: true,
                 role: true,
                 created_at: true,

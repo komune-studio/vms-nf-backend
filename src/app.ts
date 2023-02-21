@@ -10,6 +10,7 @@ import PrismaService from "./services/prisma.service";
 import Nodeflux from "./utils/nodeflux.utils";
 import {NotFoundError} from "./utils/error.utils";
 import SecurityUtils from "./utils/security.utils";
+import EnrolledFaceDAO from "./daos/enrolled_face.dao";
 
 dotenv.config();
 
@@ -37,7 +38,7 @@ app.use(handleErrors);
 (async () => {
     await PrismaService.initialize();
 
-    app.listen(PORT, () => {
+    app.listen(PORT, async () => {
         console.log(`Server listening on port ${PORT}!`);
     });
 })();

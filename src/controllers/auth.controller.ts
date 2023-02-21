@@ -37,6 +37,7 @@ export default class AuthController {
 
             let result: any = {
                 id: admin.id,
+                name: admin.name,
                 email: admin.email,
                 role: admin.role
             }
@@ -95,11 +96,12 @@ export default class AuthController {
     }
 
     static async createAdmin(req: Request, res: Response, next: NextFunction) {
-        let {email, role, password} = req.body;
+        let {email, name, role, password} = req.body;
 
         if (!email || !password) {
             return next(new BadRequestError({
                 email: !email ? "Email is not defined." : undefined,
+                name: !name ? "Name is not defined." : undefined,
                 password: !password ? "Password is not defined." : undefined,
             }))
         }
@@ -110,7 +112,7 @@ export default class AuthController {
                 return next(new ConflictError("Email is already registered.", "email"));
             }
 
-            let body: any = {email, role}
+            let body: any = {email, name, role}
 
             body.salt = SecurityUtils.generateSalt();
             body.password = SecurityUtils.generatePassword(password, body.salt)
@@ -147,7 +149,7 @@ export default class AuthController {
 
     static async update(req: Request, res: Response, next: NextFunction) {
         let id = parseInt(req.params.id);
-        const {email, role} = req.body
+        const {email, name, role} = req.body
 
         try {
             let admin = await AdminDAO.getById(id);
@@ -158,6 +160,7 @@ export default class AuthController {
 
             await AdminDAO.update(id, {
                 email,
+                name,
                 role
             });
 

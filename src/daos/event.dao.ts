@@ -62,4 +62,28 @@ export default class EventDAO {
     static async getTopVisitors(amount: number) {
         return prisma.$queryRaw<any>`SELECT count(*) AS num_visits, name FROM event LEFT JOIN enrolled_face on detection -> 'pipeline_data' ->> 'face_id' = cast(enrolled_face.face_id as text) WHERE event.status = 'KNOWN' GROUP BY detection -> 'pipeline_data' ->> 'face_id', name ORDER BY num_visits DESC LIMIT ${amount};`
     }
+
+    static async getByFaceId(faceId: string) {
+        let result = event.findMany({
+            orderBy: {
+                event_time: 'desc'
+            },
+            where: {
+                AND: [
+                    {
+                        status: {equals: 'KNOWN'}
+                    },
+                    {
+                        detection: {
+                            path: ['pipeline_data', 'face_id'],
+                            equals: faceId
+                        }
+                    }
+                ]
+
+            }
+        });
+
+        return result;
+    }
 }
