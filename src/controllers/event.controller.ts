@@ -6,7 +6,7 @@ import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 
 export default class EventController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
-        const {keyword, status, page, limit} = req.query;
+        const {keyword, status, stream, page, limit} = req.query;
 
         if (!page || !limit) {
             return next(new BadRequestError({
@@ -17,10 +17,10 @@ export default class EventController {
 
         try {
             // @ts-ignore
-            let count = await EventDAO.getCountWithPagination(keyword, status);
+            let count = await EventDAO.getCountWithPagination(keyword, status, stream);
 
             // @ts-ignore
-            let event = await EventDAO.getAllWithPagination(keyword, status, parseInt(page), parseInt(limit));
+            let event = await EventDAO.getAllWithPagination(keyword, status, stream, parseInt(page), parseInt(limit));
 
             // @ts-ignore
             res.send({
