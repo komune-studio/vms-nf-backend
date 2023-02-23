@@ -3,10 +3,11 @@ import {NextFunction, Request, Response} from "express";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import EventDAO from "../daos/event.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
+import moment from "moment";
 
 export default class EventController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
-        const {keyword, status, stream, page, limit} = req.query;
+        let {keyword, status, stream, page, limit, analytic, start_date, end_date} = req.query;
 
         if (!page || !limit) {
             return next(new BadRequestError({
@@ -16,11 +17,19 @@ export default class EventController {
         }
 
         try {
-            // @ts-ignore
-            let count = await EventDAO.getCountWithPagination(keyword, status, stream);
+            const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+            const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+
+            if(stream) {
+                stream = "'" + stream.split(',').join("', '") + "'"
+                stream = `(${stream})`
+            }
 
             // @ts-ignore
-            let event = await EventDAO.getAllWithPagination(keyword, status, stream, parseInt(page), parseInt(limit));
+            let count = await EventDAO.getCountWithPagination(keyword, status, stream, analytic, startDate, endDate);
+
+            // @ts-ignore
+            let event = await EventDAO.getAllWithPagination(keyword, status, stream, analytic, startDate, endDate, parseInt(page), parseInt(limit));
 
             // @ts-ignore
             res.send({

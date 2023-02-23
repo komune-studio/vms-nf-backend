@@ -164,7 +164,7 @@ export default class UtilController {
             }))
 
             // @ts-ignore
-            result = result.filter(data => data.stream_id === data.stream.id)
+            result = result.filter(data => data.stream_id === data.stream?.id)
 
             // @ts-ignore
             output.location_data = result.sort((a, b) => {
