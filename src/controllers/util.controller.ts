@@ -9,6 +9,7 @@ export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
             const output = {today: 0, yesterday: 0, last_7_days: 1, last_30_days: 0, daily_record: {}, heatmap_data: {}, location_data: []}
+            const {analytic} = req.query;
 
             //today's count
             const todaysCount = await EventDAO.getCount(
@@ -21,7 +22,7 @@ export default class UtilController {
                             event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
                         },
                         {
-                            status: {equals: 'KNOWN'}
+                            type: {equals: analytic}
                         }
                     ]
                 })
@@ -39,7 +40,7 @@ export default class UtilController {
                             event_time: {lte: new Date(moment().subtract(1, 'day').format('YYYY-MM-DDT23:59:59Z'))}
                         },
                         {
-                            status: {equals: 'KNOWN'}
+                            type: {equals: analytic}
                         }
                     ]
                 })
@@ -57,7 +58,7 @@ export default class UtilController {
                             event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
                         },
                         {
-                            status: {equals: 'KNOWN'}
+                            type: {equals: analytic}
                         }
                     ]
                 })
@@ -75,7 +76,7 @@ export default class UtilController {
                             event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
                         },
                         {
-                            status: {equals: 'KNOWN'}
+                            type: {equals: analytic}
                         }
                     ]
                 })
@@ -92,7 +93,7 @@ export default class UtilController {
                             event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
                         },
                         {
-                            status: {equals: 'KNOWN'}
+                            type: {equals: analytic}
                         }
                     ],
                 })
@@ -119,7 +120,7 @@ export default class UtilController {
                             event_time: {lte: moment().endOf('week').format('YYYY-MM-DDT00:00:00Z')}
                         },
                         {
-                            status: {equals: 'KNOWN'}
+                            type: {equals: analytic}
                         }
                     ]
                 })
@@ -152,6 +153,9 @@ export default class UtilController {
                         },
                         {
                             event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                        },
+                        {
+                            type: {equals: analytic}
                         }
                     ]
                 })
