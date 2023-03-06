@@ -98,16 +98,27 @@ export default class UtilController {
                     ],
                 })
 
+            console.log(analytic)
+
             last30DaysEvent.forEach(data => {
                 // @ts-ignore
                 if (!output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]) {
-                    // @ts-ignore
-                    output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = 0
+                    if(analytic === 'NFV4-VC') {
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = {car: 0, motorcycle: 0, truck: 0, bus: 0}
+                    } else {
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = 1
+                    }
+                } else {
+                    if(analytic === 'NFV4-VC') {
+                        // @ts-ignore
+                        (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')])[data.status]++;
+                    } else {
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]++;
+                    }
                 }
-
-
-                // @ts-ignore
-                output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]++;
             })
 
             const thisWeeksEvent = await EventDAO.getAll(

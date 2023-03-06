@@ -20,7 +20,7 @@ export default class EventDAO {
             orderBy: {
                 event_time: 'asc'
             },
-            select: {event_time: true},
+            select: {event_time: true, status: true, detection: true},
             where: condition
         });
 
