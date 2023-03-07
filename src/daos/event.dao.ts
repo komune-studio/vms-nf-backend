@@ -20,21 +20,17 @@ export default class EventDAO {
             orderBy: {
                 event_time: 'asc'
             },
-            select: {event_time: true, status: true, detection: true},
+            select: {event_time: true, status: true, detection: true, stream_id: true},
             where: condition
         });
 
         return result;
     }
 
-    static async getCountGroupByStreamId(condition: any) {
-        let result = event.groupBy({
-            by: ['stream_id'],
-            _count: {id: true},
-            where: condition
-        });
+    static async getCountGroupByStreamId(stream: String, analytic: String) {
+        const sql = `select count(id), result->>'location' as location from event where ${stream !== 'null' ? ` stream_id = '${stream}' AND  ` : ''} type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}'  group by result->>'location'  order by result->>'location' ASC;;`
 
-        return result;
+        return prisma.$queryRaw(Prisma.raw(sql))
     }
 
     static async getCountWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate : String, endDate  : String) {
@@ -46,8 +42,6 @@ export default class EventDAO {
         analytic = analytic === 'null' ? null : analytic
 
         const sql = `SELECT count(id) FROM event WHERE ${status ? ` status = '${status}' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id in ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''};`
-
-        console.log(sql)
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -62,13 +56,13 @@ export default class EventDAO {
 
         const sql = `SELECT id, type, stream_id, detection, primary_image, secondary_image, result, status, event_time, created_at  FROM event WHERE ${status ? ` status = '${status}' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC LIMIT ${limit} OFFSET ${limit * (page - 1)};`
 
-        console.log(sql)
-
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getTopVisitors(amount: number) {
-        return prisma.$queryRaw<any>`SELECT count(*) AS num_visits, name FROM event LEFT JOIN enrolled_face on detection -> 'pipeline_data' ->> 'face_id' = cast(enrolled_face.face_id as text) WHERE event.status = 'KNOWN' GROUP BY detection -> 'pipeline_data' ->> 'face_id', name ORDER BY num_visits DESC LIMIT ${amount};`
+    static async getTopVisitors(amount: number, stream: String) {
+        const sql = `SELECT count(*) AS num_visits, name FROM event LEFT JOIN enrolled_face on detection -> 'pipeline_data' ->> 'face_id' = cast(enrolled_face.face_id as text) WHERE event.status = 'KNOWN' ${stream === 'null' ? '' : ` AND stream_id = '${stream}' `} GROUP BY detection -> 'pipeline_data' ->> 'face_id', name ORDER BY num_visits DESC LIMIT ${amount};`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
     }
 
     static async getByFaceId(faceId: string) {

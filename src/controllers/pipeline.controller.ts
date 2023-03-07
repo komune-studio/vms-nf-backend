@@ -3,6 +3,25 @@ import PipelineDAO from "../daos/pipeline.dao";
 import request from "../utils/api.utils";
 
 export default class PipelineController {
+    static async getByAnalyticId(req : Request, res : Response, next : NextFunction) {
+
+        const { code } = req.params;
+
+        try {
+            let data = await PipelineDAO.getByAnalyticId(code);
+
+            // @ts-ignore
+            data = data.map(datum => datum.streams)
+
+            res.send({
+                success: true,
+                streams: data
+            })
+        }
+        catch (err) {
+            return next(err);
+        }
+    }
 
     static async getPipeline(req : Request, res : Response, next : NextFunction) {
 

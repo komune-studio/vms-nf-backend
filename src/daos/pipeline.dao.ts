@@ -11,4 +11,20 @@ export default class PipelineDAO {
             }
         })
     }
+
+    static async getByAnalyticId(code : string) {
+        return pipelines.findMany({
+            where: {
+                analytic_id: code
+            },
+            select: {
+                streams: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
+            }
+        })
+    }
 }

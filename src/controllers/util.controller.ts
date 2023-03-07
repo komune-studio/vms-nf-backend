@@ -9,12 +9,15 @@ export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
             const output = {today: 0, yesterday: 0, last_7_days: 1, last_30_days: 0, daily_record: {}, heatmap_data: {}, location_data: []}
-            const {analytic} = req.query;
+            const {analytic, stream} = req.query;
+            const streamEqualsClause = stream === 'null' ? [{}] : [{stream_id: {equals: stream}}]
+
 
             //today's count
             const todaysCount = await EventDAO.getCount(
                 {
                     AND: [
+                        ...streamEqualsClause,
                         {
                             event_time: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
                         },
@@ -33,6 +36,7 @@ export default class UtilController {
             const yesterdaysCount = await EventDAO.getCount(
                 {
                     AND: [
+                        ...streamEqualsClause,
                         {
                             event_time: {gte: moment().subtract(1, 'day').format('YYYY-MM-DDT00:00:00Z')}
                         },
@@ -51,6 +55,7 @@ export default class UtilController {
             const last7DaysCount = await EventDAO.getCount(
                 {
                     AND: [
+                        ...streamEqualsClause,
                         {
                             event_time: {gte: moment().subtract(6, 'day').format('YYYY-MM-DDT00:00:00Z')}
                         },
@@ -69,6 +74,7 @@ export default class UtilController {
             const last30DaysCount = await EventDAO.getCount(
                 {
                     AND: [
+                        ...streamEqualsClause,
                         {
                             event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
                         },
@@ -86,6 +92,7 @@ export default class UtilController {
             const last30DaysEvent = await EventDAO.getAll(
                 {
                     AND: [
+                        ...streamEqualsClause,
                         {
                             event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
                         },
@@ -97,8 +104,6 @@ export default class UtilController {
                         }
                     ],
                 })
-
-            console.log(analytic)
 
             last30DaysEvent.forEach(data => {
                 // @ts-ignore
@@ -121,9 +126,12 @@ export default class UtilController {
                 }
             })
 
+            if(Object.keys(output.daily_record).length === 0) output.daily_record = {'': 0}
+
             const thisWeeksEvent = await EventDAO.getAll(
                 {
                     AND: [
+                        ...streamEqualsClause,
                         {
                             event_time: {gte: moment().startOf('week').format('YYYY-MM-DDT00:00:00Z')}
                         },
@@ -156,41 +164,28 @@ export default class UtilController {
                 }
             })
 
-            const countByStreamId = await EventDAO.getCountGroupByStreamId(
-                {
-                    AND: [
-                        {
-                            event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            const streams = await StreamDAO.getStreams();
-
-            let result = countByStreamId.map(obj => ({
-                ...obj,
-                stream: streams.find(stream => stream.id = obj.stream_id)
-            }))
+            // const countByStreamId = await EventDAO.getCountGroupByStreamId(
+            //     {
+            //         AND: [
+            //             ...streamEqualsClause,
+            //             {
+            //                 event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
+            //             },
+            //             {
+            //                 event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+            //             },
+            //             {
+            //                 type: {equals: analytic}
+            //             }
+            //         ]
+            //     })
 
             // @ts-ignore
-            result = result.filter(data => data.stream_id === data.stream?.id)
-
+            const countByStreamId = await EventDAO.getCountGroupByStreamId(stream, analytic)
             // @ts-ignore
-            output.location_data = result.sort((a, b) => {
-                // @ts-ignore
-                if (a.stream.name < b.stream.name)
-                    return -1;
-                // @ts-ignore
-                if (a.stream.name > b.stream.name)
-                    return 1;
-                return 0;
-            });
+            output.location_data = countByStreamId.map(data => ({...data, count: parseInt(data.count)}))
+
+            console.log('output', output.location_data)
 
             res.send(output);
         } catch (e) {
@@ -202,14 +197,16 @@ export default class UtilController {
 
     static async getTopVisitors(req : Request, res : Response, next : NextFunction) {
         try {
-            let {visitor} = req.query;
+            let {visitor, stream} = req.query;
             if (!visitor) visitor = "10";
 
             if (typeof visitor === "string") {
-                let result = await EventDAO.getTopVisitors(parseInt(visitor))
+                // @ts-ignore
+                let result = await EventDAO.getTopVisitors(parseInt(visitor), stream)
 
                 // @ts-ignore
                 result.forEach((data, idx) => {
+                    // @ts-ignore
                     result[idx].num_visits = parseInt(result[idx].num_visits)
                 })
 
