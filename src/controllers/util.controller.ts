@@ -8,7 +8,15 @@ import {BadRequestError} from "../utils/error.utils";
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
-            const output = {today: 0, yesterday: 0, last_7_days: 1, last_30_days: 0, daily_record: {}, heatmap_data: {}, location_data: []}
+            const output = {
+                today: 0,
+                yesterday: 0,
+                last_7_days: 1,
+                last_30_days: 0,
+                daily_record: {},
+                heatmap_data: {},
+                location_data: []
+            }
             const {analytic, stream} = req.query;
             const streamEqualsClause = stream === 'null' ? [{}] : [{stream_id: {equals: stream}}]
 
@@ -89,103 +97,76 @@ export default class UtilController {
 
             output.last_30_days = last30DaysCount._count.id;
 
-            const last30DaysEvent = await EventDAO.getAll(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ],
-                })
+            // @ts-ignore
+            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream, analytic)
 
-            last30DaysEvent.forEach(data => {
+            // @ts-ignore
+            countByTimeAndStatus.forEach(data => {
+                data.event_time = data.interval_alias
+
+                if (moment(data.event_time).isSameOrAfter(moment().startOf('week').format('YYYY-MM-DDT00:00:00Z')) && moment(data.event_time).isSameOrBefore(moment().endOf('week').format('YYYY-MM-DDT00:00:00Z'))) {
+                    let key;
+
+                    // console.log(moment(data.event_time).format('d'))
+                    if (parseInt(moment(data.event_time).format('m')) > 0) {
+                        key = moment(data.event_time).format('YYYY-MM-DDTHH:01:00Z')
+                    } else {
+                        key = moment(data.event_time).subtract(1, 'hour').format('YYYY-MM-DDTHH:01:00Z')
+                    }
+
+                    // @ts-ignore
+                    if (!output.heatmap_data[key]) {
+                        // @ts-ignore
+                        output.heatmap_data[key] = parseInt(data.count);
+                    } else {
+                        // @ts-ignore
+                        output.heatmap_data[key] += parseInt(data.count);
+                    }
+                }
+
+                data.status = data.status === 'KNOWN' ? 'recognized' : data.status === 'UNKNOWN' ? 'unrecognized' : data.status
                 // @ts-ignore
                 if (!output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]) {
-                    if(analytic === 'NFV4-VC') {
+                    if (analytic === 'NFV4-FR') {
                         // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = {car: 0, motorcycle: 0, truck: 0, bus: 0}
-                    } else {
-                        // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = 1
-                    }
-                } else {
-                    if(analytic === 'NFV4-VC') {
-                        // @ts-ignore
-                        (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')])[data.status]++;
-                    } else {
-                        // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]++;
-                    }
-                }
-            })
-
-            if(Object.keys(output.daily_record).length === 0) output.daily_record = {'': 0}
-
-            const thisWeeksEvent = await EventDAO.getAll(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().startOf('week').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: moment().endOf('week').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            type: {equals: analytic}
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = {
+                            recognized: 0,
+                            unrecognized: 0
                         }
-                    ]
-                })
-
-            thisWeeksEvent.forEach(data => {
-                let key;
-
-                // console.log(moment(data.event_time).format('d'))
-                if(parseInt(moment(data.event_time).format('m')) > 0) {
-                    key = moment(data.event_time).format('YYYY-MM-DDTHH:01:00Z')
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')][data.status] += parseInt(data.count);
+                    } else if (analytic === 'NFV4-VC') {
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = {
+                            car: 0,
+                            motorcycle: 0,
+                            truck: 0,
+                            bus: 0
+                        }
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')][data.status] += parseInt(data.count);
+                    } else {
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = parseInt(data.count)
+                    }
                 } else {
-                    key = moment(data.event_time).subtract(1, 'hour').format('YYYY-MM-DDTHH:01:00Z')
-                }
-
-                // @ts-ignore
-                if(!output.heatmap_data[key]) {
-                    // @ts-ignore
-                    output.heatmap_data[key] = 1;
-                } else {
-                    // @ts-ignore
-                    output.heatmap_data[key]++;
+                    if (analytic === 'NFV4-FR' || analytic === 'NFV4-VC') {
+                        // @ts-ignore
+                        (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')])[data.status] += parseInt(data.count);
+                    } else {
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] += parseInt(data.count);
+                    }
                 }
             })
 
-            // const countByStreamId = await EventDAO.getCountGroupByStreamId(
-            //     {
-            //         AND: [
-            //             ...streamEqualsClause,
-            //             {
-            //                 event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
-            //             },
-            //             {
-            //                 event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-            //             },
-            //             {
-            //                 type: {equals: analytic}
-            //             }
-            //         ]
-            //     })
+            if (Object.keys(output.daily_record).length === 0) output.daily_record = {'': 0}
 
             // @ts-ignore
             const countByStreamId = await EventDAO.getCountGroupByStreamId(stream, analytic)
             // @ts-ignore
             output.location_data = countByStreamId.map(data => ({...data, count: parseInt(data.count)}))
 
-            console.log('output', output.location_data)
 
             res.send(output);
         } catch (e) {
@@ -195,7 +176,7 @@ export default class UtilController {
         }
     }
 
-    static async getTopVisitors(req : Request, res : Response, next : NextFunction) {
+    static async getTopVisitors(req: Request, res: Response, next: NextFunction) {
         try {
             let {visitor, stream} = req.query;
             if (!visitor) visitor = "10";
@@ -211,9 +192,7 @@ export default class UtilController {
                 })
 
                 res.send(result);
-            }
-
-            else {
+            } else {
                 return next(new BadRequestError("Visitor bad format."))
             }
         } catch (e) {

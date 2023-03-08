@@ -27,8 +27,14 @@ export default class EventDAO {
         return result;
     }
 
+    static async getCountGroupByTimeAndStatus(stream: String, analytic: String) {
+        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / 3600 )) * 3600) as interval_alias ${analytic === 'NFV4-CE' ? ` , avg(cast(detection->'pipeline_data'->>'estimation' as int)) ` : ''} from event where ${stream !== 'null' ? ` stream_id = '${stream}' AND  ` : ''} type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}' GROUP BY status, interval_alias ORDER BY interval_alias ASC`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
     static async getCountGroupByStreamId(stream: String, analytic: String) {
-        const sql = `select count(id), result->>'location' as location from event where ${stream !== 'null' ? ` stream_id = '${stream}' AND  ` : ''} type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}'  group by result->>'location'  order by result->>'location' ASC;;`
+        const sql = `select count(id), result->>'location' as location from event where ${stream !== 'null' ? ` stream_id = '${stream}' AND  ` : ''} type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}'  group by result->>'location'  order by result->>'location' ASC;`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
