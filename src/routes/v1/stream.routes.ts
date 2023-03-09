@@ -1,7 +1,7 @@
-import {Express, Router} from "express";
+import {Router} from "express";
 import PipelineController from "../../controllers/pipeline.controller";
 
-export default function (router : Router) {
+export default function routesStream(router : Router) {
     router.route('/stream/pipeline/:code')
         .get(PipelineController.getByAnalyticId)
 

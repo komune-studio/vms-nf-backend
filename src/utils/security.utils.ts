@@ -32,4 +32,9 @@ export default class SecurityUtils {
         let loginHash = this.generatePassword(password, salt);
         return loginHash === savedHash;
     }
+
+    // generate guaranteed unique id
+    static generateId() {
+        return crypto.randomBytes(32).toString("hex");
+    }
 }
