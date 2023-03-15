@@ -1,10 +1,13 @@
 import { Router } from "express";
 import AuthController from "../../controllers/auth.controller";
-import {authAdmin} from "../../middlewares/auth.middleware";
+import {authAdmin, authAll} from "../../middlewares/auth.middleware";
 
 export default function routesAuth(router : Router) {
     router.route('/login')
         .post(AuthController.login);
+
+    router.route('/authenticate')
+        .post(authAll, AuthController.authenticate);
 
     router.route('/generate-password')
         .post(AuthController.generatePassword)

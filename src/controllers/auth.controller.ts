@@ -1,7 +1,13 @@
 import {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
 
-import {BadRequestError, ConflictError, InvalidCredentialsError, NotFoundError} from "../utils/error.utils";
+import {
+    BadRequestError,
+    ConflictError,
+    InvalidCredentialsError,
+    NotFoundError,
+    UnauthorizedError
+} from "../utils/error.utils";
 import AdminDAO from "../daos/admin.dao";
 import SecurityUtils from "../utils/security.utils";
 
@@ -47,6 +53,22 @@ export default class AuthController {
             res.send(result);
 
         } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async authenticate(req : Request, res : Response, next : NextFunction) {
+        try {
+            let {name, email} = req.body;
+            if (name !== req.decoded.name && email !== req.decoded.email)
+                return next(new UnauthorizedError("Authentication failed."));
+            res.send({
+                name: req.decoded.name,
+                email: req.decoded.email,
+                role: req.decoded.role
+            });
+        }
+        catch (e) {
             return next(e);
         }
     }
