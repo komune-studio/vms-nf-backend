@@ -24,6 +24,7 @@ export default class AdminDAO {
                 role: true,
                 created_at: true,
                 modified_at: true,
+                active: true
             }
         });
     }

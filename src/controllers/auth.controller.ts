@@ -25,7 +25,7 @@ export default class AuthController {
         try {
             let admin = await AdminDAO.getByEmail(email);
 
-            if (admin === null) {
+            if (admin === null || !admin.active) {
                 return next(new InvalidCredentialsError("Invalid credentials."));
             }
 
@@ -149,7 +149,7 @@ export default class AuthController {
 
     static async update(req: Request, res: Response, next: NextFunction) {
         let id = parseInt(req.params.id);
-        const {email, name, role} = req.body
+        const {email, name, role, active} = req.body
 
         try {
             let admin = await AdminDAO.getById(id);
@@ -161,7 +161,8 @@ export default class AuthController {
             await AdminDAO.update(id, {
                 email,
                 name,
-                role
+                role,
+                active
             });
 
             res.send({success: true});

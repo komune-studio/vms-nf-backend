@@ -4,6 +4,7 @@ import routesUtil from "./util.routes";
 import routesEvent from "./event.routes";
 import routesStream from "./stream.routes";
 import routesVehicle from "./vehicle.routes";
+import routesSite from "./site.routes";
 
 const router = express.Router();
 
@@ -12,5 +13,6 @@ routesUtil(router);
 routesEvent(router);
 routesStream(router);
 routesVehicle(router);
+routesSite(router);
 
 export default router;

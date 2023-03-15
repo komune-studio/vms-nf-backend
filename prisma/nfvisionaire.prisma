@@ -17,6 +17,7 @@ model admin {
   role        String    @db.VarChar(10)
   created_at  DateTime? @default(now()) @db.Timestamp(6)
   modified_at DateTime? @default(now()) @db.Timestamp(6)
+  active Boolean @default(true)
 }
 
 model event {
@@ -64,4 +65,12 @@ model vehicle {
   @@index([status], map: "vehicle_index_status")
   @@index([type], map: "vehicle_index_type")
   @@index([unique_id], map: "vehicle_index_unique_id")
+}
+
+model site {
+  id          Int       @id @default(autoincrement())
+  name         String   @db.VarChar(200)
+  deleted_at   DateTime? @db.Timestamptz(6)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime  @default(now()) @db.Timestamptz(6)
 }

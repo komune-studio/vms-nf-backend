@@ -1,8 +1,9 @@
 import {NextFunction, Request, Response} from "express";
 import {ForbiddenError, InternalServerError, UnauthorizedError} from "../utils/error.utils";
 import jwt from "jsonwebtoken";
+import AdminDAO from "../daos/admin.dao";
 
-function processToken(req : Request) {
+async function processToken(req : Request) {
     if (!req.headers['authorization'])
         throw new UnauthorizedError("Authorization header is not defined.");
 
@@ -16,8 +17,17 @@ function processToken(req : Request) {
 
     try {
         req.decoded = jwt.verify(token, secret);
+
+        const admin = await AdminDAO.getById(req.decoded.id)
+
+        // @ts-ignore
+        if(!admin.active) {
+            throw new UnauthorizedError("EXPIRED_TOKEN");
+        }
     } catch (e : any) {
-        if (e.name === "TokenExpiredError") {
+        console.log(e)
+
+        if (e.name === "TokenExpiredError" || e.message === 'EXPIRED_TOKEN') {
             throw new UnauthorizedError("Token has expired.", "EXPIRED_TOKEN");
         }
         else {
@@ -27,9 +37,11 @@ function processToken(req : Request) {
     }
 }
 
-export function authAdmin(req : Request, res : Response, next : NextFunction) {
+export async function authAdmin(req : Request, res : Response, next : NextFunction) {
     try {
-        processToken(req);
+        await processToken(req);
+
+
         if (req.decoded.role !== "ADMIN")
             return next(new ForbiddenError("User is not authorized to access this resource."))
         next();
@@ -38,9 +50,9 @@ export function authAdmin(req : Request, res : Response, next : NextFunction) {
     }
 }
 
-export function authAll(req : Request, res : Response, next : NextFunction) {
+export async function authAll(req : Request, res : Response, next : NextFunction) {
     try {
-        processToken(req);
+        await processToken(req);
         if (!req.decoded.role)
             return next(new ForbiddenError("User is not authorized to access this resource."))
         next();
