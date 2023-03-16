@@ -12,4 +12,7 @@ export default function routesStream(router : Router) {
         .get(authAdmin, SiteController.getById)
         .put(authAdmin, SiteController.update)
         .delete(authAdmin, SiteController.delete)
+
+    router.route('/site/:id/assign-stream')
+        .post(authAdmin, SiteController.assignStream)
 }

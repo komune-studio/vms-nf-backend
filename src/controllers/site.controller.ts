@@ -2,6 +2,7 @@ import {NextFunction, Request, Response} from "express";
 import SiteDAO from "../daos/site.dao";
 import VehicleDAO from "../daos/vehicle.dao";
 import moment from "moment";
+import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 
 export default class SiteController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
@@ -53,6 +54,24 @@ export default class SiteController {
             await SiteDAO.update(parseInt(req.params.id), {deleted_at: new Date()});
             res.send({success: true})
         } catch (err) {
+            return next(err);
+        }
+    }
+
+    static async assignStream(req: Request, res: Response, next: NextFunction) {
+        try {
+            const mapSiteStream = await MapSiteStreamDAO.getByStreamId(req.body.stream_id)
+
+            if(mapSiteStream) {
+                await MapSiteStreamDAO.update(mapSiteStream.id, {site_id: parseInt(req.params.id)})
+            } else {
+                await MapSiteStreamDAO.create({site_id: parseInt(req.params.id), stream_id: req.body.stream_id})
+            }
+
+            res.send({success: true})
+        } catch (err) {
+            console.log(err)
+
             return next(err);
         }
     }

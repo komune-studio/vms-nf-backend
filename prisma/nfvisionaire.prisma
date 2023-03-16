@@ -15,6 +15,7 @@ model admin {
   password    String    @db.VarChar(86)
   salt        String    @db.VarChar(32)
   role        String    @db.VarChar(10)
+  site_access BigInt[]
   created_at  DateTime? @default(now()) @db.Timestamp(6)
   modified_at DateTime? @default(now()) @db.Timestamp(6)
   active Boolean @default(true)
@@ -73,4 +74,11 @@ model site {
   deleted_at   DateTime? @db.Timestamptz(6)
   created_at   DateTime  @default(now()) @db.Timestamptz(6)
   updated_at   DateTime  @default(now()) @db.Timestamptz(6)
+}
+
+model map_site_stream {
+  id          Int       @id @default(autoincrement())
+  site_id     BigInt   @db.BigInt
+  stream_id   String   @db.VarChar(200)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
 }

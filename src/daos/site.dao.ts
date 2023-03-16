@@ -36,9 +36,6 @@ export default class SiteDAO {
     }
 
     static async update(id : number, obj: any) {
-        console.log(id)
-        console.log(obj)
-
         return sites.update({
             where: {id},
             data: obj

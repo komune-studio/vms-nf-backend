@@ -13,7 +13,9 @@ export default class StreamDAO {
         });
     }
 
-    static async getStreams() {
-        return streams.findMany();
+    static async getAll() {
+        return streams.findMany({
+            orderBy: {name: 'asc'}
+        });
     }
 }

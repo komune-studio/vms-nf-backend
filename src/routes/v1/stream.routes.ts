@@ -1,8 +1,12 @@
 import {Router} from "express";
 import PipelineController from "../../controllers/pipeline.controller";
 import {authAdmin, authAll} from "../../middlewares/auth.middleware";
+import StreamController from "../../controllers/stream.controller";
 
 export default function routesStream(router : Router) {
+    router.route('/streams')
+        .get(StreamController.getAll)
+
     router.route('/stream/pipeline/:code')
         .get(authAll, PipelineController.getByAnalyticId)
 

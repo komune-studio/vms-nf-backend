@@ -3,6 +3,16 @@ import PrismaService from "../services/prisma.service";
 const pipelines = PrismaService.getNFV4().pipelines;
 
 export default class PipelineDAO {
+    static async getByStreamIds(streamIds: string[]) {
+        return pipelines.findMany({
+            where: {stream_id: {in: streamIds}},
+            select: {
+                stream_id: true,
+                analytic_id: true
+            }
+        })
+    }
+
     static async getPipeline(id : string, code : string) {
         return pipelines.findFirst({
             where: {

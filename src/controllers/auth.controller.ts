@@ -111,14 +111,17 @@ export default class AuthController {
                 delete result.salt;
             }
 
-            res.send(result);
+            // @ts-ignore
+            res.send({...result, site_access: result.site_access.map(site => parseInt(site))});
         } catch (e) {
+            console.error(e)
+
             return next(e);
         }
     }
 
     static async createAdmin(req: Request, res: Response, next: NextFunction) {
-        let {email, name, role, password} = req.body;
+        let {email, name, role, password, site_access} = req.body;
 
         if (!email || !password) {
             return next(new BadRequestError({
@@ -134,7 +137,7 @@ export default class AuthController {
                 return next(new ConflictError("Email is already registered.", "email"));
             }
 
-            let body: any = {email, name, role}
+            let body: any = {email, name, role, site_access}
 
             body.salt = SecurityUtils.generateSalt();
             body.password = SecurityUtils.generatePassword(password, body.salt)
@@ -171,7 +174,7 @@ export default class AuthController {
 
     static async update(req: Request, res: Response, next: NextFunction) {
         let id = parseInt(req.params.id);
-        const {email, name, role, active} = req.body
+        const {email, name, role, active, site_access} = req.body
 
         try {
             let admin = await AdminDAO.getById(id);
@@ -184,7 +187,8 @@ export default class AuthController {
                 email,
                 name,
                 role,
-                active
+                active,
+                site_access
             });
 
             res.send({success: true});
