@@ -4,10 +4,16 @@ import {format, getTime, formatDistanceToNow} from 'date-fns';
 import moment from 'moment';
 import StreamDAO from "../daos/stream.dao";
 import {BadRequestError} from "../utils/error.utils";
+import AdminDAO from "../daos/admin.dao";
+import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
+            const admin = await AdminDAO.getById(req.decoded.id);
+            // @ts-ignore
+            const mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+
             const output = {
                 today: 0,
                 yesterday: 0,
@@ -18,8 +24,7 @@ export default class UtilController {
                 location_data: []
             }
             const {analytic, stream} = req.query;
-            const streamEqualsClause = stream === 'null' ? [{}] : [{stream_id: {equals: stream}}]
-
+            const streamEqualsClause = stream === 'null' ? [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}] : [{stream_id: {equals: stream}}]
 
             //today's count
             const todaysCount = await EventDAO.getCount(
@@ -98,7 +103,7 @@ export default class UtilController {
             output.last_30_days = last30DaysCount._count.id;
 
             // @ts-ignore
-            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream, analytic)
+            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
 
             // @ts-ignore
             countByTimeAndStatus.forEach(data => {
@@ -163,7 +168,7 @@ export default class UtilController {
             if (Object.keys(output.daily_record).length === 0) output.daily_record = {'': 0}
 
             // @ts-ignore
-            const countByStreamId = await EventDAO.getCountGroupByStreamId(stream, analytic)
+            const countByStreamId = await EventDAO.getCountGroupByStreamId(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
             // @ts-ignore
             output.location_data = countByStreamId.map(data => ({...data, count: parseInt(data.count)}))
 
@@ -182,6 +187,22 @@ export default class UtilController {
             if (!visitor) visitor = "10";
 
             if (typeof visitor === "string") {
+                if(stream === 'null') {
+                    const admin = await AdminDAO.getById(req.decoded.id);
+                    // @ts-ignore
+                    const mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+
+                    stream = mapSiteStream.map(siteStream => siteStream.stream_id);
+                } else {
+                    // @ts-ignore
+                    stream = [stream]
+                }
+
+                // @ts-ignore
+                if(stream.length === 0) {
+                    return res.send([])
+                }
+
                 // @ts-ignore
                 let result = await EventDAO.getTopVisitors(parseInt(visitor), stream)
 

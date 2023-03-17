@@ -27,14 +27,18 @@ export default class EventDAO {
         return result;
     }
 
-    static async getCountGroupByTimeAndStatus(stream: String, analytic: String) {
-        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / 3600 )) * 3600) as interval_alias ${analytic === 'NFV4-CE' ? ` , avg(cast(detection->'pipeline_data'->>'estimation' as int)) ` : ''} from event where ${stream !== 'null' ? ` stream_id = '${stream}' AND  ` : ''} type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}' GROUP BY status, interval_alias ORDER BY interval_alias ASC`
+    static async getCountGroupByTimeAndStatus(streams: String[], analytic: String) {
+        if(streams.length === 0) return []
+
+        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / 3600 )) * 3600) as interval_alias ${analytic === 'NFV4-CE' ? ` , avg(cast(detection->'pipeline_data'->>'estimation' as int)) ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}' GROUP BY status, interval_alias ORDER BY interval_alias ASC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getCountGroupByStreamId(stream: String, analytic: String) {
-        const sql = `select count(id), result->>'location' as location from event where ${stream !== 'null' ? ` stream_id = '${stream}' AND  ` : ''} type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}'  group by result->>'location'  order by result->>'location' ASC;`
+    static async getCountGroupByStreamId(streams: String[], analytic: String) {
+        if(streams.length === 0) return []
+
+        const sql = `select count(id), result->>'location' as location from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}'  group by result->>'location'  order by result->>'location' ASC;`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -67,8 +71,8 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getTopVisitors(amount: number, stream: String) {
-        const sql = `SELECT count(*) AS num_visits, name FROM event LEFT JOIN enrolled_face on detection -> 'pipeline_data' ->> 'face_id' = cast(enrolled_face.face_id as text) WHERE event.status = 'KNOWN' ${stream === 'null' ? '' : ` AND stream_id = '${stream}' `} GROUP BY detection -> 'pipeline_data' ->> 'face_id', name ORDER BY num_visits DESC LIMIT ${amount};`
+    static async getTopVisitors(amount: number, streams: String[]) {
+        const sql = `SELECT count(*) AS num_visits, name FROM event LEFT JOIN enrolled_face on detection -> 'pipeline_data' ->> 'face_id' = cast(enrolled_face.face_id as text) WHERE event.status = 'KNOWN' ${` AND stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} GROUP BY detection -> 'pipeline_data' ->> 'face_id', name ORDER BY num_visits DESC LIMIT ${amount};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

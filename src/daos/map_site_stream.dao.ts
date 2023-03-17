@@ -6,6 +6,14 @@ const prisma = PrismaService.getVisionaire();
 const mapSiteStream = prisma.map_site_stream;
 
 export default class MapSiteStreamDAO {
+    static async getBySiteIds(siteIds: number[]) {
+        let result = mapSiteStream.findMany({
+            where: {site_id: {in: siteIds}}
+        });
+
+        return result;
+    }
+
     static async getByStreamIds(streamIds: string[]) {
         let result = mapSiteStream.findMany({
             where: {stream_id: {in: streamIds}}
