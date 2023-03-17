@@ -1,5 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
+import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 
 import {
     BadRequestError,
@@ -41,11 +42,15 @@ export default class AuthController {
                 return next(new InvalidCredentialsError("Invalid credentials."));
             }
 
+            const allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+
             let result: any = {
                 id: admin.id,
                 name: admin.name,
                 email: admin.email,
-                role: admin.role
+                role: admin.role,
+                allowedSites: admin.site_access.map(obj => obj.toString()),
+                allowedStreams: allowedStreams.map(obj => obj.stream_id)
             }
 
             result.token = jwt.sign(result, secret, {expiresIn: "1d"})
@@ -62,11 +67,23 @@ export default class AuthController {
             let {name, email} = req.body;
             if (name !== req.decoded.name && email !== req.decoded.email)
                 return next(new UnauthorizedError("Authentication failed."));
-            res.send({
-                name: req.decoded.name,
-                email: req.decoded.email,
-                role: req.decoded.role
-            });
+
+            let admin = await AdminDAO.getByEmail(email);
+            if (admin === null || !admin.active) {
+                return next(new InvalidCredentialsError("Invalid credentials."));
+            }
+            const allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+
+            let result: any = {
+                id: admin.id,
+                name: admin.name,
+                email: admin.email,
+                role: admin.role,
+                allowedSites: admin.site_access.map(obj => obj.toString()),
+                allowedStreams: allowedStreams.map(obj => obj.stream_id)
+            }
+
+            res.send(result);
         }
         catch (e) {
             return next(e);

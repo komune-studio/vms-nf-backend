@@ -1,16 +1,13 @@
+import cors from "cors";
 import * as dotenv from "dotenv";
 import express, {NextFunction, Request, Response} from "express";
 import logger from "morgan";
-import cors from "cors";
-
-import v1 from "./routes/v1/routes";
 
 import handleErrors from "./middlewares/error.middleware";
+
+import v1 from "./routes/v1/routes";
 import PrismaService from "./services/prisma.service";
-import Nodeflux from "./utils/nodeflux.utils";
 import {NotFoundError} from "./utils/error.utils";
-import SecurityUtils from "./utils/security.utils";
-import EnrolledFaceDAO from "./daos/enrolled_face.dao";
 
 dotenv.config();
 

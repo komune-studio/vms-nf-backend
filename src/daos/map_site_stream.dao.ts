@@ -1,12 +1,10 @@
 import PrismaService from "../services/prisma.service"
-import moment from "moment/moment";
-import {Prisma} from "../prisma/nfvisionaire";
 
 const prisma = PrismaService.getVisionaire();
 const mapSiteStream = prisma.map_site_stream;
 
 export default class MapSiteStreamDAO {
-    static async getBySiteIds(siteIds: number[]) {
+    static async getBySiteIds(siteIds: bigint[]) {
         let result = mapSiteStream.findMany({
             where: {site_id: {in: siteIds}}
         });
