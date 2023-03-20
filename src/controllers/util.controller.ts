@@ -222,4 +222,12 @@ export default class UtilController {
             return next(e);
         }
     }
+
+    static async getApiConfig(req: Request, res: Response, next: NextFunction) {
+        res.send({
+            NF_IP: process.env.NF_IP,
+            VANILLA_PORT: process.env.VANILLA_PORT,
+            VISIONAIRE_PORT: process.env.VISIONAIRE_PORT
+        })
+    }
 }

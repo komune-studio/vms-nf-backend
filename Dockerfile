@@ -15,5 +15,5 @@ RUN npm install
 # Bundle app source
 COPY . .
 
-EXPOSE 3031
+CMD [ "node", "generate-env.js" ]
 CMD [ "npm", "start" ]

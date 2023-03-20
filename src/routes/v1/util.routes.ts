@@ -8,4 +8,7 @@ export default function routesAuth(router : Router) {
 
     router.route('/top-visitors')
         .get(authAll, UtilController.getTopVisitors);
+
+    router.route('/api-config')
+        .get(UtilController.getApiConfig);
 }
