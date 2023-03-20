@@ -3,6 +3,7 @@ import EventDAO from "../daos/event.dao";
 import {format, getTime, formatDistanceToNow} from 'date-fns';
 import moment from 'moment';
 import StreamDAO from "../daos/stream.dao";
+import request from "../utils/api.utils";
 import {BadRequestError} from "../utils/error.utils";
 import AdminDAO from "../daos/admin.dao";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
@@ -229,5 +230,23 @@ export default class UtilController {
             VANILLA_PORT: process.env.VANILLA_PORT,
             VISIONAIRE_PORT: process.env.VISIONAIRE_PORT
         })
+    }
+
+    static async getResourceStats(req: Request, res: Response, next: NextFunction) {
+        try {
+            const stats = await request(`${process.env.NF_VISIONAIRE_API_URL}/resource_stats`, "GET")
+            res.send(stats);
+        } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async getNodeStatus(req: Request, res: Response, next: NextFunction) {
+        try {
+            const nodes = await request(`${process.env.NF_VISIONAIRE_API_URL}/node_status`, "GET")
+            res.send(nodes);
+        } catch (e) {
+            return next(e);
+        }
     }
 }
