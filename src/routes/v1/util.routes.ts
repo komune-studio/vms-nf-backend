@@ -10,7 +10,7 @@ export default function routesAuth(router : Router) {
         .get(authAll, UtilController.getTopVisitors);
 
     router.route('/api-config')
-        .get(authAll, UtilController.getApiConfig);
+        .get(UtilController.getApiConfig);
 
     router.route('/resource_stats')
         .get(authAll, UtilController.getResourceStats);

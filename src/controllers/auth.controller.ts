@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
+import SiteDAO from "../daos/site.dao";
 import {Prisma} from "../prisma/nfvisionaire";
 
 import {
@@ -26,7 +27,7 @@ export default class AuthController {
                     name: "Admin",
                     salt: salt,
                     password: SecurityUtils.generatePassword("adminadmin", salt),
-                    role: "ADMIN"
+                    role: "SUPERADMIN"
                 }
                 await AdminDAO.create(body);
                 console.log("Admin created successfully.");
@@ -74,13 +75,19 @@ export default class AuthController {
             }
 
             const allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+            let allowedSites = admin.site_access.map(obj => obj.toString());
+
+            if (admin.role === "SUPERADMIN") {
+                const sites = await SiteDAO.getAll();
+                allowedSites = sites.map(obj => obj.id.toString());
+            }
 
             let result: any = {
                 id: admin.id,
                 name: admin.name,
                 email: admin.email,
                 role: admin.role,
-                allowedSites: admin.site_access.map(obj => obj.toString()),
+                allowedSites: allowedSites,
                 allowedStreams: allowedStreams.map(obj => obj.stream_id)
             }
 
@@ -104,13 +111,19 @@ export default class AuthController {
                 return next(new InvalidCredentialsError("Invalid credentials."));
             }
             const allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+            let allowedSites = admin.site_access.map(obj => obj.toString());
+
+            if (admin.role === "SUPERADMIN") {
+                const sites = await SiteDAO.getAll();
+                allowedSites = sites.map(obj => obj.id.toString());
+            }
 
             let result: any = {
                 id: admin.id,
                 name: admin.name,
                 email: admin.email,
                 role: admin.role,
-                allowedSites: admin.site_access.map(obj => obj.toString()),
+                allowedSites: allowedSites,
                 allowedStreams: allowedStreams.map(obj => obj.stream_id)
             }
 

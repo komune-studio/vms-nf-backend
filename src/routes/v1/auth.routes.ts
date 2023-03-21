@@ -1,6 +1,6 @@
 import { Router } from "express";
 import AuthController from "../../controllers/auth.controller";
-import {authAdmin, authAll} from "../../middlewares/auth.middleware";
+import {authAdmin, authAll, authSuperAdmin} from "../../middlewares/auth.middleware";
 
 export default function routesAuth(router : Router) {
     router.route('/login')
@@ -13,14 +13,14 @@ export default function routesAuth(router : Router) {
         .post(AuthController.generatePassword)
 
     router.route('/admins')
-        .get(authAdmin, AuthController.getAdmins)
-        .post(authAdmin, AuthController.createAdmin)
+        .get(authSuperAdmin, AuthController.getAdmins)
+        .post(authSuperAdmin, AuthController.createAdmin)
 
     router.route('/admin/:id')
-        .get(authAdmin, AuthController.getById)
-        .put(authAdmin, AuthController.update)
-        .delete(authAdmin, AuthController.deleteAdmin)
+        .get(authSuperAdmin, AuthController.getById)
+        .put(authSuperAdmin, AuthController.update)
+        .delete(authSuperAdmin, AuthController.deleteAdmin)
 
     router.route('/admin/:id/change-password')
-        .post(authAdmin, AuthController.changePassword)
+        .post(authSuperAdmin, AuthController.changePassword)
 }
