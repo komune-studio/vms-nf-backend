@@ -5,7 +5,7 @@ export default class FaceController {
 
     static async createFace(req: Request, res: Response, next: NextFunction) {
         try {
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/enrollment`, 'POST', req.body);
+            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', req.body);
             res.send(result);
         } catch (e) {
             return next(e);
@@ -14,7 +14,8 @@ export default class FaceController {
 
     static async getFace(req: Request, res: Response, next: NextFunction) {
         try {
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/enrollment`, 'GET');
+            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'GET');
+            console.log(result);
             res.send(result);
         } catch (e) {
             return next(e);
@@ -25,7 +26,7 @@ export default class FaceController {
         const {id} = req.params;
 
         try {
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/enrollment/${id}`, 'GET');
+            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
         } catch (e) {
             return next(e);
         }
@@ -35,7 +36,7 @@ export default class FaceController {
         const {id} = req.params;
 
         try {
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/enrollment/${id}`, 'PUT', req.body);
+            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'PUT', req.body);
             res.send(result);
         } catch (e) {
             return next(e);
@@ -46,7 +47,7 @@ export default class FaceController {
         const {id} = req.params;
 
         try {
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/enrollment/${id}`, 'DELETE');
+            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'DELETE');
             res.send(result);
         } catch (e) {
             return next(e);
