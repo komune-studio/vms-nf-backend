@@ -8,7 +8,7 @@ enum Algorithm {
 
 export default class SecurityUtils {
     static generateSalt() {
-        return crypto.randomBytes(24).toString("base64url");
+        return crypto.randomBytes(24).toString("base64");
     }
 
     static generatePassword(password : string, salt : string, algorithm : Algorithm = Algorithm.SHA1) {

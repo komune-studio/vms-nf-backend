@@ -12,8 +12,18 @@ export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
             const admin = await AdminDAO.getById(req.decoded.id);
+            let mapSiteStream = [];
+
             // @ts-ignore
-            const mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+            if(admin.role === 'SUPERADMIN') {
+                mapSiteStream = await MapSiteStreamDAO.getAll()
+            } else {
+                // @ts-ignore
+                mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+            }
+
+            // @ts-ignore
+
 
             const output = {
                 today: 0,
@@ -190,8 +200,15 @@ export default class UtilController {
             if (typeof visitor === "string") {
                 if(stream === 'null') {
                     const admin = await AdminDAO.getById(req.decoded.id);
+                    let mapSiteStream = []
+
                     // @ts-ignore
-                    const mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+                    if(admin.role === 'SUPERADMIN') {
+                        mapSiteStream = await MapSiteStreamDAO.getAll()
+                    } else {
+                        // @ts-ignore
+                        mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+                    }
 
                     stream = mapSiteStream.map(siteStream => siteStream.stream_id);
                 } else {

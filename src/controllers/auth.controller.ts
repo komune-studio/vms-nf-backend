@@ -74,12 +74,16 @@ export default class AuthController {
                 return next(new InvalidCredentialsError("Invalid credentials."));
             }
 
-            const allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
-            let allowedSites = admin.site_access.map(obj => obj.toString());
+            let allowedSites = [];
+            let allowedStreams = [];
 
             if (admin.role === "SUPERADMIN") {
                 const sites = await SiteDAO.getAll();
                 allowedSites = sites.map(obj => obj.id.toString());
+                allowedStreams = await MapSiteStreamDAO.getAll()
+            } else {
+                allowedSites = admin.site_access.map(obj => obj.toString());
+                allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
             }
 
             let result: any = {
@@ -110,12 +114,16 @@ export default class AuthController {
             if (admin === null || !admin.active) {
                 return next(new InvalidCredentialsError("Invalid credentials."));
             }
-            const allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
-            let allowedSites = admin.site_access.map(obj => obj.toString());
+            let allowedSites = [];
+            let allowedStreams = [];
 
             if (admin.role === "SUPERADMIN") {
                 const sites = await SiteDAO.getAll();
                 allowedSites = sites.map(obj => obj.id.toString());
+                allowedStreams = await MapSiteStreamDAO.getAll()
+            } else {
+                allowedSites = admin.site_access.map(obj => obj.toString());
+                allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
             }
 
             let result: any = {
