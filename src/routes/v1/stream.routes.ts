@@ -7,10 +7,20 @@ export default function routesStream(router : Router) {
     router.route('/streams')
         .get(StreamController.getAll)
 
+    router.route('/streams/:node')
+        .post(authAdmin, StreamController.create);
+
+    router.route('/streams/:node/:id')
+        .get(authAll, StreamController.getById)
+        .put(authAdmin, StreamController.update)
+        .delete(authAdmin, StreamController.delete);
+
     router.route('/stream/pipeline/:code')
         .get(authAll, PipelineController.getByAnalyticId)
 
     router.route('/stream/:node_num/:id/pipeline/:code')
+        .post(authAdmin, PipelineController.createPipeline)
         .get(authAll, PipelineController.getPipeline)
-        .put(authAdmin, PipelineController.updatePipeline);
+        .put(authAdmin, PipelineController.updatePipeline)
+        .delete(authAdmin, PipelineController.deletePipeline);
 }

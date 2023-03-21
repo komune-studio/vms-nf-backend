@@ -10,5 +10,11 @@ export default function routesAuth(router : Router) {
         .get(authAll, UtilController.getTopVisitors);
 
     router.route('/api-config')
-        .get(UtilController.getApiConfig);
+        .get(authAll, UtilController.getApiConfig);
+
+    router.route('/resource_stats')
+        .get(authAll, UtilController.getResourceStats);
+
+    router.route('/node_status')
+        .get(authAll, UtilController.getNodeStatus);
 }

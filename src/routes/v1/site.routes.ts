@@ -1,7 +1,7 @@
 import {Router} from "express";
 import SiteController from "../../controllers/site.controller";
 import {authAdmin, authAll} from "../../middlewares/auth.middleware";
-export default function routesStream(router : Router) {
+export default function routesSite(router : Router) {
     router.route('/sites')
         .get(authAll, SiteController.getAll)
 
