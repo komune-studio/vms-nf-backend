@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
+import {Prisma} from "../prisma/nfvisionaire";
 
 import {
     BadRequestError,
@@ -11,8 +12,38 @@ import {
 } from "../utils/error.utils";
 import AdminDAO from "../daos/admin.dao";
 import SecurityUtils from "../utils/security.utils";
+import PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
 
 export default class AuthController {
+    static async initialize() {
+        try {
+            let result = await AdminDAO.getAll();
+            if (result.length === 0) {
+                console.log("No admin found. Creating a new one...");
+                const salt = SecurityUtils.generateSalt();
+                const body = {
+                    email: "admin@admin.com",
+                    name: "Admin",
+                    salt: salt,
+                    password: SecurityUtils.generatePassword("adminadmin", salt),
+                    role: "ADMIN"
+                }
+                await AdminDAO.create(body);
+                console.log("Admin created successfully.");
+            }
+        } catch (e) {
+            if (e instanceof PrismaClientKnownRequestError) {
+                console.log("Admin table not found. Creating a new one...");
+                const result = await AdminDAO.createTable();
+                console.log("Admin table created successfully.");
+                await this.initialize();
+            }
+            else {
+                console.log(e);
+            }
+        }
+    }
+
     static async login(req: Request, res: Response, next: NextFunction) {
 
         if (!process.env.SECRET_KEY) {

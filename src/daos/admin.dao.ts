@@ -1,8 +1,25 @@
 import PrismaService from "../services/prisma.service";
 
-const admins = PrismaService.getVisionaire().admin;
+const prisma = PrismaService.getVisionaire();
+const admins = prisma.admin;
 
 export default class AdminDAO {
+
+    static async createTable() {
+        return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS admin (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(32) NOT NULL UNIQUE,
+            name VARCHAR(32) NOT NULL,
+            password VARCHAR(86) NOT NULL,
+            salt VARCHAR(32) NOT NULL,
+            role VARCHAR(10) NOT NULL,
+            site_access BIGINT[],
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            modified_at TIMESTAMPTZ DEFAULT NOW(),
+            active BOOLEAN DEFAULT true
+        );`
+    }
+
     static async getById(id : number) {
         return admins.findFirst({
             where: {id}

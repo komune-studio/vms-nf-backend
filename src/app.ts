@@ -2,6 +2,7 @@ import cors from "cors";
 import * as dotenv from "dotenv";
 import express, {NextFunction, Request, Response} from "express";
 import logger from "morgan";
+import AuthController from "./controllers/auth.controller";
 
 import handleErrors from "./middlewares/error.middleware";
 
@@ -34,6 +35,13 @@ app.use(handleErrors);
 
 (async () => {
     await PrismaService.initialize();
+
+    try {
+        await AuthController.initialize();
+    } catch (e) {
+        console.log(e);
+        return;
+    }
 
     app.listen(PORT, async () => {
         console.log(`Server listening on port ${PORT}!`);
