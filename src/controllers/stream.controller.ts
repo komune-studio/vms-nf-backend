@@ -52,7 +52,7 @@ export default class StreamController {
     }
 
     static async getById(req: Request, res: Response, next: NextFunction) {
-        const {node, id} = req.params;
+        const {id} = req.params;
 
         try {
             let stream : any = (await StreamDAO.getStreamsById([id]))[0];

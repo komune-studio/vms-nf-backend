@@ -27,6 +27,8 @@ export default class FaceController {
 
         try {
             let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
+
+            res.send(result);
         } catch (e) {
             return next(e);
         }

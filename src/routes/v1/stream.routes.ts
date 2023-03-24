@@ -10,8 +10,10 @@ export default function routesStream(router : Router) {
     router.route('/streams/:node')
         .post(authAdmin, StreamController.create);
 
-    router.route('/streams/:node/:id')
+    router.route('/streams/:id')
         .get(authAll, StreamController.getById)
+
+    router.route('/streams/:node/:id')
         .put(authAdmin, StreamController.update)
         .delete(authAdmin, StreamController.delete);
 
