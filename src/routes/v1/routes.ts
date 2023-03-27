@@ -1,6 +1,9 @@
 import express from "express";
 import routesAuth from "./auth.routes";
+import routesBlacklist from "./blacklist.routes";
+import routesEmployee from "./employee.routes";
 import routesFace from "./face.routes";
+import routesLocation from "./location.routes";
 import routesUtil from "./util.routes";
 import routesEvent from "./event.routes";
 import routesStream from "./stream.routes";
@@ -18,5 +21,8 @@ routesVehicle(router);
 routesSite(router);
 routesMapSiteStream(router);
 routesFace(router);
+routesBlacklist(router);
+routesLocation(router);
+routesEmployee(router);
 
 export default router;
