@@ -57,7 +57,7 @@ export default class IdentifAI {
         }
         
         try {
-            return await request(endpoint, "POST", body, additionalHeaders);
+            return await request(endpoint, "POST", body, false, additionalHeaders);
         } catch (e) {
             throw e;
         }

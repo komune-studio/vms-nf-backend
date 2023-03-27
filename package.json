@@ -5,7 +5,10 @@
   "main": "src/app.ts",
   "scripts": {
     "start": "nodemon src/app.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate": "prisma generate --schema=prisma/nfvisionaire.prisma && prisma generate --schema=prisma/nfv4.prisma",
+    "pull-visionaire": "prisma db pull --schema=prisma/nfvisionaire.prisma",
+    "pull-nfv4": "prisma db pull --schema=prisma/nfv4.prisma"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +20,7 @@
     "@types/jsonwebtoken": "^9.0.1",
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.7",
+    "@types/node-fetch": "^2.6.2",
     "nodemon": "^2.0.20",
     "prisma": "^4.10.1",
     "ts-node": "^10.9.1",
@@ -29,9 +33,11 @@
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "form-data": "^2.3.3",
     "jsonwebtoken": "^9.0.0",
     "moment": "^2.29.4",
     "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^2.x"
   }
 }
