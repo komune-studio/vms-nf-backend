@@ -8,8 +8,14 @@ export default function routesFace(router : Router) {
         .get(authAll, FaceController.getFace)
         .post(authAdmin, upload.single('images'), FaceController.createFace);
 
+    router.route('/face/reenroll')
+        .post(authAdmin, FaceController.reenroll)
+
     router.route('/face/:id')
         .get(authAll, FaceController.getFaceById)
-        .put(authAdmin, upload.none(), FaceController.updateFace)
+        .put(authAdmin, upload.single('images'), FaceController.updateFace)
         .delete(authAdmin, FaceController.deleteFace);
+
+    router.route('/face/:identity_number/identity_number')
+        .get(authAdmin, FaceController.getByIdentityNumber)
 }
