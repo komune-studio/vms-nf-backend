@@ -37,10 +37,17 @@ export async function requestWithFile(endpoint : string, method : string, body :
 
     let response = await nodefetch(endpoint, request);
 
+    response = await response.json();
+
     if (response.ok) {
-        return await response.json();
-    }
-    else {
+        return response
+    } else {
+        // @ts-ignore
+        if(response.errors && response.errors[0]) {
+            // @ts-ignore
+            response = {message: response.errors[0]}
+        }
+
         throw response;
     }
 }

@@ -14,6 +14,9 @@ import {
 import AdminDAO from "../daos/admin.dao";
 import SecurityUtils from "../utils/security.utils";
 import PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
+import EmployeeDAO from "../daos/employee.dao";
+import VisitationDAO from "../daos/visitation.dao";
+import LocationDAO from "../daos/location.dao";
 
 export default class AuthController {
     static async initialize() {
@@ -37,6 +40,23 @@ export default class AuthController {
                 console.log("Admin table not found. Creating a new one...");
                 const result = await AdminDAO.createTable();
                 console.log("Admin table created successfully.");
+
+                console.log("Employee table not found. Creating a new one...");
+                await EmployeeDAO.createTable();
+                console.log("Employee table created successfully.");
+
+                console.log("Location table not found. Creating a new one...");
+                await LocationDAO.createTable();
+                console.log("Location table created successfully.");
+
+                console.log("Visitation table not found. Creating a new one...");
+                await VisitationDAO.createTable();
+                console.log("Visitation table created successfully.");
+
+                console.log("Employee table not found. Creating a new one...");
+                await EmployeeDAO.createTable();
+                console.log("Employee table created successfully.");
+
                 await this.initialize();
             }
             else {

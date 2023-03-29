@@ -1,8 +1,17 @@
 import PrismaService from "../services/prisma.service";
 
+const prisma = PrismaService.getVisionaire();
 const employee = PrismaService.getVisionaire().employee;
 
 export default class EmployeeDAO {
+    static async createTable() {
+        return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS employee (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            position VARCHAR(100),
+            phone_number VARCHAR(100)            
+        );`
+    }
     static async getAll() {
         return employee.findMany();
     }
