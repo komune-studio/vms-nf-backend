@@ -45,9 +45,60 @@ export default class FaceController {
 
     static async getFace(req: Request, res: Response, next: NextFunction) {
         try {
-            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'GET');
-            console.log(result);
-            res.send(result);
+            let {limit, page, search, status, active} = req.query;
+            // @ts-ignore
+            limit = parseInt(limit);
+
+            // @ts-ignore
+            page = parseInt(page);
+
+            // @ts-ignore
+            active = active !== 'false'
+
+
+            // @ts-ignore
+            let result = await EnrolledFaceDAO.getAll(limit, page, search, status, active)
+            // @ts-ignore
+            let count = await EnrolledFaceDAO.getCount(search, status, active)
+
+            console.log()
+
+            const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.id), !active)
+
+            result.forEach((row, idx) => {
+                // @ts-ignore
+                result[idx].faces = [];
+
+                faceImages.forEach(data => {
+                    console.log(BigInt(row.id))
+                    console.log(data.enrolled_face_id)
+
+                    // @ts-ignore
+                    if(data.enrolled_face_id === BigInt(row.id)) {
+                        const imageThumbnail = data.image_thumbnail ? {image_thumbnail: Buffer.from(data.image_thumbnail).toString('base64')} : {}
+
+                        // @ts-ignore
+                        result[idx].faces.push({...data, id: data.id.toString(), enrolled_face_id: data.enrolled_face_id.toString(), ...imageThumbnail})
+                    }
+                })
+            })
+
+            const enrollments = result.map(row => ({...row, face_id: row.face_id.toString()}));
+
+            // @ts-ignore
+            const totalPage =  limit ? Math.ceil(count._count.id / limit) : 1;
+
+            res.send({
+                message: "successfully get enrolled person",
+                ok: true,
+                results: {
+                    limit : limit ? limit : 0,
+                    current_page: page ? page : 1,
+                    total_data: count._count.id,
+                    total_page: totalPage,
+                    enrollments
+                }
+            });
         } catch (e) {
             return next(e);
         }

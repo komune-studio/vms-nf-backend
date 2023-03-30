@@ -6,6 +6,46 @@ const prisma = PrismaService.getVisionaire();
 const enrolledFace = prisma.enrolled_face;
 
 export default class EnrolledFaceDAO {
+    static async getAll(limit : number, page : number, search : string, status : string, active : boolean = true) {
+        let result = enrolledFace.findMany({
+            orderBy: {
+                created_at: 'desc'
+            },
+            skip: page && limit ? (page - 1) * limit : undefined,
+            take: limit ? limit : undefined,
+            where: {
+                name: {
+                    contains: search,
+                    mode: 'insensitive'
+                },
+                status: {
+                    equals: status
+                },
+                deleted_at: active ? null : {not: null}
+            },
+        });
+
+        return result;
+    }
+
+    static async getCount(search : string, status : string, active : boolean = true) {
+        let result = enrolledFace.aggregate({
+            _count: {id: true},
+            where: {
+                name: {
+                    contains: search,
+                    mode: 'insensitive'
+                },
+                status: {
+                    equals: status
+                },
+                deleted_at: active ? null : {not: null}
+            },
+        });
+
+        return result;
+    }
+
     static async getByFaceId(id : string) {
         const faceId = BigInt(id);
 
