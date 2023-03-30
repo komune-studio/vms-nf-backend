@@ -3,7 +3,7 @@ import EmployeeDAO from "../daos/employee.dao";
 import {BadRequestError} from "../utils/error.utils";
 
 export default class EmployeeController {
-    static async getAll(req : Request, res : Response, next : NextFunction) {
+    static async getAll(req: Request, res: Response, next: NextFunction) {
         try {
             let result = await EmployeeDAO.getAll();
             res.send(result);
@@ -12,7 +12,7 @@ export default class EmployeeController {
         }
     }
 
-    static async getOne(req : Request, res : Response, next : NextFunction) {
+    static async getOne(req: Request, res: Response, next: NextFunction) {
         const id = parseInt(req.params.id);
         if (isNaN(id)) return next(new BadRequestError("Invalid ID"));
 
@@ -24,7 +24,7 @@ export default class EmployeeController {
         }
     }
 
-    static async create(req : Request, res : Response, next : NextFunction) {
+    static async create(req: Request, res: Response, next: NextFunction) {
         const {name, position, phone_number} = req.body;
         try {
             let result = await EmployeeDAO.create({
@@ -38,7 +38,7 @@ export default class EmployeeController {
         }
     }
 
-    static async update(req : Request, res : Response, next : NextFunction) {
+    static async update(req: Request, res: Response, next: NextFunction) {
         const id = parseInt(req.params.id);
         if (isNaN(id)) return next(new BadRequestError("Invalid ID"));
 
@@ -55,12 +55,14 @@ export default class EmployeeController {
         }
     }
 
-    static async delete(req : Request, res : Response, next : NextFunction) {
+    static async delete(req: Request, res: Response, next: NextFunction) {
         const id = parseInt(req.params.id);
         if (isNaN(id)) return next(new BadRequestError("Invalid ID"));
 
         try {
-            let result = await EmployeeDAO.delete(id);
+            let result = await EmployeeDAO.update(id, {
+                deleted_at: new Date()
+            });
             res.send(result);
         } catch (e) {
             return next(e);

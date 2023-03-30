@@ -9,12 +9,17 @@ export default class LocationDAO {
             id SERIAL PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            modified_at TIMESTAMPTZ DEFAULT NOW()            
+            modified_at TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at TIMESTAMPTZ           
         );`
     }
 
     static async getAll() {
-        return location.findMany();
+        return location.findMany({
+            where: {
+                deleted_at: null
+            }
+        });
     }
 
     static async getOne(id : number) {

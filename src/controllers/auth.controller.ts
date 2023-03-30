@@ -53,10 +53,6 @@ export default class AuthController {
                 await VisitationDAO.createTable();
                 console.log("Visitation table created successfully.");
 
-                console.log("Employee table not found. Creating a new one...");
-                await EmployeeDAO.createTable();
-                console.log("Employee table created successfully.");
-
                 await this.initialize();
             }
             else {

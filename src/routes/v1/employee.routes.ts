@@ -9,6 +9,6 @@ export default function routesEmployee(router : Router) {
 
     router.route('/employee/:id')
         .get(authAll, EmployeeController.getOne)
-        .put(authAdmin, EmployeeController.update);
-        // .delete(EmployeeController.delete);
+        .put(authAdmin, EmployeeController.update)
+        .delete(EmployeeController.delete);
 }

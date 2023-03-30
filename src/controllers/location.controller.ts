@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response} from "express";
 import LocationDAO from "../daos/location.dao";
 import {BadRequestError} from "../utils/error.utils";
+import EmployeeDAO from "../daos/employee.dao";
 
 export default class LocationController {
     static async getAll(req : Request, res : Response, next : NextFunction) {
@@ -55,7 +56,9 @@ export default class LocationController {
         if (isNaN(id)) return next(new BadRequestError("Invalid ID"));
 
         try {
-            let result = await LocationDAO.delete(id);
+            let result = await LocationDAO.update(id, {
+                deleted_at: new Date()
+            });
             res.send(result);
         } catch (e) {
             return next(e);

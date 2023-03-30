@@ -8,6 +8,6 @@ export default function routesLocation(router : Router) {
 
     router.route('/location/:id')
         .get(LocationController.getOne)
-        .put(LocationController.update);
-        // .delete(LocationController.delete);
+        .put(LocationController.update)
+        .delete(LocationController.delete);
 }

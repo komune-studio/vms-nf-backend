@@ -9,11 +9,16 @@ export default class EmployeeDAO {
             id SERIAL PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
             position VARCHAR(100),
-            phone_number VARCHAR(100)            
+            phone_number VARCHAR(100),
+            deleted_at TIMESTAMPTZ
         );`
     }
     static async getAll() {
-        return employee.findMany();
+        return employee.findMany({
+            where: {
+                deleted_at: null
+            }
+        });
     }
 
     static async getOne(id : number) {
