@@ -3,5 +3,6 @@ import VisitationController from "../../controllers/visitation.controller";
 
 export default function routesVisitation(router : Router) {
     router.route('/visitation')
-        .post(VisitationController.createVisit);
+        .post(VisitationController.createVisit)
+        .get(VisitationController.getAllVisits);
 }
