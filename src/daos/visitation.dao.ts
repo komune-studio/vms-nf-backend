@@ -15,4 +15,10 @@ export default class VisitationDAO {
             created_at TIMESTAMPTZ DEFAULT NOW()           
         );`
     }
+
+    static async createVisit(data : any) {
+        return visitation.create({
+            data: data
+        })
+    }
 }

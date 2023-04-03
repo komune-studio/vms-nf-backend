@@ -10,6 +10,7 @@ import routesStream from "./stream.routes";
 import routesVehicle from "./vehicle.routes";
 import routesSite from "./site.routes";
 import routesMapSiteStream from "./map_site_stream.routes";
+import routesVisitation from "./visitation.routes";
 
 const router = express.Router();
 
@@ -24,5 +25,6 @@ routesFace(router);
 routesBlacklist(router);
 routesLocation(router);
 routesEmployee(router);
+routesVisitation(router);
 
 export default router;
