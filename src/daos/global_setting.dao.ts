@@ -3,7 +3,7 @@ import PrismaService from "../services/prisma.service";
 const prisma = PrismaService.getVisionaire();
 const globalSetting = prisma.global_setting;
 
-export default class AdminDAO {
+export default class GlobalSettingDAO {
     static async getAll() {
         return globalSetting.findMany({
             select: {

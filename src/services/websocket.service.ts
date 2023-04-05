@@ -2,6 +2,7 @@ import {client as WebsocketClient, connection, server as WebsocketServer} from "
 import * as http from "http";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FaceImageDAO from "../daos/face_image.dao";
+import GlobalSettingDAO from "../daos/global_setting.dao";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 import VisitationDAO from "../daos/visitation.dao";
 
@@ -67,6 +68,14 @@ export default class WebsocketService {
                 // if (data.primary_text === "UNKNOWN") return;
                 // console.log(data);
 
+                const setting = await GlobalSettingDAO.getAll();
+                const similarity = setting[0].similarity || 0.7;
+                console.log(similarity, data.pipeline_data.similarity)
+
+                if (data.pipeline_data.similarity < similarity) {
+                    data.primary_text = 'UNKNOWN'
+                }
+
                 const payload : any = {
                     analytic_id: data.analytic_id,
                     label: data.primary_text === "UNKNOWN" ? "unrecognized" : "recognized",
@@ -79,19 +88,19 @@ export default class WebsocketService {
                 }
 
                 if (data.primary_text !== "UNKNOWN") {
-                    console.log("Known face detected")
+                    // console.log("Known face detected")
                     const face = await EnrolledFaceDAO.getByFaceId(data.primary_text);
                     if (!face) {
-                        console.log("Face not found in database")
+                        // console.log("Face not found in database")
                         return;
                     }
                     const image = await FaceImageDAO.getByEnrolledFaceId(face.id);
                     if (!image) {
-                        console.log("Image not found in database")
+                        // console.log("Image not found in database")
                         return
                     }
                     payload.primary_image = image[0].image_thumbnail?.toString('base64') || "";
-                    payload.result = `${(data.pipeline_data.similarity * 100).toFixed(1)}% - ${face.name}`
+                    payload.result = `${data.pipeline_data.similarity === 1 ? 99.99 : (data.pipeline_data.similarity * 100).toFixed(1)}% - ${face.name}`
                     payload.status = face.status;
 
                     const visitData = await VisitationDAO.getByEnrolledFaceId(face.id);
