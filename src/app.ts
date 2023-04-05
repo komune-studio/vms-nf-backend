@@ -9,6 +9,7 @@ import handleErrors from "./middlewares/error.middleware";
 import v1 from "./routes/v1/routes";
 import PrismaService from "./services/prisma.service";
 import EnrolledFaceDAO from "./daos/enrolled_face.dao";
+import WebsocketService from "./services/websocket.service";
 import {NotFoundError} from "./utils/error.utils";
 import request from "./utils/api.utils";
 const schedule = require('node-schedule');
@@ -78,7 +79,9 @@ app.use(handleErrors);
         return;
     }
 
-    app.listen(PORT, async () => {
+    const server = app.listen(PORT, async () => {
         console.log(`Server listening on port ${PORT}!`);
     });
+
+    await WebsocketService.initialize(server);
 })();

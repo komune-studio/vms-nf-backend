@@ -86,4 +86,23 @@ export default class VisitationDAO {
             }
         });
     }
+
+    static async getByEnrolledFaceId(id : number) {
+        return visitation.findMany({
+            where: {enrolled_face_id: id},
+            orderBy: {created_at: 'desc'},
+            select: {
+                id: true,
+                purpose: true,
+                employee: {
+                    select: {name: true}
+                },
+                location: {
+                    select: {name: true}
+                },
+                allowed_sites: true,
+                created_at: true,
+            }
+        })
+    }
 }
