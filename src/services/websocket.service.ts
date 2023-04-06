@@ -102,6 +102,7 @@ export default class WebsocketService {
                     payload.primary_image = image[0].image_thumbnail?.toString('base64') || "";
                     payload.result = `${data.pipeline_data.similarity === 1 ? 99.99 : (data.pipeline_data.similarity * 100).toFixed(1)}% - ${face.name}`
                     payload.status = face.status;
+                    payload.face_id = data.primary_text;
 
                     const visitData = await VisitationDAO.getByEnrolledFaceId(face.id);
                     console.log(visitData)
