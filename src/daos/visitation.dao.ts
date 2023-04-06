@@ -35,7 +35,7 @@ export default class VisitationDAO {
         })
     }
 
-    static async getAllVisits(limit : number, page : number, search? : string) {
+    static async getAllVisits(limit : number, page : number, search? : string, searchBy? : string) {
         return visitation.findMany({
             orderBy: {
                 created_at: 'desc'
@@ -43,15 +43,17 @@ export default class VisitationDAO {
             skip: page && limit ? (page - 1) * limit : undefined,
             take: limit ? limit : undefined,
             where: {
-                OR: [
-                    { purpose: { contains: search, mode: 'insensitive' } },
-                    { enrolled_face: {
-                        identity_number: { contains: search, mode: 'insensitive' },
-                        name: { contains: search, mode: 'insensitive' },
-                    }},
-                    { location: { name: { contains: search, mode: 'insensitive' } } },
-                    { employee: { name: { contains: search, mode: 'insensitive' } } },
-                ]
+                purpose: searchBy === 'purpose' ? { contains: search, mode: 'insensitive' } : undefined,
+                enrolled_face: {
+                    identity_number: searchBy === 'identity_number' ? { contains: search, mode: 'insensitive' } : undefined,
+                    name: searchBy === 'name' ? { contains: search, mode: 'insensitive' } : undefined,
+                },
+                location: {
+                    name: searchBy === 'location' ? { contains: search, mode: 'insensitive' } : undefined
+                },
+                employee: {
+                    name: searchBy === 'employee' ? { contains: search, mode: 'insensitive' } : undefined
+                },
             },
             select: {
                 enrolled_face: {
@@ -70,19 +72,21 @@ export default class VisitationDAO {
         });
     }
 
-    static async getVisitCount(search? : string) {
+    static async getVisitCount(search? : string, searchBy? : string) {
         return visitation.aggregate({
             _count: {id: true},
             where: {
-                OR: [
-                    { purpose: { contains: search, mode: 'insensitive' } },
-                    { enrolled_face: {
-                        identity_number: { contains: search, mode: 'insensitive' },
-                        name: { contains: search, mode: 'insensitive' },
-                    }},
-                    { location: { name: { contains: search, mode: 'insensitive' } } },
-                    { employee: { name: { contains: search, mode: 'insensitive' } } },
-                ]
+                purpose: searchBy === 'purpose' ? { contains: search, mode: 'insensitive' } : undefined,
+                enrolled_face: {
+                    identity_number: searchBy === 'identity_number' ? { contains: search, mode: 'insensitive' } : undefined,
+                    name: searchBy === 'name' ? { contains: search, mode: 'insensitive' } : undefined,
+                },
+                location: {
+                    name: searchBy === 'location' ? { contains: search, mode: 'insensitive' } : undefined
+                },
+                employee: {
+                    name: searchBy === 'employee' ? { contains: search, mode: 'insensitive' } : undefined
+                },
             }
         });
     }

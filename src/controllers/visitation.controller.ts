@@ -34,7 +34,7 @@ export default class VisitationController {
 
     static async getAllVisits(req : Request, res : Response, next : NextFunction) {
         try {
-            let {limit, page, search} = req.query;
+            let {limit, page, search, searchBy} = req.query;
 
             // @ts-ignore
             limit = parseInt(limit);
@@ -43,10 +43,10 @@ export default class VisitationController {
             page = parseInt(page);
 
             // @ts-ignore
-            let result = await VisitationDAO.getAllVisits(limit, page, search);
+            let result = await VisitationDAO.getAllVisits(limit, page, search, searchBy);
 
             // @ts-ignore
-            let count = await VisitationDAO.getVisitCount(search);
+            let count = await VisitationDAO.getVisitCount(search, searchBy);
 
             // @ts-ignore
             const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.enrolled_face.id), true)
