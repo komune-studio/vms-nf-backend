@@ -91,6 +91,26 @@ export default class VisitationDAO {
         });
     }
 
+    static async getById(id : number) {
+        return visitation.findFirst({
+            where: {id: id},
+            select: {
+                enrolled_face: {
+                    select: {id: true, name: true, identity_number: true}
+                },
+                purpose: true,
+                employee: {
+                    select: {name: true}
+                },
+                location: {
+                    select: {name: true}
+                },
+                allowed_sites: true,
+                created_at: true,
+            }
+        });
+    }
+
     static async getByEnrolledFaceId(id : number) {
         return visitation.findMany({
             where: {enrolled_face_id: id},

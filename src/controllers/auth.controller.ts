@@ -2,6 +2,7 @@ import {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 import SiteDAO from "../daos/site.dao";
+import VisitEventDAO from "../daos/visit_event.dao";
 import {Prisma} from "../prisma/nfvisionaire";
 
 import {
@@ -40,19 +41,7 @@ export default class AuthController {
                 console.log("Admin table not found. Creating a new one...");
                 const result = await AdminDAO.createTable();
                 console.log("Admin table created successfully.");
-
-                console.log("Employee table not found. Creating a new one...");
-                await EmployeeDAO.createTable();
-                console.log("Employee table created successfully.");
-
-                console.log("Location table not found. Creating a new one...");
-                await LocationDAO.createTable();
-                console.log("Location table created successfully.");
-
-                console.log("Visitation table not found. Creating a new one...");
-                await VisitationDAO.createTable();
-                console.log("Visitation table created successfully.");
-
+                
                 await this.initialize();
             }
             else {

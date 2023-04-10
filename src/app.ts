@@ -3,6 +3,10 @@ import * as dotenv from "dotenv";
 import express, {NextFunction, Request, Response} from "express";
 import logger from "morgan";
 import AuthController from "./controllers/auth.controller";
+import EmployeeDAO from "./daos/employee.dao";
+import LocationDAO from "./daos/location.dao";
+import VisitEventDAO from "./daos/visit_event.dao";
+import VisitationDAO from "./daos/visitation.dao";
 
 import handleErrors from "./middlewares/error.middleware";
 
@@ -74,6 +78,17 @@ app.use(handleErrors);
 
     try {
         await AuthController.initialize();
+        await EmployeeDAO.createTable();
+        console.log("Employee table initialized successfully.");
+
+        await LocationDAO.createTable();
+        console.log("Location table initialized successfully.");
+
+        await VisitationDAO.createTable();
+        console.log("Visitation table initialized successfully.");
+
+        await VisitEventDAO.createTable();
+        console.log("Visit Event table initialized successfully.");
     } catch (e) {
         console.log(e);
         return;

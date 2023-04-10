@@ -4,6 +4,7 @@ import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FaceImageDAO from "../daos/face_image.dao";
 import GlobalSettingDAO from "../daos/global_setting.dao";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
+import VisitEventDAO from "../daos/visit_event.dao";
 import VisitationDAO from "../daos/visitation.dao";
 
 const requestUrl = 'ws://localhost:4004/event_channel';
@@ -107,6 +108,8 @@ export default class WebsocketService {
                     const visitData = await VisitationDAO.getByEnrolledFaceId(face.id);
                     console.log(visitData)
                     if (visitData.length > 0) {
+                        await VisitEventDAO.create({event_id: data.pipeline_data.event_id, visitation_id: visitData[0].id})
+                        payload.visitation = visitData[0].id;
                         const site = await MapSiteStreamDAO.getByStreamId(data.stream_id);
                         if (site)
                             payload.allowed_here = visitData[0].allowed_sites.includes(site.site_id)

@@ -1,7 +1,8 @@
 import {NextFunction, Request, Response} from "express";
 import FaceImageDAO from "../daos/face_image.dao";
+import VisitEventDAO from "../daos/visit_event.dao";
 import VisitationDAO from "../daos/visitation.dao";
-import {BadRequestError} from "../utils/error.utils";
+import {BadRequestError, NotFoundError} from "../utils/error.utils";
 
 export default class VisitationController {
     static async createVisit(req : Request, res : Response, next : NextFunction) {
@@ -84,7 +85,45 @@ export default class VisitationController {
         }
     }
 
-    static async checkClearance(req : Request, res : Response, next : NextFunction) {
-        
+    static async getByEventId(req : Request, res : Response, next : NextFunction) {
+        const id = req.params.id;
+        try {
+            let visitEvent = await VisitEventDAO.getByEventId(id);
+            if (visitEvent === null) {
+                return next(new NotFoundError("Visit Event not found."));
+            }
+            if (visitEvent.visitation_id === null) {
+                return res.send({});
+            }
+            let visitation = await VisitationDAO.getById(visitEvent.visitation_id);
+            if (visitation === null) {
+                return res.send({});
+            }
+            res.send({
+                ...visitation,
+                allowed_sites: visitation.allowed_sites.map((site : any) => site.toString()),
+            })
+        } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async getById(req : Request, res : Response, next : NextFunction) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid id."));
+        }
+        try {
+            let visitation = await VisitationDAO.getById(id);
+            if (visitation === null) {
+                return next(new NotFoundError("Visitation not found."));
+            }
+            res.send({
+                ...visitation,
+                allowed_sites: visitation.allowed_sites.map((site : any) => site.toString()),
+            })
+        } catch (e) {
+            return next(e);
+        }
     }
 }
