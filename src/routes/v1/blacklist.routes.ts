@@ -12,4 +12,7 @@ export default function routesBlacklist(router : Router) {
         .get(authAll, BlacklistController.getBlacklistedById)
         .put(authAdmin, upload.none(), BlacklistController.updateBlacklisted)
         .delete(authAdmin, BlacklistController.deleteBlacklisted);
+
+    router.route('/blacklist/:id/unblacklist')
+        .put(authAdmin, BlacklistController.unblacklist);
 }

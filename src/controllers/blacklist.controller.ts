@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response} from "express";
 import FormData from "form-data";
 import fs from "fs";
+import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import request, {requestWithFile} from "../utils/api.utils";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 
@@ -66,6 +67,21 @@ export default class BlacklistController {
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'PUT', body);
             res.send(result);
         } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async unblacklist(req: Request, res: Response, next: NextFunction) {
+
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
+        try {
+            let result = await EnrolledFaceDAO.unblacklist(id)
+            res.send({success: true});
+        } catch (e) {
+            console.log(e)
             return next(e);
         }
     }

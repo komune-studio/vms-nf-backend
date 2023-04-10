@@ -85,4 +85,25 @@ export default class EnrolledFaceDAO {
 
         return result;
     }
+
+    static async blacklist(id : number) {
+        let result = enrolledFace.update({
+            where: {
+                id
+            },
+            data: {status: 'BLACKLIST', deleted_at: null}
+        });
+
+        return result;
+    }
+    static async unblacklist(id : number) {
+        let result = enrolledFace.update({
+            where: {
+                id
+            },
+            data: {status: 'VISITOR', deleted_at: null}
+        });
+
+        return result;
+    }
 }

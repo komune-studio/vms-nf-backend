@@ -16,6 +16,9 @@ export default function routesFace(router : Router) {
         .put(authAdmin, upload.single('images'), FaceController.updateFace)
         .delete(authAdmin, FaceController.deleteFace);
 
+    router.route('/face/:id/blacklist')
+        .put(authAdmin, FaceController.blacklistFace);
+
     router.route('/face/:identity_number/identity_number')
         .get(authAdmin, FaceController.getByIdentityNumber)
 }

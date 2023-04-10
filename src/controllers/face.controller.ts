@@ -216,4 +216,19 @@ export default class FaceController {
             return next(e);
         }
     }
+
+    static async blacklistFace(req: Request, res: Response, next: NextFunction) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
+
+        try {
+            let result = await EnrolledFaceDAO.blacklist(id)
+            res.send({success: true});
+        } catch (e) {
+            console.log(e)
+            return next(e);
+        }
+    }
 }
