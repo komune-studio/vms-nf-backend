@@ -6,7 +6,7 @@ const prisma = PrismaService.getVisionaire();
 const enrolledFace = prisma.enrolled_face;
 
 export default class EnrolledFaceDAO {
-    static async getAll(limit : number, page : number, search : string, status : string, active : boolean = true) {
+    static async getAll(limit : number, page : number, search : string, status : string, active : boolean = true, ids? : number[]) {
         let result = enrolledFace.findMany({
             orderBy: {
                 created_at: 'desc'
@@ -14,6 +14,7 @@ export default class EnrolledFaceDAO {
             skip: page && limit ? (page - 1) * limit : undefined,
             take: limit ? limit : undefined,
             where: {
+                id: ids ? {in: ids} : undefined,
                 name: {
                     contains: search,
                     mode: 'insensitive'
@@ -21,17 +22,18 @@ export default class EnrolledFaceDAO {
                 status: {
                     equals: status
                 },
-                deleted_at: active ? null : {not: null}
+                // deleted_at: active ? null : {not: null}
             },
         });
 
         return result;
     }
 
-    static async getCount(search : string, status : string, active : boolean = true) {
+    static async getCount(search : string, status : string, active : boolean = true, ids? : number[]) {
         let result = enrolledFace.aggregate({
             _count: {id: true},
             where: {
+                id: ids ? {in: ids} : undefined,
                 name: {
                     contains: search,
                     mode: 'insensitive'
@@ -39,7 +41,7 @@ export default class EnrolledFaceDAO {
                 status: {
                     equals: status
                 },
-                deleted_at: active ? null : {not: null}
+                // deleted_at: active ? null : {not: null}
             },
         });
 

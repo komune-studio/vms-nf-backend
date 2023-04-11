@@ -9,7 +9,8 @@ export default class VisitEventDAO {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS visit_event (
             id SERIAL PRIMARY KEY,
             event_id bigint NOT NULL,
-            visitation_id int NOT NULL
+            visitation_id int NOT NULL,
+            unauthorized boolean NOT NULL DEFAULT false
         );`
     }
 
@@ -25,5 +26,9 @@ export default class VisitEventDAO {
                 event_id: id
             }
         })
+    }
+
+    static async getAll() {
+        return visitEvent.findMany();
     }
 }

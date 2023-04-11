@@ -35,7 +35,7 @@ export default class VisitationDAO {
         })
     }
 
-    static async getAllVisits(limit : number, page : number, search? : string, searchBy? : string) {
+    static async getAllVisits(limit? : number, page? : number, search? : string, searchBy? : string, distinct? : boolean) {
         return visitation.findMany({
             orderBy: {
                 created_at: 'desc'
@@ -68,7 +68,8 @@ export default class VisitationDAO {
                 },
                 allowed_sites: true,
                 created_at: true,
-            }
+            },
+            distinct: distinct ? ['enrolled_face_id'] : undefined
         });
     }
 

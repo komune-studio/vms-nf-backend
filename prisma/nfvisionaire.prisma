@@ -134,7 +134,8 @@ model global_setting {
 }
 
 model visit_event {
-  id            BigInt @id @default(autoincrement())
+  id            BigInt  @id @default(autoincrement())
   event_id      String
-  visitation_id Int?
+  visitation_id Int
+  unauthorized  Boolean @default(false)
 }

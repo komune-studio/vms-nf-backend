@@ -1,6 +1,8 @@
 import {NextFunction, Request, Response} from "express";
 import FormData from "form-data";
 import fs from "fs";
+import moment from "moment";
+import VisitationDAO from "../daos/visitation.dao";
 import request, {requestWithFile} from "../utils/api.utils";
 import {BadRequestError, ConflictError, NotFoundError} from "../utils/error.utils";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
@@ -55,11 +57,17 @@ export default class FaceController {
             // @ts-ignore
             active = active !== 'false'
 
+            let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true);
+            visitData = visitData.filter(data => active
+                ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD')
+                : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD'))
+            const ids = visitData.map(data => data.enrolled_face?.id)
 
             // @ts-ignore
-            let result = await EnrolledFaceDAO.getAll(limit, page, search, status, active)
+            let result = await EnrolledFaceDAO.getAll(limit, page, search, status, active, ids)
+
             // @ts-ignore
-            let count = await EnrolledFaceDAO.getCount(search, status, active)
+            let count = await EnrolledFaceDAO.getCount(search, status, active, ids)
 
             console.log()
 

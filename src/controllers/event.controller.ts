@@ -1,5 +1,6 @@
 // @ts-nocheck
 import {NextFunction, Request, Response} from "express";
+import VisitEventDAO from "../daos/visit_event.dao";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import EventDAO from "../daos/event.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
@@ -31,6 +32,7 @@ export default class EventController {
             // @ts-ignore
             let event = await EventDAO.getAllWithPagination(keyword, status, stream, analytic, startDate, endDate, parseInt(page), parseInt(limit));
 
+            const visitData = await VisitEventDAO.getAll();
             // @ts-ignore
             res.send({
                 total_page:  Math.floor(((parseInt(count[0].count) - 1) / limit) + 1),
@@ -41,7 +43,8 @@ export default class EventController {
                         ...item,
                         id: parseInt(item.id),
                         primary_image: Buffer.from(item.primary_image).toString('base64'),
-                        secondary_image: Buffer.from(item.secondary_image).toString('base64')
+                        secondary_image: Buffer.from(item.secondary_image).toString('base64'),
+                        unauthorized: !!visitData.find((visit: any) => visit.event_id === item.id)
                     }
                 })
             });

@@ -12,43 +12,42 @@ import handleErrors from "./middlewares/error.middleware";
 
 import v1 from "./routes/v1/routes";
 import PrismaService from "./services/prisma.service";
-import EnrolledFaceDAO from "./daos/enrolled_face.dao";
 import WebsocketService from "./services/websocket.service";
 import {NotFoundError} from "./utils/error.utils";
-import request from "./utils/api.utils";
-const schedule = require('node-schedule');
+
+// const schedule = require('node-schedule');
 
 /**
  * checking expired enrollment every midnight
  */
-schedule.scheduleJob('0 0 * * *', async function(){
-    try {
-        console.log(`Checking expired enrollment...`)
-
-        const expiredIds = await EnrolledFaceDAO.getExpiredFaceId();
-
-        // @ts-ignore
-        if(expiredIds.length === 0) {
-            console.log(`There is currently no expired enrollment.`)
-        }
-
-        // @ts-ignore
-        for(const data of expiredIds) {
-            console.log(`Deleting expired enrollment with face id: ${data.id}`)
-
-            try {
-                await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${data.id}`, 'DELETE');
-
-                console.log(`Enrollment with face id: ${data.id} deleted!`)
-            } catch (e) {
-                console.log(`Enrollment with face id: ${data.id} delete error:`)
-                console.log(e)
-            }
-        }
-    } catch (e) {
-        console.log(e)
-    }
-});
+// schedule.scheduleJob('0 0 * * *', async function(){
+//     try {
+//         console.log(`Checking expired enrollment...`)
+//
+//         const expiredIds = await EnrolledFaceDAO.getExpiredFaceId();
+//
+//         // @ts-ignore
+//         if(expiredIds.length === 0) {
+//             console.log(`There is currently no expired enrollment.`)
+//         }
+//
+//         // @ts-ignore
+//         for(const data of expiredIds) {
+//             console.log(`Deleting expired enrollment with face id: ${data.id}`)
+//
+//             try {
+//                 await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${data.id}`, 'DELETE');
+//
+//                 console.log(`Enrollment with face id: ${data.id} deleted!`)
+//             } catch (e) {
+//                 console.log(`Enrollment with face id: ${data.id} delete error:`)
+//                 console.log(e)
+//             }
+//         }
+//     } catch (e) {
+//         console.log(e)
+//     }
+// });
 
 dotenv.config();
 
