@@ -1,8 +1,10 @@
 import {NextFunction, Request, Response} from "express";
 import FaceImageDAO from "../daos/face_image.dao";
+import SiteDAO from "../daos/site.dao";
 import VisitEventDAO from "../daos/visit_event.dao";
 import VisitationDAO from "../daos/visitation.dao";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
+import SiteController from "./site.controller";
 
 export default class VisitationController {
     static async createVisit(req : Request, res : Response, next : NextFunction) {
@@ -52,6 +54,8 @@ export default class VisitationController {
             // @ts-ignore
             const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.enrolled_face.id), true)
 
+            const sites = await SiteDAO.getAll();
+
             result.forEach((row, idx) => {
                 // @ts-ignore
                 result[idx].enrolled_face.faces = [];
@@ -65,7 +69,9 @@ export default class VisitationController {
                         result[idx].enrolled_face.faces.push({...data, id: data.id.toString(), enrolled_face_id: data.enrolled_face_id.toString(), ...imageThumbnail})
                     }
                 })
-                result[idx].allowed_sites = result[idx].allowed_sites.map((site : any) => site.toString());
+
+                // @ts-ignore
+                result[idx].allowed_sites = result[idx].allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));
             });
 
             // @ts-ignore

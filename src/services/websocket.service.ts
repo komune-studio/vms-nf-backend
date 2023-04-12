@@ -108,21 +108,26 @@ export default class WebsocketService {
 
                     const visitData = await VisitationDAO.getByEnrolledFaceId(face.id);
                     console.log(visitData)
+                    let status = "";
                     if (visitData.length > 0) {
                         const today = moment().format('YYYY-MM-DD');
                         const lastVisit = moment(visitData[0].created_at).format('YYYY-MM-DD');
 
-                        await VisitEventDAO.create({
-                            event_id: data.pipeline_data.event_id,
-                            visitation_id: visitData[0].id,
-                            unauthorized: today !== lastVisit,
-                        })
                         payload.visitation = visitData[0].id;
                         payload.last_visit_date = visitData[0].created_at;
                         const site = await MapSiteStreamDAO.getByStreamId(data.stream_id);
-                        if (site)
-                            payload.allowed_here = visitData[0].allowed_sites.includes(site.site_id)
+                        if (site) {
+                            payload.allowed_here = visitData[0].allowed_sites.includes(site.site_id) && today === lastVisit;
+                            status = visitData[0].allowed_sites.includes(site.site_id) ? "" : "Unauthorized";
+                        }
+                        status = today === lastVisit ? "" : "Unauthorized";
                     }
+                    status = face.status === "BLACKLIST" ? "Blacklisted" : status;
+                    await VisitEventDAO.create({
+                        event_id: data.pipeline_data.event_id,
+                        visitation_id: visitData[0]?.id,
+                        status,
+                    })
                 }
                 // console.log(payload)
                 console.log(this.connections.length)

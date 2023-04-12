@@ -44,7 +44,7 @@ export default class EventController {
                         id: parseInt(item.id),
                         primary_image: Buffer.from(item.primary_image).toString('base64'),
                         secondary_image: Buffer.from(item.secondary_image).toString('base64'),
-                        unauthorized: !!visitData.find((visit: any) => visit.event_id === item.id)
+                        visitor_status: visitData.find(visit => visit.event_id === item.detection?.pipeline_data?.event_id)?.status
                     }
                 })
             });
