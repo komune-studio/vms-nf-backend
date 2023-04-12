@@ -132,4 +132,33 @@ export default class VisitationController {
             return next(e);
         }
     }
+
+    static async updateVisit(req : Request, res : Response, next : NextFunction) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid id."));
+        }
+        const {enrolled_face_id, location_id, employee_id, allowed_sites, purpose} = req.body;
+        if (!purpose) {
+            return next(new BadRequestError(`Please specify: ${!purpose ? "purpose" : ""}`));
+        }
+        try {
+            let body = {
+                enrolled_face_id: enrolled_face_id,
+                location_id: location_id ? parseInt(location_id) : undefined,
+                employee_id: employee_id ? parseInt(employee_id) : undefined,
+                allowed_sites: allowed_sites.map((site : any) => BigInt(site)),
+                purpose: purpose,
+            }
+            let result : any = await VisitationDAO.updateVisit(id, body);
+            result = {
+                ...result,
+                enrolled_face_id: result.enrolled_face_id.toString(),
+                allowed_sites: result.allowed_sites.map((site : any) => site.toString()),
+            }
+            res.send(result);
+        } catch (e) {
+            return next(e);
+        }
+    }
 }

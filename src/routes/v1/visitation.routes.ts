@@ -7,7 +7,8 @@ export default function routesVisitation(router : Router) {
         .get(VisitationController.getAllVisits);
 
     router.route('/visitation/:id')
-        .get(VisitationController.getById);
+        .get(VisitationController.getById)
+        .put(VisitationController.updateVisit);
     
     router.route('/visitation/event/:id')
         .get(VisitationController.getByEventId);

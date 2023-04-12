@@ -56,15 +56,16 @@ export default class VisitationDAO {
                 },
             },
             select: {
+                id: true,
                 enrolled_face: {
                     select: {id: true, name: true, identity_number: true}
                 },
                 purpose: true,
                 employee: {
-                    select: {name: true}
+                    select: {id: true, name: true}
                 },
                 location: {
-                    select: {name: true}
+                    select: {id: true, name: true}
                 },
                 allowed_sites: true,
                 created_at: true,
@@ -101,10 +102,10 @@ export default class VisitationDAO {
                 },
                 purpose: true,
                 employee: {
-                    select: {name: true}
+                    select: {id: true, name: true}
                 },
                 location: {
-                    select: {name: true}
+                    select: {id: true, name: true}
                 },
                 allowed_sites: true,
                 created_at: true,
@@ -127,6 +128,22 @@ export default class VisitationDAO {
                 },
                 allowed_sites: true,
                 created_at: true,
+            }
+        })
+    }
+
+    static async updateVisit(id : number, data : any) {
+        return visitation.update({
+            where: {id: id},
+            data: {
+                purpose: data.purpose,
+                employee: {
+                    connect: {id: data.employee_id}
+                },
+                location: {
+                    connect: {id: data.location_id}
+                },
+                allowed_sites: data.allowed_sites
             }
         })
     }
