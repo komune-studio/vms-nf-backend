@@ -8,7 +8,7 @@ export default class VisitEventDAO {
     static async createTable() {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS visit_event (
             id SERIAL PRIMARY KEY,
-            event_id bigint NOT NULL,
+            event_id character varying (100) NOT NULL,
             visitation_id int,
             status TEXT
         );`
