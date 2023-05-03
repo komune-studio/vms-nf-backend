@@ -71,7 +71,7 @@ export default class WebsocketService {
                 // console.log(data);
 
                 const setting = await GlobalSettingDAO.getAll();
-                const similarity = setting[0].similarity || 0.7;
+                const similarity = setting[0]?.similarity || 0.7;
                 console.log(similarity, data.pipeline_data.similarity)
 
                 if (data.pipeline_data.similarity < similarity) {
