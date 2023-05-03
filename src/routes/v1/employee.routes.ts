@@ -4,7 +4,7 @@ import {authAdmin, authAll} from "../../middlewares/auth.middleware";
 
 export default function routesEmployee(router : Router) {
     router.route('/employees')
-        .get(authAll, EmployeeController.getAll)
+        .get(EmployeeController.getAll)
         .post(authAdmin, EmployeeController.create);
 
     router.route('/employee/:id')

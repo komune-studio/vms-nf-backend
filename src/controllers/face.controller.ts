@@ -37,8 +37,11 @@ export default class FaceController {
             });
             body.append('images', fs.createReadStream(file.path));
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
+
+            console.log(result)
             res.send(result);
         } catch (e) {
+            console.log(e)
             return next(e);
         } finally {
             fs.rmSync(file.path);
@@ -61,6 +64,9 @@ export default class FaceController {
             visitData = visitData.filter(data => active
                 ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD')
                 : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD'))
+
+            console.log(visitData.length)
+
             const ids = visitData.map(data => data.enrolled_face?.id)
 
             // @ts-ignore
@@ -108,6 +114,7 @@ export default class FaceController {
                 }
             });
         } catch (e) {
+            console.log(e)
             return next(e);
         }
     }
@@ -191,6 +198,9 @@ export default class FaceController {
         faceImages.forEach(data => {
             faces.push(Buffer.from(data.image).toString('base64'))
         })
+
+        // @ts-ignore
+        console.log({enrollment: {...enrolledFace, faces, face_id: parseInt(enrolledFace.face_id)}})
 
         // @ts-ignore
         res.send({enrollment: {...enrolledFace, faces, face_id: parseInt(enrolledFace.face_id)}})

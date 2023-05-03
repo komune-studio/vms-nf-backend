@@ -6,7 +6,7 @@ import upload from "../../utils/multer.utils";
 export default function routesFace(router : Router) {
     router.route('/faces')
         .get(authAll, FaceController.getFace)
-        .post(authAdmin, upload.single('images'), FaceController.createFace);
+        .post(upload.single('images'), FaceController.createFace);
 
     router.route('/face/reenroll')
         .post(authAdmin, FaceController.reenroll)
@@ -20,5 +20,5 @@ export default function routesFace(router : Router) {
         .put(authAdmin, FaceController.blacklistFace);
 
     router.route('/face/:identity_number/identity_number')
-        .get(authAdmin, FaceController.getByIdentityNumber)
+        .get(FaceController.getByIdentityNumber)
 }

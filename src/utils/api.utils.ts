@@ -35,7 +35,10 @@ export async function requestWithFile(endpoint : string, method : string, body :
         body: body,
     }
 
+    console.log('test')
     let response = await nodefetch(endpoint, request);
+
+    console.log(response)
 
     response = await response.json();
 
