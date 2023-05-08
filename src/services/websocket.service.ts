@@ -67,6 +67,9 @@ export default class WebsocketService {
             connection.on('message', async (message) => {
                 if (message.type !== 'utf8') return;
                 const data = JSON.parse(message.utf8Data);
+
+                if(data.analytic_id !== 'NFV4-FR') return;
+
                 // if (data.primary_text === "UNKNOWN") return;
                 // console.log(data);
 
