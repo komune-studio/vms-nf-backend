@@ -1,8 +1,8 @@
 const fs = require('fs');
 
 const env = {
-    DATABASE_URL_NFV4_WITH_SCHEMA: `postgresql://postgres:nfvisionaire123@${process.env.SERVER_PORT}:${process.env.DB_PORT}/nfv4`,
-    DATABASE_URL_NFVISIONAIRE_WITH_SCHEMA: `postgresql://postgres:nfvisionaire123@${process.env.SERVER_PORT}:${process.env.DB_PORT}/nfvisionaire`,
+    DATABASE_URL_NFV4_WITH_SCHEMA: `postgresql://postgres:nfvisionaire123@${process.env.NF_IP}:${process.env.DB_PORT}/nfv4`,
+    DATABASE_URL_NFVISIONAIRE_WITH_SCHEMA: `postgresql://postgres:nfvisionaire123@${process.env.NF_IP}:${process.env.DB_PORT}/nfvisionaire`,
     NF_IP: process.env.NF_IP,
     VANILLA_PORT: process.env.VANILLA_PORT,
     VISIONAIRE_PORT: process.env.VISIONAIRE_PORT,
@@ -11,7 +11,7 @@ const env = {
     NF_FREMISN_API_URL: `http://${process.env.NF_IP}:${process.env.FREMISN_PORT}/v1`,
 }
 
-if(process.env.SECRET_KEY) {
+if(!process.env.SECRET_KEY) {
     env.SECRET_KEY = `"aHsJ09wtn0286735384h.jHF42hynwMntgY"`
 }
 
