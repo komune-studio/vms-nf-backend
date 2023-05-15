@@ -7,6 +7,7 @@ import EmployeeDAO from "./daos/employee.dao";
 import LocationDAO from "./daos/location.dao";
 import VisitEventDAO from "./daos/visit_event.dao";
 import VisitationDAO from "./daos/visitation.dao";
+import EnrolledFaceDAO from "./daos/enrolled_face.dao";
 
 import handleErrors from "./middlewares/error.middleware";
 
@@ -88,6 +89,9 @@ app.use(handleErrors);
 
         await VisitEventDAO.createTable();
         console.log("Visit Event table initialized successfully.");
+
+        await EnrolledFaceDAO.addAdditionalInfoColumn()
+        console.log("Additional info column has been added to Enrolled Face table.");
     } catch (e) {
         console.log(e);
         return;

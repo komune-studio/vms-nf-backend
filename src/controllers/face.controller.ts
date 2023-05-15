@@ -36,9 +36,16 @@ export default class FaceController {
                 body.append(key, req.body[key]);
             });
             body.append('images', fs.createReadStream(file.path));
+
+
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
 
-            console.log(result)
+
+            if(result.ok) {
+                // @ts-ignore
+                await EnrolledFaceDAO.updateAdditionalInfo(result.enrollment.id, req.body.additional_info);
+            }
+
             res.send(result);
         } catch (e) {
             console.log(e)
@@ -124,6 +131,14 @@ export default class FaceController {
 
         try {
             let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
+
+            if(result.ok) {
+                let response = await EnrolledFaceDAO.getAdditionaInfo(result.enrollment.id);
+
+                // @ts-ignore
+                result.enrollment.additional_info = response.additional_info;
+            }
+
             res.send(result);
         } catch (e) {
             return next(e);
@@ -142,6 +157,8 @@ export default class FaceController {
             return next(new BadRequestError("Name is required."));
         }
 
+        console.log(req.body.additional_info)
+
         const enrollment = await EnrolledFaceDAO.getByIdentityNumber(req.body['identity_number'])
 
         // @ts-ignore
@@ -157,6 +174,8 @@ export default class FaceController {
             if(file) {
                 body.append('images', fs.createReadStream(file.path));
             }
+
+            await EnrolledFaceDAO.updateAdditionalInfo(parseInt(id), req.body.additional_info);
 
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'PUT', body);
 

@@ -47,6 +47,7 @@ model enrolled_face {
   birth_place     String?      @db.VarChar(200)
   birth_date      DateTime?    @db.Date
   visitation      visitation[]
+  additional_info Json
 }
 
 model vehicle {

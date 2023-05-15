@@ -108,4 +108,35 @@ export default class EnrolledFaceDAO {
 
         return result;
     }
+
+    static async addAdditionalInfoColumn() {
+        //enrollment only valid in the same day when they register
+        const sql = `ALTER TABLE enrolled_face ADD COLUMN IF NOT EXISTS additional_info JSONB default '{}';`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async getAdditionaInfo(id : number) {
+        let result = enrolledFace.findFirst({
+            select: {
+                additional_info: true
+            },
+            where: {
+                id
+            },
+        });
+
+        return result;
+    }
+
+    static async updateAdditionalInfo(id : number, additionalInfo: any) {
+        let result = enrolledFace.update({
+            where: {
+                id
+            },
+            data: {additional_info: JSON.parse(additionalInfo)}
+        });
+
+        return result;
+    }
 }
