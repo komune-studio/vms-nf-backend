@@ -7,7 +7,7 @@ export default class VisitationDAO {
     static async createTable() {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS visitation (
             id SERIAL PRIMARY KEY,
-            enrolled_face_id bigint NOT NULL,
+            enrolled_face_id bigint,
             employee_id int NOT NULL,
             location_id int NOT NULL,
             allowed_sites bigint[] NOT NULL,
@@ -17,12 +17,20 @@ export default class VisitationDAO {
     }
 
     static async createVisit(data : any) {
+        let enrolledFaceData = {};
+
+        if(data.enrolled_face_id) {
+            enrolledFaceData = {
+                enrolled_face: {
+                    connect: {id: data.enrolled_face_id}
+                }
+            }
+        }
+
         return visitation.create({
             data: {
                 purpose: data.purpose,
-                enrolled_face: {
-                    connect: {id: data.enrolled_face_id}
-                },
+                ...enrolledFaceData,
                 employee: {
                     connect: {id: data.employee_id}
                 },

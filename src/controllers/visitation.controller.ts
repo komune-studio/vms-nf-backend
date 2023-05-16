@@ -9,7 +9,7 @@ import SiteController from "./site.controller";
 export default class VisitationController {
     static async createVisit(req : Request, res : Response, next : NextFunction) {
         const {enrolled_face_id, location_id, employee_id, allowed_sites, purpose} = req.body;
-        if (!enrolled_face_id || !purpose) {
+        if (!purpose) {
             return next(new BadRequestError(`Please specify: ${!enrolled_face_id ? "enrolled_face_id" : ""} ${!purpose ? "purpose" : ""}`));
         }
 
@@ -25,12 +25,15 @@ export default class VisitationController {
             let result : any = await VisitationDAO.createVisit(body);
             result = {
                 ...result,
-                enrolled_face_id: result.enrolled_face_id.toString(),
+                enrolled_face_id: result.enrolled_face_id ? result.enrolled_face_id.toString() : null,
                 allowed_sites: result.allowed_sites.map((site : any) => site.toString()),
             }
+
             res.send(result);
 
         } catch (e) {
+            console.log(e)
+
             return next(e);
         }
     }
@@ -51,12 +54,16 @@ export default class VisitationController {
             // @ts-ignore
             let count = await VisitationDAO.getVisitCount(search, searchBy);
 
+            console.log(result)
+
             // @ts-ignore
-            const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.enrolled_face.id), true)
+            const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.filter(row => row.enrolled_face).map(row => row.enrolled_face.id), true)
 
             const sites = await SiteDAO.getAll();
 
             result.forEach((row, idx) => {
+                if(!row.enrolled_face) return
+
                 // @ts-ignore
                 result[idx].enrolled_face.faces = [];
 

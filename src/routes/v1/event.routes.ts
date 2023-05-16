@@ -8,4 +8,7 @@ export default function eventRoutes(router : Router) {
 
     router.route('/event/:face_id/track')
         .get(authAll, EventController.getByFaceId);
+
+    router.route('/event/:stream_id/:mode/recent')
+        .get(authAll, EventController.getRecentFace);
 }

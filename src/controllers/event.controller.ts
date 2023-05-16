@@ -85,4 +85,16 @@ export default class EventController {
             return next(e);
         }
     }
+
+    static async getRecentFace(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {mode, stream_id} = req.params;
+
+           res.send({mode, stream_id})
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
 }

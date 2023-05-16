@@ -74,7 +74,7 @@ export default class FaceController {
 
             console.log(visitData.length)
 
-            const ids = visitData.map(data => data.enrolled_face?.id)
+            const ids = visitData.filter(data => data.enrolled_face).map(data => data.enrolled_face?.id)
 
             // @ts-ignore
             let result = await EnrolledFaceDAO.getAll(limit, page, search, status, active, ids)
