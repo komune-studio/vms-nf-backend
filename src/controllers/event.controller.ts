@@ -90,7 +90,9 @@ export default class EventController {
         try {
             const {mode, stream_id} = req.params;
 
-           res.send({mode, stream_id})
+            const events = await EventDAO.getRecentFace(mode, stream_id)
+
+           res.send({data: events})
         } catch (e) {
             console.log(e)
 

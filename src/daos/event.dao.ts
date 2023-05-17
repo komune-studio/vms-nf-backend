@@ -100,4 +100,23 @@ export default class EventDAO {
 
         return result;
     }
+
+    static async getRecentFace(mode : string, streamId : string) {
+        let whereStatusClause = ``
+
+        if(mode === 'AUTHORIZED') {
+            whereStatusClause = ` AND visit_event.status = '' `
+        } else if(mode === 'UNAUTHORIZED') {
+            whereStatusClause = ` AND visit_event.status = 'Unauthorized' `
+        } else if(mode === 'BLACKLISTED') {
+            whereStatusClause = ` AND visit_event.status = 'Blacklisted' `
+        }  else if(mode === 'UNRECOGNIZED') {
+            whereStatusClause = ` AND visit_event.status IS NULL `
+        }
+
+        //enrollment only valid in the same day when they register
+        const sql = `select * from (select distinct on (event.status, detection->'pipeline_data'->>'face_id') detection, result, visit_event.status, name, encode(secondary_image, 'base64') as image_jpeg, event_time from event LEFT JOIN visit_event on detection->'pipeline_data'->>'event_id' = event_id LEFT JOIN enrolled_face on detection->'pipeline_data'->>'face_id' = cast(face_id as text) where stream_id = '${streamId}' ${whereStatusClause} ORDER BY event.status, detection->'pipeline_data'->>'face_id', event_time  DESC LIMIT 6) event order by event_time DESC;
+`
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }

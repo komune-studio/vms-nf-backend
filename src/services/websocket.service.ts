@@ -90,6 +90,7 @@ export default class WebsocketService {
                     secondary_image: data.image_jpeg,
                     stream_id: data.stream_id,
                     timestamp: new Date(data.timestamp * 1000),
+                    pipeline_data: data.pipeline_data
                 }
 
                 if (data.primary_text !== "UNKNOWN") {
@@ -104,6 +105,7 @@ export default class WebsocketService {
                         // console.log("Image not found in database")
                         return
                     }
+                    payload.name = face.name;
                     payload.primary_image = image[0].image_thumbnail?.toString('base64') || "";
                     payload.result = `${data.pipeline_data.similarity === 1 ? 99.99 : (data.pipeline_data.similarity * 100).toFixed(1)}% - ${face.name}`
                     payload.status = face.status;
@@ -126,11 +128,20 @@ export default class WebsocketService {
                         }
                     }
                     status = face.status === "BLACKLIST" ? "Blacklisted" : status;
+
+                    payload.visitor_status = status
+
                     await VisitEventDAO.create({
                         event_id: data.pipeline_data.event_id,
                         visitation_id: visitData[0]?.id,
                         status,
                     })
+                } else {
+                    const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
+
+                    if(face) {
+                        payload.name = face.name;
+                    }
                 }
                 // console.log(payload)
                 console.log(this.connections.length)
