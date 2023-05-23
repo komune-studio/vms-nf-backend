@@ -13,9 +13,12 @@ export default class EmployeeDAO {
             deleted_at TIMESTAMPTZ
         );`
     }
-    static async getAll() {
+    static async getAll(security : boolean) {
+        let whereSecurityClause = security ? {position: {equals: 'SECURITY'}} : {position: {not: 'SECURITY'}};
+
         return employee.findMany({
             where: {
+                ...whereSecurityClause,
                 deleted_at: null
             }
         });

@@ -7,6 +7,7 @@ import request from "../utils/api.utils";
 import {BadRequestError} from "../utils/error.utils";
 import AdminDAO from "../daos/admin.dao";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
+import VisitationDAO from "../daos/visitation.dao";
 
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
@@ -27,15 +28,64 @@ export default class UtilController {
 
             const output = {
                 today: 0,
+                today_visitor: 0,
                 yesterday: 0,
                 last_7_days: 1,
+                last_7_days_visitor: 0,
                 last_30_days: 0,
+                last_30_days_visitor: 0,
                 daily_record: {},
+                daily_record_visitor: {},
                 heatmap_data: {},
                 location_data: []
             }
             const {analytic, stream} = req.query;
             const streamEqualsClause = stream === 'null' ? [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}] : [{stream_id: {equals: stream}}]
+
+            if(analytic === 'NFV4-FR') {
+                const todaysCount = await VisitationDAO.getCount(
+                    {
+                        AND: [
+                            {
+                                created_at: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
+                            },
+                            {
+                                created_at: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                            }
+                        ]
+                    })
+
+                output.today_visitor = todaysCount._count.id;
+
+                const last7DaysCount = await VisitationDAO.getCount(
+                    {
+                        AND: [
+                            {
+                                created_at: {gte: moment().subtract(6, 'day').format('YYYY-MM-DDT00:00:00Z')}
+                            },
+                            {
+                                created_at: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                            }
+                        ]
+                    })
+
+                output.last_7_days_visitor = last7DaysCount._count.id;
+
+                //last 30 day's count
+                const last30DaysCount = await VisitationDAO.getCount(
+                    {
+                        AND: [
+                            {
+                                created_at: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
+                            },
+                            {
+                                created_at: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                            }
+                        ]
+                    })
+
+                output.last_30_days_visitor = last30DaysCount._count.id;
+            }
 
             //today's count
             const todaysCount = await EventDAO.getCount(
@@ -113,6 +163,15 @@ export default class UtilController {
 
             output.last_30_days = last30DaysCount._count.id;
 
+
+            const visitationCountByTime = await VisitationDAO.getCountGroupByTime();
+            // @ts-ignore
+            visitationCountByTime.forEach(data => {
+                // @ts-ignore
+                output.daily_record_visitor[format(new Date(data.interval_alias), 'dd MMM yyyy')] = parseInt(data.count);
+            })
+
+            console.log(output.daily_record_visitor);
             // @ts-ignore
             const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
 

@@ -5,7 +5,7 @@ import {BadRequestError} from "../utils/error.utils";
 export default class EmployeeController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            let result = await EmployeeDAO.getAll();
+            let result = await EmployeeDAO.getAll(req.query.security === 'true');
             res.send(result);
         } catch (e) {
             return next(e);

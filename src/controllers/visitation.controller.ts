@@ -8,7 +8,7 @@ import SiteController from "./site.controller";
 
 export default class VisitationController {
     static async createVisit(req : Request, res : Response, next : NextFunction) {
-        const {enrolled_face_id, location_id, employee_id, allowed_sites, purpose} = req.body;
+        const {enrolled_face_id, location_id, employee_id, allowed_sites, purpose, security_id} = req.body;
         if (!purpose) {
             return next(new BadRequestError(`Please specify: ${!enrolled_face_id ? "enrolled_face_id" : ""} ${!purpose ? "purpose" : ""}`));
         }
@@ -20,6 +20,7 @@ export default class VisitationController {
                 employee_id: employee_id ? parseInt(employee_id) : undefined,
                 allowed_sites: allowed_sites.map((site : any) => BigInt(site)),
                 purpose: purpose,
+                security_id: security_id ? parseInt(security_id) : undefined,
             }
             console.log(req.body, body)
             let result : any = await VisitationDAO.createVisit(body);
@@ -165,6 +166,24 @@ export default class VisitationController {
             }
             res.send(result);
         } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async approve(req : Request, res : Response, next : NextFunction) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid id."));
+        }
+
+        try {
+            let result : any = await VisitationDAO.approve(id);
+
+            // @ts-ignore
+            res.send({...result, allowed_sites: result.allowed_sites.map(data => parseInt(data))});
+        } catch (e) {
+            console.log(e)
+
             return next(e);
         }
     }
