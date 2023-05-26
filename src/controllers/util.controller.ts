@@ -171,7 +171,11 @@ export default class UtilController {
                 output.daily_record_visitor[format(new Date(data.interval_alias), 'dd MMM yyyy')] = parseInt(data.count);
             })
 
-            console.log(output.daily_record_visitor);
+            // @ts-ignore
+            if(visitationCountByTime.length === 0) {
+                output.daily_record_visitor = [{ "": 0 }]
+            }
+
             // @ts-ignore
             const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
 

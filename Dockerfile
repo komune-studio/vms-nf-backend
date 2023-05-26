@@ -14,6 +14,3 @@ RUN npm install
 
 # Bundle app source
 COPY . .
-
-CMD [ "node", "generate-env.js" ]
-CMD [ "npm", "start" ]
