@@ -9,7 +9,7 @@ import VisitEventDAO from "../daos/visit_event.dao";
 import VisitationDAO from "../daos/visitation.dao";
 import VehicleDAO from "../daos/vehicle.dao";
 
-const requestUrl = 'ws://localhost:4004/event_channel';
+const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
 
 export default class WebsocketService {
     private static instance: WebsocketService;
