@@ -131,7 +131,7 @@ export default class WebsocketService {
                                 status = visitData[0].allowed_sites.includes(site.site_id) ? status : "Unauthorized";
                             }
                         }
-                        status = face.status === "BLACKLIST" ? "Blacklisted" : status;
+                        status = face.status === "BLACKLIST" ? "Blacklist" : status;
 
                         payload.visitor_status = status
 

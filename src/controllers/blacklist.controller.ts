@@ -4,6 +4,7 @@ import fs from "fs";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import request, {requestWithFile} from "../utils/api.utils";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
+import FaceImageDAO from "../daos/face_image.dao";
 
 export default class BlacklistController {
     static async createBlacklisted(req: Request, res: Response, next: NextFunction) {
@@ -31,10 +32,34 @@ export default class BlacklistController {
 
     static async getAllBlacklisted(req: Request, res: Response, next: NextFunction) {
         try {
-            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'GET');
-            console.log(result);
-            result = result.results.enrollments.filter((item: any) => item.status === "BLACKLIST");
-            res.send(result);
+            // @ts-ignore
+            let result = await EnrolledFaceDAO.getAll(null, null, '', 'BLACKLIST')
+
+            const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.id), true)
+
+            result.forEach((row, idx) => {
+                // @ts-ignore
+                result[idx].faces = [];
+
+                faceImages.forEach(data => {
+                    console.log(BigInt(row.id))
+                    console.log(data.enrolled_face_id)
+
+                    // @ts-ignore
+                    if(data.enrolled_face_id === BigInt(row.id)) {
+                        const imageThumbnail = data.image_thumbnail ? {image_thumbnail: Buffer.from(data.image_thumbnail).toString('base64')} : {}
+
+                        // @ts-ignore
+                        result[idx].faces.push({...data, id: data.id.toString(), enrolled_face_id: data.enrolled_face_id.toString(), ...imageThumbnail})
+                    }
+                })
+            })
+            // console.log(result1)
+
+            // let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'GET');
+
+            // result = result.results.enrollments.filter((item: any) => item.status === "BLACKLIST");
+            res.send(result.map(data => ({...data, face_id: data.face_id.toString()})));
         } catch (e) {
             return next(e);
         }
@@ -45,7 +70,8 @@ export default class BlacklistController {
 
         try {
             let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
-            if (result.status !== "BLACKLIST") {
+
+            if (result.enrollment.status !== "BLACKLIST") {
                 return next(new NotFoundError("Face not found"));
             }
             res.send(result);

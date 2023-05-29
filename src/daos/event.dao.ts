@@ -108,8 +108,8 @@ export default class EventDAO {
             whereStatusClause = ` AND visit_event.status = '' `
         } else if(mode === 'UNAUTHORIZED') {
             whereStatusClause = ` AND visit_event.status = 'Unauthorized' `
-        } else if(mode === 'BLACKLISTED') {
-            whereStatusClause = ` AND visit_event.status = 'Blacklisted' `
+        } else if(mode === 'BLACKLIST') {
+            whereStatusClause = ` AND visit_event.status = 'Blacklist' `
         }  else if(mode === 'UNRECOGNIZED') {
             whereStatusClause = ` AND visit_event.status IS NULL `
         }

@@ -21,8 +21,8 @@ export default class VisitationDAO {
             enrolled_face_id bigint,
             employee_id int,
             security_id int,
-            location_id int NOT NULL,
-            allowed_sites bigint[] NOT NULL,
+            location_id int,
+            allowed_sites bigint[] NOT NULL default '{}',
             approved boolean NOT NULL default false,
             purpose VARCHAR(100) NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW()           
