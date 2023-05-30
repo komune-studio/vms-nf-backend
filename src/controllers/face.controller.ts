@@ -268,4 +268,15 @@ export default class FaceController {
             return next(e);
         }
     }
+
+    static async faceMatch(req: Request, res: Response, next: NextFunction) {
+        try {
+            const response = await request(`${process.env.NF_FREMISN_API_URL}/face/match`, 'POST', req.body);
+
+            res.send(response);
+        } catch (e) {
+            console.log(e)
+            return next(e);
+        }
+    }
 }

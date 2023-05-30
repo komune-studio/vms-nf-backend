@@ -11,6 +11,9 @@ export default function routesFace(router : Router) {
     router.route('/face/reenroll')
         .post(authAdmin, FaceController.reenroll)
 
+    router.route('/face/match')
+        .post(FaceController.faceMatch)
+
     router.route('/face/:id')
         .get(authAll, FaceController.getFaceById)
         .put(authAdmin, upload.single('images'), FaceController.updateFace)
