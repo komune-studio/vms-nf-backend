@@ -87,13 +87,22 @@ export default class FaceController {
             const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.id), !active)
 
             result.forEach((row, idx) => {
+                if(active) {
+                    visitData.forEach(data => {
+                        // @ts-ignore
+                        if(row.id === data.enrolled_face.id) {
+                            // @ts-ignore
+                            result[idx].visit_id = data.id;
+                            // @ts-ignore
+                            result[idx].approved = data.approved;
+                        }
+                    })
+                }
+
                 // @ts-ignore
                 result[idx].faces = [];
 
                 faceImages.forEach(data => {
-                    console.log(BigInt(row.id))
-                    console.log(data.enrolled_face_id)
-
                     // @ts-ignore
                     if(data.enrolled_face_id === BigInt(row.id)) {
                         const imageThumbnail = data.image_thumbnail ? {image_thumbnail: Buffer.from(data.image_thumbnail).toString('base64')} : {}

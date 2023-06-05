@@ -22,7 +22,7 @@ export default class EnrolledFaceDAO {
                 status: {
                     equals: status
                 },
-                // deleted_at: active ? null : {not: null}
+                deleted_at: {equals: null}
             },
         });
 
@@ -41,7 +41,7 @@ export default class EnrolledFaceDAO {
                 status: {
                     equals: status
                 },
-                // deleted_at: active ? null : {not: null}
+                deleted_at:  {equals: null}
             },
         });
 
