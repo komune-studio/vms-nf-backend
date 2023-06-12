@@ -14,6 +14,9 @@ export default function routesVisitation(router : Router) {
     router.route('/visitation/:id/approve')
         .post(authSuperAdmin, VisitationController.approve)
 
+    router.route('/visitation/:id/check-out')
+        .post(authSuperAdmin, VisitationController.checkOut)
+
     router.route('/visitation/event/:id')
         .get(VisitationController.getByEventId);
 }

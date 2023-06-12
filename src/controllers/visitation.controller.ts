@@ -187,4 +187,22 @@ export default class VisitationController {
             return next(e);
         }
     }
+
+    static async checkOut(req : Request, res : Response, next : NextFunction) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid id."));
+        }
+
+        try {
+            let result : any = await VisitationDAO.checkOut(id);
+
+            // @ts-ignore
+            res.send({...result, allowed_sites: result.allowed_sites.map(data => parseInt(data))});
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
 }

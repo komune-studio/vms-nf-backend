@@ -124,6 +124,7 @@ model visitation {
   purpose          String?
   approved         Boolean        @default(false)
   created_at       DateTime?      @default(now()) @db.Timestamptz(6)
+  check_out_time   DateTime?       @db.Timestamptz(6)
   location         location?      @relation(fields: [location_id], references: [id])
   employee         employee?      @relation(fields: [employee_id], references: [id])
   enrolled_face    enrolled_face? @relation(fields: [enrolled_face_id], references: [id])
@@ -141,4 +142,10 @@ model visit_event {
   event_id      String
   visitation_id Int?
   status        String?
+}
+
+model customized_forms {
+  id            Int  @id @default(autoincrement())
+  type          String
+  fields        String[]
 }

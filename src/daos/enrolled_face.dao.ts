@@ -6,7 +6,51 @@ const prisma = PrismaService.getVisionaire();
 const enrolledFace = prisma.enrolled_face;
 
 export default class EnrolledFaceDAO {
-    static async getAll(limit : number, page : number, search : string, status : string, active : boolean = true, ids? : number[]) {
+    static async getAll(limit : number, page : number, search : string, status : string, active : boolean = true, ids? : number[], startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string) {
+        const enumerateDaysBetweenDates = (startDate : String, endDate : String) => {
+            let date = []
+
+            // @ts-ignore
+            while(moment(startDate) <= moment(endDate)){
+                date.push(startDate);
+                // @ts-ignore
+                startDate = moment(startDate).add(1, 'days').format("YYYY-MM-DD");
+            }
+            return date;
+        }
+
+        let whereDateClause = {}
+
+        console.log(gender)
+
+        if(startDate && endDate) {
+            whereDateClause = {
+                OR: enumerateDaysBetweenDates(startDate, endDate).map(date => {
+                    return (
+                        {
+                            AND: [
+                                {created_at: {gte: `${date}T${startTime}:00+07:00`}},
+                                {created_at: {lte: `${date}T${endTime}:59+07:00`}},
+                            ]
+                        }
+                    )
+                })
+            }
+        }
+
+        let whereDOBClause = {};
+
+        if(age) {
+            const year = moment().subtract(parseInt(age), 'year').format('YYYY');
+
+            whereDOBClause = {
+                AND: [
+                    {birth_date: {gte: `${year}-01-01T00:00:00Z`}},
+                    {birth_date: {lte: `${year}-12-31T23:59:59Z`}},
+                ]
+            }
+        }
+
         let result = enrolledFace.findMany({
             orderBy: {
                 created_at: 'desc'
@@ -22,7 +66,10 @@ export default class EnrolledFaceDAO {
                 status: {
                     equals: status
                 },
-                deleted_at: {equals: null}
+                deleted_at: {equals: null},
+                gender: gender ? gender : undefined,
+                ...whereDateClause,
+                ...whereDOBClause
             },
         });
 

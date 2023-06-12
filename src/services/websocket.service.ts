@@ -118,18 +118,20 @@ export default class WebsocketService {
                         const visitData = await VisitationDAO.getByEnrolledFaceId(face.id);
                         console.log(visitData)
                         let status = "";
-                        if (visitData.length > 0) {
+                        if (visitData.length > 0 && visitData[0].approved) {
                             const today = moment().format('YYYY-MM-DD');
                             const lastVisit = moment(visitData[0].created_at).format('YYYY-MM-DD');
-                            status = today === lastVisit ? status : "Unauthorized";
+                            status = today === lastVisit && !visitData[0].check_out_time ? status : "Unauthorized";
 
                             payload.visitation = visitData[0].id;
                             payload.last_visit_date = visitData[0].created_at;
                             const site = await MapSiteStreamDAO.getByStreamId(data.stream_id);
                             if (site) {
-                                payload.allowed_here = visitData[0].allowed_sites.includes(site.site_id) && today === lastVisit;
+                                payload.allowed_here = visitData[0].allowed_sites.includes(site.site_id) && today === lastVisit && !visitData[0].check_out_time;
                                 status = visitData[0].allowed_sites.includes(site.site_id) ? status : "Unauthorized";
                             }
+                        } else {
+                            status = "Unauthorized";
                         }
                         status = face.status === "BLACKLIST" ? "Blacklist" : status;
 

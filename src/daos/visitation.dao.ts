@@ -25,7 +25,8 @@ export default class VisitationDAO {
             allowed_sites bigint[] NOT NULL default '{}',
             approved boolean NOT NULL default false,
             purpose VARCHAR(100) NOT NULL,
-            created_at TIMESTAMPTZ DEFAULT NOW()           
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            check_out_time TIMESTAMPTZ        
         );`
     }
 
@@ -101,6 +102,7 @@ export default class VisitationDAO {
                 approved: true,
                 allowed_sites: true,
                 created_at: true,
+                check_out_time: true
             },
             distinct: distinct ? ['enrolled_face_id'] : undefined
         });
@@ -147,7 +149,7 @@ export default class VisitationDAO {
 
     static async getByEnrolledFaceId(id : number) {
         return visitation.findMany({
-            where: {enrolled_face_id: id, approved: true},
+            where: {enrolled_face_id: id},
             orderBy: {created_at: 'desc'},
             select: {
                 id: true,
@@ -160,6 +162,8 @@ export default class VisitationDAO {
                 },
                 allowed_sites: true,
                 created_at: true,
+                check_out_time: true,
+                approved: true
             }
         })
     }
@@ -193,5 +197,14 @@ export default class VisitationDAO {
         const sql = `select count(*), to_timestamp(floor((extract('epoch' from created_at) / 3600 )) * 3600) as interval_alias from visitation where created_at >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}' GROUP BY interval_alias ORDER BY interval_alias ASC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async checkOut(id : number) {
+        return visitation.update({
+            where: {id: id},
+            data: {
+                check_out_time: new Date()
+            }
+        })
     }
 }

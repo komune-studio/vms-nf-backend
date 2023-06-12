@@ -12,6 +12,7 @@ import routesSite from "./site.routes";
 import routesMapSiteStream from "./map_site_stream.routes";
 import routesVisitation from "./visitation.routes";
 import routesGlobalSetting from "./global_setting.routes";
+import routesCustomizedForm from "./customized_form.routes";
 
 const router = express.Router();
 
@@ -28,5 +29,6 @@ routesLocation(router);
 routesEmployee(router);
 routesVisitation(router);
 routesGlobalSetting(router)
+routesCustomizedForm(router)
 
 export default router;

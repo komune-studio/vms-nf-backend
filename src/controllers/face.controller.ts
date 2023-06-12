@@ -7,6 +7,7 @@ import request, {requestWithFile} from "../utils/api.utils";
 import {BadRequestError, ConflictError, NotFoundError} from "../utils/error.utils";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FaceImageDAO from "../daos/face_image.dao";
+import SiteDAO from "../daos/site.dao";
 
 export default class FaceController {
 
@@ -57,7 +58,7 @@ export default class FaceController {
 
     static async getFace(req: Request, res: Response, next: NextFunction) {
         try {
-            let {limit, page, search, status, active} = req.query;
+            let {limit, page, search, status, active, start_date, end_date, start_time, end_time, gender, age} = req.query;
             // @ts-ignore
             limit = parseInt(limit);
 
@@ -69,22 +70,26 @@ export default class FaceController {
 
             let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true);
             visitData = visitData.filter(data => active
-                ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD')
-                : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD'))
+                ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_time
+                : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_time)
 
-            console.log(visitData.length)
+
 
             const ids = visitData.filter(data => data.enrolled_face).map(data => data.enrolled_face?.id)
 
-            // @ts-ignore
-            let result = await EnrolledFaceDAO.getAll(limit, page, search, status, active, ids)
+
 
             // @ts-ignore
-            let count = await EnrolledFaceDAO.getCount(search, status, active, ids)
+            let result = await EnrolledFaceDAO.getAll(limit, page, search, status, active, ids, start_date, end_date, start_time, end_time, gender, age)
 
-            console.log()
+            console.log(result)
+
+            // @ts-ignore
+            let count = await EnrolledFaceDAO.getCount(search, status, active, ids, start_date, end_date, start_time, end_time)
 
             const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.id), !active)
+
+            const sites = await SiteDAO.getAll();
 
             result.forEach((row, idx) => {
                 if(active) {
@@ -95,6 +100,15 @@ export default class FaceController {
                             result[idx].visit_id = data.id;
                             // @ts-ignore
                             result[idx].approved = data.approved;
+
+                            // @ts-ignore
+                            result[idx].check_out_time = data.check_out_time;
+
+                            // @ts-ignore
+                            result[idx].allowed_sites = data.allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));
+
+                            // @ts-ignore
+                            console.log(result[idx].allowed_sites)
                         }
                     })
                 }

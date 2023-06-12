@@ -115,7 +115,7 @@ export default class EventDAO {
         }
 
         //enrollment only valid in the same day when they register
-        const sql = `select * from (select distinct on (event.status, detection->'pipeline_data'->>'face_id') detection, result, visit_event.status, name, encode(secondary_image, 'base64') as image_jpeg, event_time from event LEFT JOIN visit_event on detection->'pipeline_data'->>'event_id' = event_id LEFT JOIN enrolled_face on detection->'pipeline_data'->>'face_id' = cast(face_id as text) where stream_id = '${streamId}' ${whereStatusClause} ORDER BY event.status, detection->'pipeline_data'->>'face_id', event_time  DESC LIMIT 6) event order by event_time DESC;
+        const sql = `select * from (select distinct on (event.status, detection->'pipeline_data'->>'face_id') detection, result, visit_event.status, name, encode(secondary_image, 'base64') as image_jpeg, event_time from event LEFT JOIN visit_event on detection->'pipeline_data'->>'event_id' = event_id LEFT JOIN enrolled_face on detection->'pipeline_data'->>'face_id' = cast(face_id as text) where stream_id = '${streamId}' ${whereStatusClause} AND event_time >= '${moment().subtract(2, 'minutes').format("YYYY-MM-DDTHH:mm:ssZ")}' ORDER BY event.status, detection->'pipeline_data'->>'face_id', event_time  DESC LIMIT 6) event order by event_time DESC;
 `
         return prisma.$queryRaw(Prisma.raw(sql))
     }
