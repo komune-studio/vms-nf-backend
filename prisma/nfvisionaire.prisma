@@ -74,6 +74,7 @@ model vehicle {
 model site {
   id         Int       @id @default(autoincrement())
   name       String    @db.VarChar(200)
+  image      Bytes?
   created_at DateTime  @default(now()) @db.Timestamptz(6)
   updated_at DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at DateTime? @db.Timestamptz(6)
@@ -108,6 +109,7 @@ model face_image {
 model location {
   id          Int          @id @default(autoincrement())
   name        String?
+  site_id     BigInt
   created_at  DateTime     @default(now()) @db.Timestamptz(6)
   modified_at DateTime     @default(now()) @db.Timestamptz(6)
   deleted_at  DateTime?    @db.Timestamptz(6)

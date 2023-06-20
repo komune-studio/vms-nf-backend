@@ -5,6 +5,7 @@ import VisitEventDAO from "../daos/visit_event.dao";
 import VisitationDAO from "../daos/visitation.dao";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import SiteController from "./site.controller";
+const json2csv = require('json2csv').parse;
 
 export default class VisitationController {
     static async createVisit(req : Request, res : Response, next : NextFunction) {
@@ -41,7 +42,7 @@ export default class VisitationController {
 
     static async getAllVisits(req : Request, res : Response, next : NextFunction) {
         try {
-            let {limit, page, search, searchBy} = req.query;
+            let {limit, page, search, searchBy, start_date, end_date, start_time, end_time, gender, age, form, download} = req.query;
 
             // @ts-ignore
             limit = parseInt(limit);
@@ -50,12 +51,32 @@ export default class VisitationController {
             page = parseInt(page);
 
             // @ts-ignore
-            let result = await VisitationDAO.getAllVisits(limit, page, search, searchBy);
+            let result = await VisitationDAO.getAllVisits(download ? null : limit, download ? null : page, search, searchBy, null, start_date, end_date, start_time, end_time, gender, age, form);
+
+
+            if(download) {
+                const fields = ['Identity Number', 'Name', 'Purpose', 'Location', 'Visit Time'];
+
+                const docs = result.map(item => ({
+                    identity_number: item.enrolled_face ? item.enrolled_face.identity_number : '',
+                    name: item.enrolled_face ? item.enrolled_face.name : '',
+                    purpose: item.purpose,
+                    location: item.location ? item.location.name : '',
+                    created_at: item.created_at
+                }))
+
+                console.log('hiii')
+                console.log('docs', docs)
+
+                const data = json2csv(docs, fields);
+
+                res.attachment('visitor-history.csv');
+
+                return res.send(data)
+            }
 
             // @ts-ignore
-            let count = await VisitationDAO.getVisitCount(search, searchBy);
-
-            console.log(result)
+            let count = await VisitationDAO.getVisitCount(search, searchBy, start_date, end_date, start_time, end_time, gender, age, form);
 
             // @ts-ignore
             const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.filter(row => row.enrolled_face).map(row => row.enrolled_face.id), true)
@@ -84,8 +105,6 @@ export default class VisitationController {
 
             // @ts-ignore
             const totalPage =  limit ? Math.ceil(count._count.id / limit) : 1;
-
-            console.log(result)
 
             res.send({
                 limit : limit ? limit : 0,

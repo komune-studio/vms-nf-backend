@@ -8,6 +8,7 @@ import {BadRequestError, ConflictError, NotFoundError} from "../utils/error.util
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FaceImageDAO from "../daos/face_image.dao";
 import SiteDAO from "../daos/site.dao";
+const json2csv = require('json2csv').parse;
 
 export default class FaceController {
 
@@ -58,7 +59,7 @@ export default class FaceController {
 
     static async getFace(req: Request, res: Response, next: NextFunction) {
         try {
-            let {limit, page, search, status, active, start_date, end_date, start_time, end_time, gender, age} = req.query;
+            let {limit, page, search, status, active, start_date, end_date, start_time, end_time, gender, age, download, form} = req.query;
             // @ts-ignore
             limit = parseInt(limit);
 
@@ -80,12 +81,29 @@ export default class FaceController {
 
 
             // @ts-ignore
-            let result = await EnrolledFaceDAO.getAll(limit, page, search, status, active, ids, start_date, end_date, start_time, end_time, gender, age)
+            let result = await EnrolledFaceDAO.getAll(download ? null : limit, download ? null : page, search, status, active, ids, start_date, end_date, start_time, end_time, gender, age, form)
 
-            console.log(result)
+            if(download) {
+                const fields = ['Created At', 'Identity Number', 'Name', 'Gender', 'Birth Place', 'Birth Date'];
+
+                const docs = result.map(item => ({
+                    created_at: item.created_at,
+                    identity_number: item.identity_number,
+                    name: item.name,
+                    gender: item.gender,
+                    birth_place: item.birth_place,
+                    birth_date: item.birth_date
+                }))
+
+                const data = json2csv(docs, fields);
+
+                res.attachment('face-enrollment.csv');
+
+                return res.send(data)
+            }
 
             // @ts-ignore
-            let count = await EnrolledFaceDAO.getCount(search, status, active, ids, start_date, end_date, start_time, end_time)
+            let count = await EnrolledFaceDAO.getCount(search, status, active, ids, start_date, end_date, start_time, end_time, gender, age, form)
 
             const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.id), !active)
 
@@ -285,6 +303,21 @@ export default class FaceController {
 
         try {
             let result = await EnrolledFaceDAO.blacklist(id)
+            res.send({success: true});
+        } catch (e) {
+            console.log(e)
+            return next(e);
+        }
+    }
+
+    static async whitelistFace(req: Request, res: Response, next: NextFunction) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
+
+        try {
+            let result = await EnrolledFaceDAO.whitelist(id)
             res.send({success: true});
         } catch (e) {
             console.log(e)

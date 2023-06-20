@@ -71,8 +71,8 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getTopVisitors(amount: number, streams: String[]) {
-        const sql = `SELECT count(*) AS num_visits, name FROM event LEFT JOIN enrolled_face on detection -> 'pipeline_data' ->> 'face_id' = cast(enrolled_face.face_id as text) WHERE event.status = 'KNOWN' ${` AND stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} GROUP BY detection -> 'pipeline_data' ->> 'face_id', name ORDER BY num_visits DESC LIMIT ${amount};`
+    static async getTopVisitors(amount: number, streams: String[], startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string) {
+        const sql = `SELECT count(*) AS num_visits, name FROM event LEFT JOIN enrolled_face on detection -> 'pipeline_data' ->> 'face_id' = cast(enrolled_face.face_id as text) WHERE event.status = 'KNOWN' ${` AND stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${gender ? ` AND gender = '${gender}'` : ''} GROUP BY detection -> 'pipeline_data' ->> 'face_id', name ORDER BY num_visits DESC LIMIT ${amount};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -115,7 +115,7 @@ export default class EventDAO {
         }
 
         //enrollment only valid in the same day when they register
-        const sql = `select * from (select distinct on (event.status, detection->'pipeline_data'->>'face_id') detection, result, visit_event.status, name, encode(secondary_image, 'base64') as image_jpeg, event_time from event LEFT JOIN visit_event on detection->'pipeline_data'->>'event_id' = event_id LEFT JOIN enrolled_face on detection->'pipeline_data'->>'face_id' = cast(face_id as text) where stream_id = '${streamId}' ${whereStatusClause} AND event_time >= '${moment().subtract(2, 'minutes').format("YYYY-MM-DDTHH:mm:ssZ")}' ORDER BY event.status, detection->'pipeline_data'->>'face_id', event_time  DESC LIMIT 6) event order by event_time DESC;
+        const sql = `select * from (select distinct on (event.status, detection->'pipeline_data'->>'face_id') detection, result, visit_event.status, name, encode(secondary_image, 'base64') as image_jpeg, event_time from event LEFT JOIN visit_event on detection->'pipeline_data'->>'event_id' = event_id LEFT JOIN enrolled_face on detection->'pipeline_data'->>'face_id' = cast(face_id as text) where stream_id = '${streamId}' ${whereStatusClause} AND event_time >= '${moment().subtract(2, 'minutes').format("YYYY-MM-DDTHH:mm:ssZ")}' ORDER BY event.status, detection->'pipeline_data'->>'face_id', event_time  DESC) event order by event_time DESC;
 `
         return prisma.$queryRaw(Prisma.raw(sql))
     }

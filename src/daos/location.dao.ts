@@ -3,11 +3,13 @@ import PrismaService from "../services/prisma.service";
 const prisma = PrismaService.getVisionaire();
 const location = PrismaService.getVisionaire().location;
 
+
 export default class LocationDAO {
     static async createTable() {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS location (
             id SERIAL PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
+            site_id BIGINT NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             modified_at TIMESTAMPTZ DEFAULT NOW(),
             deleted_at TIMESTAMPTZ           

@@ -7,8 +7,10 @@ export default class LocationController {
     static async getAll(req : Request, res : Response, next : NextFunction) {
         try {
             let result = await LocationDAO.getAll();
-            res.send(result);
+            // @ts-ignore
+            res.send(result.map(data => ({...data, site_id: parseInt(data.site_id)})));
         } catch (e) {
+            console.log(e)
             return next(e);
         }
     }
@@ -18,20 +20,25 @@ export default class LocationController {
 
         try {
             let result = await LocationDAO.getOne(id);
-            res.send(result);
+
+            // @ts-ignore
+            res.send({...result, site_id: parseInt(result.site_id)} );
         } catch (e) {
             return next(e);
         }
     }
     static async create(req : Request, res : Response, next : NextFunction) {
-        const {name} = req.body;
+        const {name, site_id} = req.body;
         try {
             let result = await LocationDAO.create({
                 name: name,
+                site_id: parseInt(site_id),
                 created_at: new Date(),
                 modified_at: new Date(),
             });
-            res.send(result);
+
+            // @ts-ignore
+            res.send({...result, site_id: parseInt(result.site_id)});
         } catch (e) {
             return next(e);
         }
@@ -59,7 +66,9 @@ export default class LocationController {
             let result = await LocationDAO.update(id, {
                 deleted_at: new Date()
             });
-            res.send(result);
+
+            // @ts-ignore
+            res.send({...result, site_id: parseInt(result.site_id)});
         } catch (e) {
             return next(e);
         }

@@ -134,6 +134,7 @@ export default class WebsocketService {
                             status = "Unauthorized";
                         }
                         status = face.status === "BLACKLIST" ? "Blacklist" : status;
+                        status = face.status === "WHITELIST" ? "Whitelist" : status;
 
                         payload.visitor_status = status
 

@@ -7,7 +7,8 @@ export default class SiteDAO {
         return sites.findMany({
             select: {
                 id: true,
-                name: true
+                name: true,
+                image: true
             },
             where: {
                 deleted_at: {equals: null}

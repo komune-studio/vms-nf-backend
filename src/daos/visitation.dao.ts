@@ -66,7 +66,65 @@ export default class VisitationDAO {
         })
     }
 
-    static async getAllVisits(limit? : number, page? : number, search? : string, searchBy? : string, distinct? : boolean) {
+    static async getAllVisits(limit? : number, page? : number, search? : string, searchBy? : string, distinct? : boolean, startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string, formId? : string) {
+         const enumerateDaysBetweenDates = (startDate : String, endDate : String) => {
+             let date = []
+
+             // @ts-ignore
+             while(moment(startDate) <= moment(endDate)){
+                 date.push(startDate);
+                 // @ts-ignore
+                 startDate = moment(startDate).add(1, 'days').format("YYYY-MM-DD");
+             }
+             return date;
+         }
+
+        let whereDateClause = {}
+
+        if(startDate && endDate) {
+            whereDateClause = {
+                OR: enumerateDaysBetweenDates(startDate, endDate).map(date => {
+                    console.log([
+                        {created_at: {gte: `${date}T${startTime}:00+07:00`}},
+                        {created_at: {lte: `${date}T${endTime}:59+07:00`}},
+                    ])
+
+                    return (
+                        {
+                            AND: [
+                                {created_at: {gte: `${date}T${startTime}:00+07:00`}},
+                                {created_at: {lte: `${date}T${endTime}:59+07:00`}},
+                            ]
+                        }
+                    )
+                })
+            }
+        }
+
+        let whereDOBClause = {};
+
+        if(age) {
+            const year = moment().subtract(parseInt(age), 'year').format('YYYY');
+
+            whereDOBClause = {
+                AND: [
+                    {birth_date: {gte: `${year}-01-01T00:00:00Z`}},
+                    {birth_date: {lte: `${year}-12-31T23:59:59Z`}},
+                ]
+            }
+        }
+
+        let whereFormIdClause = {};
+
+        if(formId) {
+            whereFormIdClause = {
+                additional_info: {
+                    path: ['form_id'],
+                    equals: parseInt(formId)
+                }
+            }
+        }
+
         return visitation.findMany({
             orderBy: {
                 created_at: 'desc'
@@ -74,10 +132,14 @@ export default class VisitationDAO {
             skip: page && limit ? (page - 1) * limit : undefined,
             take: limit ? limit : undefined,
             where: {
+                ...whereDateClause,
                 purpose: searchBy === 'purpose' ? { contains: search, mode: 'insensitive' } : undefined,
                 enrolled_face: {
                     identity_number: searchBy === 'identity_number' ? { contains: search, mode: 'insensitive' } : undefined,
                     name: searchBy === 'name' ? { contains: search, mode: 'insensitive' } : undefined,
+                    gender: gender ? gender : undefined,
+                    ...whereDOBClause,
+                    ...whereFormIdClause
                 },
                 location: {
                     name: searchBy === 'location' ? { contains: search, mode: 'insensitive' } : undefined
@@ -108,14 +170,76 @@ export default class VisitationDAO {
         });
     }
 
-    static async getVisitCount(search? : string, searchBy? : string) {
+    static async getVisitCount( search? : string, searchBy? : string, startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string, formId? : string) {
+        const enumerateDaysBetweenDates = (startDate : String, endDate : String) => {
+            let date = []
+
+            // @ts-ignore
+            while(moment(startDate) <= moment(endDate)){
+                date.push(startDate);
+                // @ts-ignore
+                startDate = moment(startDate).add(1, 'days').format("YYYY-MM-DD");
+            }
+            return date;
+        }
+
+        let whereDateClause = {}
+
+        if(startDate && endDate) {
+            whereDateClause = {
+                OR: enumerateDaysBetweenDates(startDate, endDate).map(date => {
+                    console.log([
+                        {created_at: {gte: `${date}T${startTime}:00+07:00`}},
+                        {created_at: {lte: `${date}T${endTime}:59+07:00`}},
+                    ])
+
+                    return (
+                        {
+                            AND: [
+                                {created_at: {gte: `${date}T${startTime}:00+07:00`}},
+                                {created_at: {lte: `${date}T${endTime}:59+07:00`}},
+                            ]
+                        }
+                    )
+                })
+            }
+        }
+
+        let whereDOBClause = {};
+
+        if(age) {
+            const year = moment().subtract(parseInt(age), 'year').format('YYYY');
+
+            whereDOBClause = {
+                AND: [
+                    {birth_date: {gte: `${year}-01-01T00:00:00Z`}},
+                    {birth_date: {lte: `${year}-12-31T23:59:59Z`}},
+                ]
+            }
+        }
+
+        let whereFormIdClause = {};
+
+        if(formId) {
+            whereFormIdClause = {
+                additional_info: {
+                    path: ['form_id'],
+                    equals: parseInt(formId)
+                }
+            }
+        }
+
         return visitation.aggregate({
             _count: {id: true},
             where: {
+                ...whereDateClause,
                 purpose: searchBy === 'purpose' ? { contains: search, mode: 'insensitive' } : undefined,
                 enrolled_face: {
                     identity_number: searchBy === 'identity_number' ? { contains: search, mode: 'insensitive' } : undefined,
                     name: searchBy === 'name' ? { contains: search, mode: 'insensitive' } : undefined,
+                    gender: gender ? gender : undefined,
+                    ...whereDOBClause,
+                    ...whereFormIdClause
                 },
                 location: {
                     name: searchBy === 'location' ? { contains: search, mode: 'insensitive' } : undefined

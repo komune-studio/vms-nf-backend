@@ -39,7 +39,7 @@ export default class UtilController {
                 heatmap_data: {},
                 location_data: []
             }
-            const {analytic, stream} = req.query;
+            const {analytic, stream, start_date, end_date, start_time, end_time, gender, age} = req.query;
             const streamEqualsClause = stream === 'null' ? [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}] : [{stream_id: {equals: stream}}]
 
             if(analytic === 'NFV4-FR') {
@@ -257,7 +257,7 @@ export default class UtilController {
 
     static async getTopVisitors(req: Request, res: Response, next: NextFunction) {
         try {
-            let {visitor, stream} = req.query;
+            let {visitor, stream, start_date, end_date, start_time, end_time, gender, age} = req.query;
             if (!visitor) visitor = "10";
 
             if (typeof visitor === "string") {
@@ -285,7 +285,7 @@ export default class UtilController {
                 }
 
                 // @ts-ignore
-                let result = await EventDAO.getTopVisitors(parseInt(visitor), stream)
+                let result = await EventDAO.getTopVisitors(parseInt(visitor), stream, start_date, end_date, start_time, end_time, gender, age)
 
                 // @ts-ignore
                 result.forEach((data, idx) => {
