@@ -15,6 +15,7 @@ import v1 from "./routes/v1/routes";
 import PrismaService from "./services/prisma.service";
 import WebsocketService from "./services/websocket.service";
 import {NotFoundError} from "./utils/error.utils";
+import CustomizedFormDao from "./daos/customized_form.dao";
 
 // const schedule = require('node-schedule');
 
@@ -89,6 +90,9 @@ app.use(handleErrors);
 
         await VisitEventDAO.createTable();
         console.log("Visit Event table initialized successfully.");
+
+        await CustomizedFormDao.createTable();
+        console.log("Customized Form table initialized successfully.");
 
         await EnrolledFaceDAO.addAdditionalInfoColumn()
         console.log("Additional info column has been added to Enrolled Face table.");

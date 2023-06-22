@@ -25,6 +25,9 @@ export default function routesFace(router : Router) {
     router.route('/face/:id/whitelist')
         .put(authAdmin, FaceController.whitelistFace);
 
+    router.route('/face/:face_ids/face_ids')
+        .get(FaceController.getByFaceIds)
+
     router.route('/face/:identity_number/identity_number')
         .get(FaceController.getByIdentityNumber)
 }

@@ -57,6 +57,37 @@ export default class FaceController {
         }
     }
 
+    static async getByFaceIds(req: Request, res: Response, next: NextFunction) {
+        try {
+            let {face_ids} = req.params;
+
+            // @ts-ignore
+            let result = await EnrolledFaceDAO.getByFaceIds(JSON.parse(face_ids).map(id => BigInt(id)))
+
+            const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.id), true)
+
+            result.forEach((row, idx) => {
+                // @ts-ignore
+                result[idx].faces = [];
+
+                faceImages.forEach(data => {
+                    // @ts-ignore
+                    if(data.enrolled_face_id === BigInt(row.id)) {
+                        const imageThumbnail = data.image_thumbnail ? {image_thumbnail: Buffer.from(data.image_thumbnail).toString('base64')} : {}
+
+                        // @ts-ignore
+                        result[idx].faces.push({...data, id: data.id.toString(), enrolled_face_id: data.enrolled_face_id.toString(), ...imageThumbnail})
+                    }
+                })
+            })
+
+            res.send(result.map(data => ({...data, face_id: data.face_id.toString()})))
+        } catch (e) {
+            console.log(e)
+            return next(e);
+        }
+    }
+
     static async getFace(req: Request, res: Response, next: NextFunction) {
         try {
             let {limit, page, search, status, active, start_date, end_date, start_time, end_time, gender, age, download, form} = req.query;

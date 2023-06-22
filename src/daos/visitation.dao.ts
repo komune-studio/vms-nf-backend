@@ -15,6 +15,7 @@ export default class VisitationDAO {
 
         return result;
     }
+
     static async createTable() {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS visitation (
             id SERIAL PRIMARY KEY,
@@ -30,10 +31,10 @@ export default class VisitationDAO {
         );`
     }
 
-    static async createVisit(data : any) {
+    static async createVisit(data: any) {
         let enrolledFaceData = {};
 
-        if(data.enrolled_face_id) {
+        if (data.enrolled_face_id) {
             enrolledFaceData = {
                 enrolled_face: {
                     connect: {id: data.enrolled_face_id}
@@ -43,10 +44,20 @@ export default class VisitationDAO {
 
         let locationData = {}
 
-        if(data.location_id) {
+        if (data.location_id) {
             locationData = {
                 location: {
                     connect: {id: data.location_id}
+                }
+            }
+        }
+
+        let employeeData = {}
+
+        if (data.employee_id) {
+            employeeData = {
+                employee: {
+                    connect: {id: data.employee_id}
                 }
             }
         }
@@ -56,9 +67,7 @@ export default class VisitationDAO {
                 security_id: data.security_id,
                 purpose: data.purpose,
                 ...enrolledFaceData,
-                employee: {
-                    connect: {id: data.employee_id}
-                },
+                ...employeeData,
                 ...locationData,
                 created_at: new Date(),
                 allowed_sites: data.allowed_sites
@@ -66,22 +75,22 @@ export default class VisitationDAO {
         })
     }
 
-    static async getAllVisits(limit? : number, page? : number, search? : string, searchBy? : string, distinct? : boolean, startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string, formId? : string) {
-         const enumerateDaysBetweenDates = (startDate : String, endDate : String) => {
-             let date = []
+    static async getAllVisits(limit?: number, page?: number, search?: string, searchBy?: string, distinct?: boolean, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string) {
+        const enumerateDaysBetweenDates = (startDate: String, endDate: String) => {
+            let date = []
 
-             // @ts-ignore
-             while(moment(startDate) <= moment(endDate)){
-                 date.push(startDate);
-                 // @ts-ignore
-                 startDate = moment(startDate).add(1, 'days').format("YYYY-MM-DD");
-             }
-             return date;
-         }
+            // @ts-ignore
+            while (moment(startDate) <= moment(endDate)) {
+                date.push(startDate);
+                // @ts-ignore
+                startDate = moment(startDate).add(1, 'days').format("YYYY-MM-DD");
+            }
+            return date;
+        }
 
         let whereDateClause = {}
 
-        if(startDate && endDate) {
+        if (startDate && endDate) {
             whereDateClause = {
                 OR: enumerateDaysBetweenDates(startDate, endDate).map(date => {
                     console.log([
@@ -103,7 +112,7 @@ export default class VisitationDAO {
 
         let whereDOBClause = {};
 
-        if(age) {
+        if (age) {
             const year = moment().subtract(parseInt(age), 'year').format('YYYY');
 
             whereDOBClause = {
@@ -116,7 +125,7 @@ export default class VisitationDAO {
 
         let whereFormIdClause = {};
 
-        if(formId) {
+        if (formId) {
             whereFormIdClause = {
                 additional_info: {
                     path: ['form_id'],
@@ -133,19 +142,22 @@ export default class VisitationDAO {
             take: limit ? limit : undefined,
             where: {
                 ...whereDateClause,
-                purpose: searchBy === 'purpose' ? { contains: search, mode: 'insensitive' } : undefined,
+                purpose: searchBy === 'purpose' ? {contains: search, mode: 'insensitive'} : undefined,
                 enrolled_face: {
-                    identity_number: searchBy === 'identity_number' ? { contains: search, mode: 'insensitive' } : undefined,
-                    name: searchBy === 'name' ? { contains: search, mode: 'insensitive' } : undefined,
+                    identity_number: searchBy === 'identity_number' ? {
+                        contains: search,
+                        mode: 'insensitive'
+                    } : undefined,
+                    name: searchBy === 'name' ? {contains: search, mode: 'insensitive'} : undefined,
                     gender: gender ? gender : undefined,
                     ...whereDOBClause,
                     ...whereFormIdClause
                 },
                 location: {
-                    name: searchBy === 'location' ? { contains: search, mode: 'insensitive' } : undefined
+                    name: searchBy === 'location' ? {contains: search, mode: 'insensitive'} : undefined
                 },
                 employee: {
-                    name: searchBy === 'employee' ? { contains: search, mode: 'insensitive' } : undefined
+                    name: searchBy === 'employee' ? {contains: search, mode: 'insensitive'} : undefined
                 },
             },
             select: {
@@ -170,12 +182,12 @@ export default class VisitationDAO {
         });
     }
 
-    static async getVisitCount( search? : string, searchBy? : string, startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string, formId? : string) {
-        const enumerateDaysBetweenDates = (startDate : String, endDate : String) => {
+    static async getVisitCount(search?: string, searchBy?: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string) {
+        const enumerateDaysBetweenDates = (startDate: String, endDate: String) => {
             let date = []
 
             // @ts-ignore
-            while(moment(startDate) <= moment(endDate)){
+            while (moment(startDate) <= moment(endDate)) {
                 date.push(startDate);
                 // @ts-ignore
                 startDate = moment(startDate).add(1, 'days').format("YYYY-MM-DD");
@@ -185,7 +197,7 @@ export default class VisitationDAO {
 
         let whereDateClause = {}
 
-        if(startDate && endDate) {
+        if (startDate && endDate) {
             whereDateClause = {
                 OR: enumerateDaysBetweenDates(startDate, endDate).map(date => {
                     console.log([
@@ -207,7 +219,7 @@ export default class VisitationDAO {
 
         let whereDOBClause = {};
 
-        if(age) {
+        if (age) {
             const year = moment().subtract(parseInt(age), 'year').format('YYYY');
 
             whereDOBClause = {
@@ -220,7 +232,7 @@ export default class VisitationDAO {
 
         let whereFormIdClause = {};
 
-        if(formId) {
+        if (formId) {
             whereFormIdClause = {
                 additional_info: {
                     path: ['form_id'],
@@ -233,25 +245,28 @@ export default class VisitationDAO {
             _count: {id: true},
             where: {
                 ...whereDateClause,
-                purpose: searchBy === 'purpose' ? { contains: search, mode: 'insensitive' } : undefined,
+                purpose: searchBy === 'purpose' ? {contains: search, mode: 'insensitive'} : undefined,
                 enrolled_face: {
-                    identity_number: searchBy === 'identity_number' ? { contains: search, mode: 'insensitive' } : undefined,
-                    name: searchBy === 'name' ? { contains: search, mode: 'insensitive' } : undefined,
+                    identity_number: searchBy === 'identity_number' ? {
+                        contains: search,
+                        mode: 'insensitive'
+                    } : undefined,
+                    name: searchBy === 'name' ? {contains: search, mode: 'insensitive'} : undefined,
                     gender: gender ? gender : undefined,
                     ...whereDOBClause,
                     ...whereFormIdClause
                 },
                 location: {
-                    name: searchBy === 'location' ? { contains: search, mode: 'insensitive' } : undefined
+                    name: searchBy === 'location' ? {contains: search, mode: 'insensitive'} : undefined
                 },
                 employee: {
-                    name: searchBy === 'employee' ? { contains: search, mode: 'insensitive' } : undefined
+                    name: searchBy === 'employee' ? {contains: search, mode: 'insensitive'} : undefined
                 },
             }
         });
     }
 
-    static async getById(id : number) {
+    static async getById(id: number) {
         return visitation.findFirst({
             where: {id: id},
             select: {
@@ -271,7 +286,7 @@ export default class VisitationDAO {
         });
     }
 
-    static async getByEnrolledFaceId(id : number) {
+    static async getByEnrolledFaceId(id: number) {
         return visitation.findMany({
             where: {enrolled_face_id: id},
             orderBy: {created_at: 'desc'},
@@ -292,7 +307,7 @@ export default class VisitationDAO {
         })
     }
 
-    static async updateVisit(id : number, data : any) {
+    static async updateVisit(id: number, data: any) {
         return visitation.update({
             where: {id: id},
             data: {
@@ -308,7 +323,7 @@ export default class VisitationDAO {
         })
     }
 
-    static async approve(id : number) {
+    static async approve(id: number) {
         return visitation.update({
             where: {id: id},
             data: {
@@ -323,7 +338,7 @@ export default class VisitationDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async checkOut(id : number) {
+    static async checkOut(id: number) {
         return visitation.update({
             where: {id: id},
             data: {

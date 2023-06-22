@@ -6,6 +6,19 @@ const prisma = PrismaService.getVisionaire();
 const enrolledFace = prisma.enrolled_face;
 
 export default class EnrolledFaceDAO {
+    static async getByFaceIds(ids : number[]) {
+        let result = enrolledFace.findMany({
+            orderBy: {
+                name: 'asc'
+            },
+            where: {
+                face_id: {in: ids}
+            },
+        });
+
+        return result;
+    }
+
     static async getAll(limit : number, page : number, search : string, status : string, active : boolean = true, ids? : number[], startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string, formId?: string) {
         const enumerateDaysBetweenDates = (startDate : String, endDate : String) => {
             let date = []
@@ -224,6 +237,8 @@ export default class EnrolledFaceDAO {
 
         return result;
     }
+
+
     static async unblacklist(id : number) {
         let result = enrolledFace.update({
             where: {
