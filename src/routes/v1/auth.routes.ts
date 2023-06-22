@@ -13,7 +13,7 @@ export default function routesAuth(router : Router) {
         .post(AuthController.generatePassword)
 
     router.route('/admins')
-        .get(authSuperAdmin, AuthController.getAdmins)
+        .get(authAll, AuthController.getAdmins)
         .post(authSuperAdmin, AuthController.createAdmin)
 
     router.route('/admin/:id')

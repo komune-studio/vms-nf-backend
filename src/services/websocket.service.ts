@@ -8,6 +8,7 @@ import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 import VisitEventDAO from "../daos/visit_event.dao";
 import VisitationDAO from "../daos/visitation.dao";
 import VehicleDAO from "../daos/vehicle.dao";
+import StreamDAO from "../daos/stream.dao";
 
 const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
 
@@ -125,11 +126,11 @@ export default class WebsocketService {
 
                             payload.visitation = visitData[0].id;
                             payload.last_visit_date = visitData[0].created_at;
-                            const site = await MapSiteStreamDAO.getByStreamId(data.stream_id);
-                            if (site) {
-                                payload.allowed_here = visitData[0].allowed_sites.includes(site.site_id) && today === lastVisit && !visitData[0].check_out_time;
-                                status = visitData[0].allowed_sites.includes(site.site_id) ? status : "Unauthorized";
-                            }
+                            let stream : any = (await StreamDAO.getStreamsById([data.stream_id]))[0];
+
+
+                            payload.allowed_here = visitData[0].location_id === stream.custom_data.location_id && today === lastVisit && !visitData[0].check_out_time;
+                            status = visitData[0].location_id === stream.custom_data.location_id ? status : "Unauthorized";
                         } else {
                             status = "Unauthorized";
                         }

@@ -21,7 +21,7 @@ export default class VisitationController {
                 employee_id: employee_id ? parseInt(employee_id) : undefined,
                 allowed_sites: allowed_sites.map((site : any) => BigInt(site)),
                 purpose: purpose,
-                security_id: security_id ? parseInt(security_id) : undefined,
+                security_id: security_id ? parseInt(security_id) : undefined
             }
             console.log(req.body, body)
             let result : any = await VisitationDAO.createVisit(body);
@@ -196,7 +196,7 @@ export default class VisitationController {
         }
 
         try {
-            let result : any = await VisitationDAO.approve(id);
+            let result : any = await VisitationDAO.approve(id, req.decoded.id);
 
             // @ts-ignore
             res.send({...result, allowed_sites: result.allowed_sites.map(data => parseInt(data))});

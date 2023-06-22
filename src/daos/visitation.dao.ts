@@ -22,6 +22,7 @@ export default class VisitationDAO {
             enrolled_face_id bigint,
             employee_id int,
             security_id int,
+            admin_id int,
             location_id int,
             allowed_sites bigint[] NOT NULL default '{}',
             approved boolean NOT NULL default false,
@@ -64,6 +65,7 @@ export default class VisitationDAO {
 
         return visitation.create({
             data: {
+                admin_id: data.admin_id,
                 security_id: data.security_id,
                 purpose: data.purpose,
                 ...enrolledFaceData,
@@ -162,6 +164,7 @@ export default class VisitationDAO {
             },
             select: {
                 id: true,
+                admin_id: true,
                 security_id: true,
                 enrolled_face: {
                     select: {id: true, name: true, identity_number: true}
@@ -300,6 +303,7 @@ export default class VisitationDAO {
                     select: {name: true}
                 },
                 allowed_sites: true,
+                location_id: true,
                 created_at: true,
                 check_out_time: true,
                 approved: true
@@ -323,11 +327,12 @@ export default class VisitationDAO {
         })
     }
 
-    static async approve(id: number) {
+    static async approve(id: number, adminId : number) {
         return visitation.update({
             where: {id: id},
             data: {
-                approved: true
+                approved: true,
+                admin_id: adminId
             }
         })
     }

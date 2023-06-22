@@ -154,10 +154,19 @@ export default class FaceController {
                             result[idx].check_out_time = data.check_out_time;
 
                             // @ts-ignore
-                            result[idx].allowed_sites = data.allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));
+                            result[idx].admin_id = data.admin_id;
 
                             // @ts-ignore
-                            console.log(result[idx].allowed_sites)
+                            result[idx].employee = data.employee;
+
+                            // @ts-ignore
+                            result[idx].security_id = data.security_id;
+
+                            // @ts-ignore
+                            result[idx].created_at = data.created_at;
+
+                            // @ts-ignore
+                            result[idx].allowed_sites = data.allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));
                         }
                     })
                 }

@@ -121,6 +121,7 @@ model visitation {
   enrolled_face_id Int?
   employee_id      Int?
   security_id      Int?
+  admin_id         Int?
   location_id      Int?
   allowed_sites    BigInt[]
   purpose          String?
