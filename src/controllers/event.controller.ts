@@ -5,6 +5,7 @@ import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import EventDAO from "../daos/event.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import moment from "moment";
+import FaceImageDAO from "../daos/face_image.dao";
 
 export default class EventController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
@@ -68,9 +69,10 @@ export default class EventController {
 
             // @ts-ignore
             let events = await EventDAO.getByFaceId(faceId);
+            const faceImages = await FaceImageDAO.getByEnrolledFaceIds([enrollment.id], false)
 
             res.send({
-                enrollment: {...enrollment, face_id: enrollment.face_id.toString()},
+                enrollment: {...enrollment, face_id: enrollment.face_id.toString(), face_image_id: parseInt(faceImages[0].id)},
                 events: events.map(item => {
                     return {
                         ...item,

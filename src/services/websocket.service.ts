@@ -116,21 +116,21 @@ export default class WebsocketService {
                         payload.status = face.status;
                         payload.face_id = data.primary_text;
 
-                        const visitData = await VisitationDAO.getByEnrolledFaceId(face.id);
+                        const visitData = await VisitationDAO.getLatestByEnrolledFaceId(face.id);
                         console.log(visitData)
                         let status = "";
-                        if (visitData.length > 0 && visitData[0].approved) {
+                        if (visitData && visitData.approved) {
                             const today = moment().format('YYYY-MM-DD');
-                            const lastVisit = moment(visitData[0].created_at).format('YYYY-MM-DD');
-                            status = today === lastVisit && !visitData[0].check_out_time ? status : "Unauthorized";
+                            const lastVisit = moment(visitData.created_at).format('YYYY-MM-DD');
+                            status = today === lastVisit && !visitData.check_out_at ? status : "Unauthorized";
 
-                            payload.visitation = visitData[0].id;
-                            payload.last_visit_date = visitData[0].created_at;
+                            payload.visitation = visitData.id;
+                            payload.last_visit_date = visitData.created_at;
                             let stream : any = (await StreamDAO.getStreamsById([data.stream_id]))[0];
 
 
-                            payload.allowed_here = visitData[0].location_id === stream.custom_data.location_id && today === lastVisit && !visitData[0].check_out_time;
-                            status = visitData[0].location_id === stream.custom_data.location_id ? status : "Unauthorized";
+                            payload.allowed_here = visitData.location_id === stream.custom_data.location_id && today === lastVisit && !visitData.check_out_at;
+                            status = visitData.location_id === stream.custom_data.location_id ? status : "Unauthorized";
                         } else {
                             status = "Unauthorized";
                         }
@@ -141,7 +141,7 @@ export default class WebsocketService {
 
                         await VisitEventDAO.create({
                             event_id: data.pipeline_data.event_id,
-                            visitation_id: visitData[0]?.id,
+                            visitation_id: visitData?.id,
                             status,
                         })
                     } else {

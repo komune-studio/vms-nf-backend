@@ -5,25 +5,34 @@ import VisitEventDAO from "../daos/visit_event.dao";
 import VisitationDAO from "../daos/visitation.dao";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import SiteController from "./site.controller";
+import fs from "fs";
 const json2csv = require('json2csv').parse;
 
 export default class VisitationController {
     static async createVisit(req : Request, res : Response, next : NextFunction) {
+        const {file} = req;
         const {enrolled_face_id, location_id, employee_id, allowed_sites, purpose, security_id} = req.body;
+
+        if (!file) {
+            return next(new BadRequestError("Image is required."));
+        }
+
         if (!purpose) {
             return next(new BadRequestError(`Please specify: ${!enrolled_face_id ? "enrolled_face_id" : ""} ${!purpose ? "purpose" : ""}`));
         }
 
         try {
             let body = {
-                enrolled_face_id: enrolled_face_id,
+                enrolled_face_id: parseInt(enrolled_face_id),
                 location_id: location_id ? parseInt(location_id) : undefined,
                 employee_id: employee_id ? parseInt(employee_id) : undefined,
-                allowed_sites: allowed_sites.map((site : any) => BigInt(site)),
+                allowed_sites: [parseInt(allowed_sites)],
                 purpose: purpose,
-                security_id: security_id ? parseInt(security_id) : undefined
+                security_id: security_id ? parseInt(security_id) : undefined,
+                image: fs.readFileSync(file.path),
+                registered_by: req.decoded.id
             }
-            console.log(req.body, body)
+            console.log(body)
             let result : any = await VisitationDAO.createVisit(body);
             result = {
                 ...result,
@@ -37,6 +46,10 @@ export default class VisitationController {
             console.log(e)
 
             return next(e);
+        } finally {
+            if(file) {
+                fs.rmSync(file.path);
+            }
         }
     }
 
@@ -101,6 +114,8 @@ export default class VisitationController {
 
                 // @ts-ignore
                 result[idx].allowed_sites = result[idx].allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));
+                // @ts-ignore
+                result[idx].image = row.image ? Buffer.from(row.image).toString('base64') : null
             });
 
             // @ts-ignore
@@ -114,6 +129,8 @@ export default class VisitationController {
                 results: result,
             });
         } catch (e) {
+            console.log(e)
+
             return next(e);
         }
     }
@@ -155,6 +172,23 @@ export default class VisitationController {
                 ...visitation,
                 allowed_sites: visitation.allowed_sites.map((site : any) => site.toString()),
             })
+        } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async getByEnrolledFaceId(req : Request, res : Response, next : NextFunction) {
+        const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid id."));
+        }
+        try {
+            let visitation = await VisitationDAO.getByEnrolledFaceId(id);
+            if (visitation === null) {
+                return next(new NotFoundError("Visitation not found."));
+            }
+            res.send(visitation.map(data => ({...data, image: data.image ? Buffer.from(data.image).toString('base64') : null, allowed_sites: data.allowed_sites.map((site : any) => site.toString())})))
         } catch (e) {
             return next(e);
         }
@@ -214,7 +248,7 @@ export default class VisitationController {
         }
 
         try {
-            let result : any = await VisitationDAO.checkOut(id);
+            let result : any = await VisitationDAO.checkOut(id, req.decoded.id);
 
             // @ts-ignore
             res.send({...result, allowed_sites: result.allowed_sites.map(data => parseInt(data))});

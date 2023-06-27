@@ -102,8 +102,8 @@ export default class FaceController {
 
             let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true);
             visitData = visitData.filter(data => active
-                ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_time
-                : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_time)
+                ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_at
+                : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_at)
 
 
 
@@ -151,10 +151,10 @@ export default class FaceController {
                             result[idx].approved = data.approved;
 
                             // @ts-ignore
-                            result[idx].check_out_time = data.check_out_time;
+                            result[idx].check_out_at = data.check_out_at;
 
                             // @ts-ignore
-                            result[idx].admin_id = data.admin_id;
+                            result[idx].registered_by = data.registered_by;
 
                             // @ts-ignore
                             result[idx].employee = data.employee;
@@ -238,8 +238,6 @@ export default class FaceController {
             return next(new BadRequestError("Name is required."));
         }
 
-        console.log(req.body.additional_info)
-
         const enrollment = await EnrolledFaceDAO.getByIdentityNumber(req.body['identity_number'])
 
         // @ts-ignore
@@ -308,30 +306,48 @@ export default class FaceController {
 
     static async reenroll(req: Request, res: Response, next: NextFunction) {
         const {identity_number} = req.body;
-
-        const enrolledFace = await EnrolledFaceDAO.getByIdentityNumber(identity_number);
-
-        if (enrolledFace === null) {
-            return next(new NotFoundError("Enrollment not found.", "identity_number"));
-        }
-
-        const faceImages = await FaceImageDAO.getByEnrolledFaceId(enrolledFace.id);
+        const {file} = req;
 
         try {
-            for(const data of faceImages) {
-                await request(`${process.env.NF_FREMISN_API_URL}/face/enrollment`, 'POST', {image: Buffer.from(data.image).toString('base64'), keyspace: 'default', additional_params: {face_id: enrolledFace.face_id.toString()}});
+            const enrolledFace = await EnrolledFaceDAO.getByIdentityNumber(identity_number);
 
-                // @ts-ignore
-                await FaceImageDAO.recover(data.id)
+            if (enrolledFace === null) {
+                return next(new NotFoundError("Enrollment not found.", "identity_number"));
+            }
+
+            if(!file) {
+                return next(new BadRequestError("Image is required."));
             }
 
             await EnrolledFaceDAO.recover(enrolledFace.id)
+
+            const faceImages = await FaceImageDAO.getByEnrolledFaceId(enrolledFace.id);
+
+            const body = new FormData();
+
+            for(const data of faceImages) {
+                body.append('deleted_variations', data.variation);
+            }
+
+            body.append('images', fs.createReadStream(file.path));
+            body.append('identity_number', enrolledFace.identity_number);
+            body.append('name', enrolledFace.name);
+            body.append('status', enrolledFace.status);
+            if(enrolledFace.gender) body.append('gender', enrolledFace.gender);
+            if(enrolledFace.birth_place) body.append('birth_place', enrolledFace.birth_place);
+            body.append('birth_date', moment(enrolledFace.birth_date).format('YYYY-MM-DD'));
+
+            await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment/${enrolledFace.id}`, 'PUT', body);
 
             res.send({success: true});
         } catch (e) {
             console.log(e)
 
             return next(e);
+        } finally {
+            if(file) {
+                fs.rmSync(file.path);
+            }
         }
     }
 

@@ -19,16 +19,20 @@ export default class VisitationDAO {
     static async createTable() {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS visitation (
             id SERIAL PRIMARY KEY,
+            image bytea NOT NULL,
             enrolled_face_id bigint,
             employee_id int,
             security_id int,
-            admin_id int,
+            registered_by int,
+            approved_by int,
+            approved_at TIMESTAMPTZ,
+            check_out_by int,
+            check_out_at TIMESTAMPTZ,
             location_id int,
             allowed_sites bigint[] NOT NULL default '{}',
             approved boolean NOT NULL default false,
             purpose VARCHAR(100) NOT NULL,
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            check_out_time TIMESTAMPTZ        
+            created_at TIMESTAMPTZ DEFAULT NOW()      
         );`
     }
 
@@ -65,14 +69,15 @@ export default class VisitationDAO {
 
         return visitation.create({
             data: {
-                admin_id: data.admin_id,
+                registered_by: data.registered_by,
                 security_id: data.security_id,
                 purpose: data.purpose,
                 ...enrolledFaceData,
                 ...employeeData,
                 ...locationData,
                 created_at: new Date(),
-                allowed_sites: data.allowed_sites
+                allowed_sites: data.allowed_sites,
+                image: data.image
             }
         })
     }
@@ -164,7 +169,8 @@ export default class VisitationDAO {
             },
             select: {
                 id: true,
-                admin_id: true,
+                image: !!limit,
+                registered_by: true,
                 security_id: true,
                 enrolled_face: {
                     select: {id: true, name: true, identity_number: true}
@@ -179,7 +185,7 @@ export default class VisitationDAO {
                 approved: true,
                 allowed_sites: true,
                 created_at: true,
-                check_out_time: true
+                check_out_at: true
             },
             distinct: distinct ? ['enrolled_face_id'] : undefined
         });
@@ -289,6 +295,31 @@ export default class VisitationDAO {
         });
     }
 
+    static async getLatestByEnrolledFaceId(id: number) {
+        return visitation.findFirst({
+            where: {enrolled_face_id: id},
+            orderBy: {created_at: 'desc'},
+            select: {
+                id: true,
+                purpose: true,
+                employee: {
+                    select: {name: true}
+                },
+                location: {
+                    select: {name: true}
+                },
+                allowed_sites: true,
+                location_id: true,
+                created_at: true,
+                check_out_at: true,
+                check_out_by: true,
+                approved: true,
+                security_id: true,
+                registered_by: true
+            }
+        })
+    }
+
     static async getByEnrolledFaceId(id: number) {
         return visitation.findMany({
             where: {enrolled_face_id: id},
@@ -305,8 +336,12 @@ export default class VisitationDAO {
                 allowed_sites: true,
                 location_id: true,
                 created_at: true,
-                check_out_time: true,
-                approved: true
+                check_out_at: true,
+                check_out_by: true,
+                approved: true,
+                security_id: true,
+                registered_by: true,
+                image: true
             }
         })
     }
@@ -332,7 +367,8 @@ export default class VisitationDAO {
             where: {id: id},
             data: {
                 approved: true,
-                admin_id: adminId
+                approved_by: adminId,
+                approved_at: new Date()
             }
         })
     }
@@ -343,11 +379,12 @@ export default class VisitationDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async checkOut(id: number) {
+    static async checkOut(id: number, adminId : number) {
         return visitation.update({
             where: {id: id},
             data: {
-                check_out_time: new Date()
+                check_out_at: new Date(),
+                check_out_by: adminId
             }
         })
     }
