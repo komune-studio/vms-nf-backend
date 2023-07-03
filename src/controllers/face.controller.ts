@@ -102,8 +102,8 @@ export default class FaceController {
 
             let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true);
             visitData = visitData.filter(data => active
-                ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_time
-                : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_time)
+                ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_at
+                : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_at)
 
 
 
@@ -151,7 +151,7 @@ export default class FaceController {
                             result[idx].approved = data.approved;
 
                             // @ts-ignore
-                            result[idx].check_out_time = data.check_out_time;
+                            result[idx].check_out_at = data.check_out_at;
 
                             // @ts-ignore
                             result[idx].allowed_sites = data.allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));

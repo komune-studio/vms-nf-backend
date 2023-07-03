@@ -27,7 +27,7 @@ export default class VisitationDAO {
             approved boolean NOT NULL default false,
             purpose VARCHAR(100) NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            check_out_time TIMESTAMPTZ        
+            check_out_at TIMESTAMPTZ        
         );`
     }
 
@@ -176,7 +176,7 @@ export default class VisitationDAO {
                 approved: true,
                 allowed_sites: true,
                 created_at: true,
-                check_out_time: true
+                check_out_at: true
             },
             distinct: distinct ? ['enrolled_face_id'] : undefined
         });
@@ -301,7 +301,7 @@ export default class VisitationDAO {
                 },
                 allowed_sites: true,
                 created_at: true,
-                check_out_time: true,
+                check_out_at: true,
                 approved: true
             }
         })
@@ -342,7 +342,7 @@ export default class VisitationDAO {
         return visitation.update({
             where: {id: id},
             data: {
-                check_out_time: new Date()
+                check_out_at: new Date()
             }
         })
     }
