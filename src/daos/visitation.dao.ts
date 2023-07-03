@@ -185,7 +185,9 @@ export default class VisitationDAO {
                 approved: true,
                 allowed_sites: true,
                 created_at: true,
-                check_out_at: true
+                check_out_at: true,
+                approved_at:true,
+                approved_by: true
             },
             distinct: distinct ? ['enrolled_face_id'] : undefined
         });

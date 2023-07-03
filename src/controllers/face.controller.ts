@@ -166,6 +166,13 @@ export default class FaceController {
                             result[idx].created_at = data.created_at;
 
                             // @ts-ignore
+                            result[idx].approved_by = data.approved_by;
+
+                            // @ts-ignore
+                            result[idx].approved_at = data.approved_at;
+
+
+                            // @ts-ignore
                             result[idx].allowed_sites = data.allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));
                         }
                     })

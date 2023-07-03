@@ -13,6 +13,7 @@ export default class BookingDAO {
     gender character varying(200),
     birth_place character varying(220),
     birth_date date,
+    phone_num character varying(30),
     plate_number character varying(100),
     image bytea NOT NULL,
     site_id bigint NOT NULL,
