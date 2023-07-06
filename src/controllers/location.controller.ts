@@ -53,7 +53,8 @@ export default class LocationController {
                 name: name,
                 modified_at: new Date(),
             });
-            res.send(result);
+
+            res.send({...result, site_id: result.site_id.toString()});
         } catch (e) {
             return next(e);
         }

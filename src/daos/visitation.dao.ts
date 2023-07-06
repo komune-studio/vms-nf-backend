@@ -77,12 +77,13 @@ export default class VisitationDAO {
                 ...locationData,
                 created_at: new Date(),
                 allowed_sites: data.allowed_sites,
-                image: data.image
+                image: data.image,
+                approved: data.approved
             }
         })
     }
 
-    static async getAllVisits(limit?: number, page?: number, search?: string, searchBy?: string, distinct?: boolean, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string) {
+    static async getAllVisits(limit?: number, page?: number, search?: string, searchBy?: string, distinct?: boolean, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string, approved?: boolean) {
         const enumerateDaysBetweenDates = (startDate: String, endDate: String) => {
             let date = []
 
@@ -148,6 +149,7 @@ export default class VisitationDAO {
             skip: page && limit ? (page - 1) * limit : undefined,
             take: limit ? limit : undefined,
             where: {
+                approved,
                 ...whereDateClause,
                 purpose: searchBy === 'purpose' ? {contains: search, mode: 'insensitive'} : undefined,
                 enrolled_face: {
@@ -185,6 +187,7 @@ export default class VisitationDAO {
                 approved: true,
                 allowed_sites: true,
                 created_at: true,
+                check_out_by: true,
                 check_out_at: true,
                 approved_at:true,
                 approved_by: true
@@ -193,7 +196,7 @@ export default class VisitationDAO {
         });
     }
 
-    static async getVisitCount(search?: string, searchBy?: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string) {
+    static async getVisitCount(search?: string, searchBy?: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string, approved? : boolean) {
         const enumerateDaysBetweenDates = (startDate: String, endDate: String) => {
             let date = []
 
@@ -255,6 +258,7 @@ export default class VisitationDAO {
         return visitation.aggregate({
             _count: {id: true},
             where: {
+                approved,
                 ...whereDateClause,
                 purpose: searchBy === 'purpose' ? {contains: search, mode: 'insensitive'} : undefined,
                 enrolled_face: {
@@ -324,7 +328,7 @@ export default class VisitationDAO {
 
     static async getByEnrolledFaceId(id: number) {
         return visitation.findMany({
-            where: {enrolled_face_id: id},
+            where: {approved: true, enrolled_face_id: id},
             orderBy: {created_at: 'desc'},
             select: {
                 id: true,
@@ -341,6 +345,7 @@ export default class VisitationDAO {
                 check_out_at: true,
                 check_out_by: true,
                 approved: true,
+                approved_at: true,
                 security_id: true,
                 registered_by: true,
                 image: true

@@ -144,7 +144,7 @@ export default class FaceController {
                 if(active) {
                     visitData.forEach(data => {
                         // @ts-ignore
-                        if(row.id === data.enrolled_face.id) {
+                        if(data.enrolled_face && row.id === data.enrolled_face.id) {
                             // @ts-ignore
                             result[idx].visit_id = data.id;
                             // @ts-ignore

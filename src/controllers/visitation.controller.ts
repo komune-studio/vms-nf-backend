@@ -13,9 +13,9 @@ export default class VisitationController {
         const {file} = req;
         const {enrolled_face_id, location_id, employee_id, allowed_sites, purpose, security_id} = req.body;
 
-        if (!file) {
-            return next(new BadRequestError("Image is required."));
-        }
+        // if (!file) {
+        //     return next(new BadRequestError("Image is required."));
+        // }
 
         if (!purpose) {
             return next(new BadRequestError(`Please specify: ${!enrolled_face_id ? "enrolled_face_id" : ""} ${!purpose ? "purpose" : ""}`));
@@ -26,11 +26,12 @@ export default class VisitationController {
                 enrolled_face_id: parseInt(enrolled_face_id),
                 location_id: location_id ? parseInt(location_id) : undefined,
                 employee_id: employee_id ? parseInt(employee_id) : undefined,
-                allowed_sites: [parseInt(allowed_sites)],
+                allowed_sites: allowed_sites ? [parseInt(allowed_sites)] : [],
                 purpose: purpose,
                 security_id: security_id ? parseInt(security_id) : undefined,
-                image: fs.readFileSync(file.path),
-                registered_by: req.decoded.id
+                image: file ? fs.readFileSync(file.path) : null,
+                registered_by: req.decoded.id,
+                approved: security_id ? true : undefined
             }
             console.log(body)
             let result : any = await VisitationDAO.createVisit(body);
@@ -63,8 +64,9 @@ export default class VisitationController {
             // @ts-ignore
             page = parseInt(page);
 
+
             // @ts-ignore
-            let result = await VisitationDAO.getAllVisits(download ? null : limit, download ? null : page, search, searchBy, null, start_date, end_date, start_time, end_time, gender, age, form);
+            let result = await VisitationDAO.getAllVisits(download ? null : limit, download ? null : page, search, searchBy, null, start_date, end_date, start_time, end_time, gender, age, form, true);
 
 
             if(download) {

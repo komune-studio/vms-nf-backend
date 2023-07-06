@@ -191,7 +191,8 @@ export default class EnrolledFaceDAO {
     static async getByIdentityNumber(identityNo : string) {
         let result = enrolledFace.findFirst({
             where: {
-                identity_number: identityNo
+                identity_number: identityNo,
+                deleted_at: {equals: null}
             }
         });
 

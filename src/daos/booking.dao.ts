@@ -16,8 +16,6 @@ export default class BookingDAO {
     phone_num character varying(30),
     plate_number character varying(100),
     image bytea NOT NULL,
-    site_id bigint NOT NULL,
-    location_id integer NOT NULL,
     employee_id integer,
     purpose character varying(100) NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL

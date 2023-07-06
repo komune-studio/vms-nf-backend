@@ -38,8 +38,7 @@ export default class BookingController {
                     return {
                         ...item,
                         id: parseInt(item.id),
-                        image: Buffer.from(item.image).toString('base64'),
-                        site_id : item.site_id ? parseInt(item.site_id) : null
+                        image: Buffer.from(item.image).toString('base64')
                     }
                 })
             });
@@ -57,7 +56,7 @@ export default class BookingController {
             console.log(result)
 
             // @ts-ignore
-            res.send(result ? {...result, id: parseInt(result.id), image:  Buffer.from(result.image).toString('base64'), site_id : result.site_id ? parseInt(result.site_id) : null} : {});
+            res.send(result ? {...result, id: parseInt(result.id), image:  Buffer.from(result.image).toString('base64')} : {});
         } catch (e) {
             console.error(e)
 
@@ -73,7 +72,7 @@ export default class BookingController {
 
 
         try {
-            const response = await BookingDAO.create({...req.body, site_id: req.body.site_id ? BigInt(req.body.site_id) : null, image: fs.readFileSync(file.path), location_id: parseInt(req.body.location_id), employee_id: req.body.employee_id ? parseInt(req.body.employee_id) : null, birth_date:  req.body.birth_date ? new Date(req.body.birth_date) : null});
+            const response = await BookingDAO.create({...req.body, image: fs.readFileSync(file.path), employee_id: req.body.employee_id ? parseInt(req.body.employee_id) : null, birth_date:  req.body.birth_date ? new Date(req.body.birth_date) : null});
 
             res.send({success: true, id: response.id.toString()});
         } catch (e) {
