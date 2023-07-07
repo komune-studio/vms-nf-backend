@@ -6,6 +6,7 @@ import VisitationDAO from "../daos/visitation.dao";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import SiteController from "./site.controller";
 import fs from "fs";
+import AdminDAO from "../daos/admin.dao";
 const json2csv = require('json2csv').parse;
 
 export default class VisitationController {
@@ -57,6 +58,8 @@ export default class VisitationController {
     static async getAllVisits(req : Request, res : Response, next : NextFunction) {
         try {
             let {limit, page, search, searchBy, start_date, end_date, start_time, end_time, gender, age, form, download} = req.query;
+            const {id} = req.decoded;
+            const admin = await AdminDAO.getById(id);
 
             // @ts-ignore
             limit = parseInt(limit);
@@ -64,9 +67,8 @@ export default class VisitationController {
             // @ts-ignore
             page = parseInt(page);
 
-
             // @ts-ignore
-            let result = await VisitationDAO.getAllVisits(download ? null : limit, download ? null : page, search, searchBy, null, start_date, end_date, start_time, end_time, gender, age, form, true);
+            let result = await VisitationDAO.getAllVisits(download ? null : limit, download ? null : page, search, searchBy, null, start_date, end_date, start_time, end_time, gender, age, form, true, admin.role === 'SUPERADMIN' ? null : admin.site_access);
 
 
             if(download) {

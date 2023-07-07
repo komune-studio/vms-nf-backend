@@ -6,7 +6,7 @@ import upload from "../../utils/multer.utils";
 export default function routesVisitation(router : Router) {
     router.route('/visitation')
         .post(authAll, upload.single('images'), VisitationController.createVisit)
-        .get(VisitationController.getAllVisits);
+        .get(authAll, VisitationController.getAllVisits);
 
     router.route('/visitation/:id')
         .get(VisitationController.getById)

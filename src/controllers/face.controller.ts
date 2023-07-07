@@ -8,6 +8,7 @@ import {BadRequestError, ConflictError, NotFoundError} from "../utils/error.util
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FaceImageDAO from "../daos/face_image.dao";
 import SiteDAO from "../daos/site.dao";
+import AdminDAO from "../daos/admin.dao";
 const json2csv = require('json2csv').parse;
 
 export default class FaceController {
@@ -100,16 +101,12 @@ export default class FaceController {
             // @ts-ignore
             active = active !== 'false'
 
-            let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true);
+            let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
             visitData = visitData.filter(data => active
                 ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_at
                 : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_at)
 
-
-
             const ids = visitData.filter(data => data.enrolled_face).map(data => data.enrolled_face?.id)
-
-
 
             // @ts-ignore
             let result = await EnrolledFaceDAO.getAll(download ? null : limit, download ? null : page, search, status, active, ids, start_date, end_date, start_time, end_time, gender, age, form)
@@ -295,6 +292,7 @@ export default class FaceController {
             return res.send({enrollment: null})
         }
 
+        const latestVisitData = await VisitationDAO.getLatestByEnrolledFaceId(enrolledFace.id);
         const faceImages = await FaceImageDAO.getByEnrolledFaceId(enrolledFace.id);
 
         // @ts-ignore
@@ -305,10 +303,7 @@ export default class FaceController {
         })
 
         // @ts-ignore
-        console.log({enrollment: {...enrolledFace, faces, face_id: parseInt(enrolledFace.face_id)}})
-
-        // @ts-ignore
-        res.send({enrollment: {...enrolledFace, faces, face_id: parseInt(enrolledFace.face_id)}})
+        res.send({enrollment: {...enrolledFace, faces, face_id: parseInt(enrolledFace.face_id)}, latest_visit_data: {...latestVisitData, allowed_sites: latestVisitData.allowed_sites.map(data => parseInt(data))}})
     }
 
     static async reenroll(req: Request, res: Response, next: NextFunction) {

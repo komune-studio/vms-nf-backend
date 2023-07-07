@@ -83,7 +83,9 @@ export default class VisitationDAO {
         })
     }
 
-    static async getAllVisits(limit?: number, page?: number, search?: string, searchBy?: string, distinct?: boolean, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string, approved?: boolean) {
+    static async getAllVisits(limit?: number, page?: number, search?: string, searchBy?: string, distinct?: boolean, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string, approved?: boolean, sites?: BigInt[]) {
+        console.log(sites)
+
         const enumerateDaysBetweenDates = (startDate: String, endDate: String) => {
             let date = []
 
@@ -142,6 +144,16 @@ export default class VisitationDAO {
             }
         }
 
+        let whereSiteClause = {}
+
+        if(sites) {
+            whereSiteClause = {
+                allowed_sites: {
+                    hasSome: sites
+                }
+            }
+        }
+
         return visitation.findMany({
             orderBy: {
                 created_at: 'desc'
@@ -151,6 +163,7 @@ export default class VisitationDAO {
             where: {
                 approved,
                 ...whereDateClause,
+                ...whereSiteClause,
                 purpose: searchBy === 'purpose' ? {contains: search, mode: 'insensitive'} : undefined,
                 enrolled_face: {
                     identity_number: searchBy === 'identity_number' ? {
@@ -168,6 +181,7 @@ export default class VisitationDAO {
                 employee: {
                     name: searchBy === 'employee' ? {contains: search, mode: 'insensitive'} : undefined
                 },
+
             },
             select: {
                 id: true,
@@ -309,10 +323,10 @@ export default class VisitationDAO {
                 id: true,
                 purpose: true,
                 employee: {
-                    select: {name: true}
+                    select: {id: true, name: true}
                 },
                 location: {
-                    select: {name: true}
+                    select: {id: true, name: true}
                 },
                 allowed_sites: true,
                 location_id: true,
