@@ -91,6 +91,9 @@ export default class FaceController {
 
     static async getFace(req: Request, res: Response, next: NextFunction) {
         try {
+            const {id} = req.decoded;
+            const admin = await AdminDAO.getById(id);
+
             let {limit, page, search, status, active, start_date, end_date, start_time, end_time, gender, age, download, form} = req.query;
             // @ts-ignore
             limit = parseInt(limit);
@@ -101,7 +104,7 @@ export default class FaceController {
             // @ts-ignore
             active = active !== 'false'
 
-            let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
+            let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, admin ? (admin.role === 'SUPERADMIN' ? undefined : admin.site_access) : undefined);
             visitData = visitData.filter(data => active
                 ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_at
                 : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_at)
