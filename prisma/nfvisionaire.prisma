@@ -46,7 +46,8 @@ model enrolled_face {
   gender          String?      @db.VarChar(200)
   birth_place     String?      @db.VarChar(200)
   birth_date      DateTime?    @db.Date
-  visitation      visitation[]
+  visitation      visitation[] @relation("enrolled_face")
+  granted_by      visitation[] @relation("employee")
   additional_info Json
 }
 
@@ -93,7 +94,6 @@ model employee {
   position     String?
   phone_number String?
   deleted_at   DateTime?    @db.Timestamptz(6)
-  visitation   visitation[]
 }
 
 model face_image {
@@ -133,8 +133,8 @@ model visitation {
   approved         Boolean        @default(false)
   created_at       DateTime?      @default(now()) @db.Timestamptz(6)
   location         location?      @relation(fields: [location_id], references: [id])
-  employee         employee?      @relation(fields: [employee_id], references: [id])
-  enrolled_face    enrolled_face? @relation(fields: [enrolled_face_id], references: [id])
+  employee         enrolled_face? @relation("employee", fields: [employee_id], references: [id])
+  enrolled_face    enrolled_face? @relation("enrolled_face", fields: [enrolled_face_id], references: [id])
 }
 
 model global_setting {

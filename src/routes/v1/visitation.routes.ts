@@ -8,6 +8,9 @@ export default function routesVisitation(router : Router) {
         .post(authAll, upload.single('images'), VisitationController.createVisit)
         .get(authAll, VisitationController.getAllVisits);
 
+    router.route('/visitation/member')
+        .get(VisitationController.getMember);
+
     router.route('/visitation/:id')
         .get(VisitationController.getById)
         .put(VisitationController.updateVisit);
