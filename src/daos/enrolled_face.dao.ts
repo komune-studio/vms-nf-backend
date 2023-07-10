@@ -15,4 +15,15 @@ export default class EnrolledFaceDAO {
 
         return result;
     }
+
+    static async getByFaceIds(ids : bigint[]) {
+        let result = enrolledFace.findMany({
+            where: {
+                face_id: {in: ids}
+            }
+        });
+
+        return result;
+    }
+
 }

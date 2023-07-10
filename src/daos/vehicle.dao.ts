@@ -11,6 +11,13 @@ export default class VehicleDAO {
     static async getVehicles() {
         return vehicles.findMany();
     }
+    static async getByPlate(plate : string) {
+        return vehicles.findFirst({
+            where: {
+                plate_number: plate
+            }
+        })
+    }
     static async getVehicle(id : number) {
         return vehicles.findFirst({
             where: {

@@ -12,4 +12,6 @@ export default function routesVehicle(router : Router) {
         .put(authAdmin, VehicleController.updateVehicle)
         .delete(authAdmin, VehicleController.deleteVehicle);
 
+    router.route('/vehicle/:plate/plate')
+        .get(VehicleController.getByPlate)
 }

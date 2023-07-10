@@ -38,6 +38,17 @@ export default class VehicleController {
         }
     }
 
+    static async getByPlate(req : Request, res : Response, next : NextFunction) {
+        try {
+            let vehicle : any = await VehicleDAO.getByPlate(req.params.plate);
+
+            res.send(vehicle ? {...vehicle, id: vehicle.id.toString()} : vehicle);
+        }
+        catch (err) {
+            return next(err);
+        }
+    }
+
     static async getVehicle(req : Request, res : Response, next : NextFunction) {
         let {id} = req.params;
 
