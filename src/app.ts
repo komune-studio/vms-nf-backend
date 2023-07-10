@@ -17,6 +17,7 @@ import WebsocketService from "./services/websocket.service";
 import {NotFoundError} from "./utils/error.utils";
 import CustomizedFormDao from "./daos/customized_form.dao";
 import BookingDAO from "./daos/booking.dao";
+import SiteDAO from "./daos/site.dao";
 
 // const schedule = require('node-schedule');
 
@@ -100,6 +101,9 @@ app.use(handleErrors);
 
         await EnrolledFaceDAO.addAdditionalInfoColumn()
         console.log("Additional info column has been added to Enrolled Face table.");
+
+        await SiteDAO.addImageColumn()
+        console.log("Image column has been added to Site table.");
     } catch (e) {
         console.log(e);
         return;

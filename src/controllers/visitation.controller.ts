@@ -262,4 +262,17 @@ export default class VisitationController {
             return next(e);
         }
     }
+
+    static async getMember(req : Request, res : Response, next : NextFunction) {
+        try {
+            let result : any = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true, undefined);
+
+            // @ts-ignore
+            res.send(result.filter(data => !data.employee).map(data => ({id: data.enrolled_face.id, name: data.enrolled_face.name, allowed_sites: data.allowed_sites ? data.allowed_sites.map(data => parseInt(data)) : data.allowed_sites, location_id: data.location.id})));
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
 }
