@@ -1,8 +1,12 @@
 import PrismaService from "../services/prisma.service";
-
+const prisma = PrismaService.getVisionaire();
 const sites = PrismaService.getVisionaire().site;
 
 export default class SiteDAO {
+    static async addImageColumn() {
+        return prisma.$executeRaw`ALTER TABLE site ADD COLUMN IF NOT EXISTS image bytea`
+    }
+
     static async getAll() {
         return sites.findMany({
             select: {
