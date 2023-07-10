@@ -46,6 +46,7 @@ model enrolled_face {
   gender          String?   @db.VarChar(200)
   birth_place     String?   @db.VarChar(200)
   birth_date      DateTime? @db.Date
+  detection   detection[]
 }
 
 model vehicle {
@@ -60,6 +61,7 @@ model vehicle {
   deleted_at   DateTime? @db.Timestamptz(6)
   created_at   DateTime  @default(now()) @db.Timestamptz(6)
   updated_at   DateTime  @default(now()) @db.Timestamptz(6)
+  vehicle_detection   vehicle_detection[]
 
   @@index([id], map: "vehicle_auto_index_id")
   @@index([name], map: "vehicle_index_name")
@@ -92,4 +94,55 @@ model face_image {
   created_at       DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at       DateTime? @db.Timestamptz(6)
   image_thumbnail  Bytes?
+}
+
+model cases {
+  id         Int     @id @default(autoincrement())
+  name       String  @db.VarChar
+  deleted_at DateTime? @db.Timestamptz(6)
+}
+
+model user {
+  id          Int       @id @default(autoincrement())
+  photo       Bytes
+  name        String    @db.VarChar(32)
+  password    String    @db.VarChar(86)
+  salt        String    @db.VarChar(32)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  modified_at DateTime? @default(now()) @db.Timestamp(6)
+  active      Boolean   @default(true)
+  detection   detection[]
+  vehicle_detection   vehicle_detection[]
+}
+
+model detection {
+    id            Int     @id @default(autoincrement())
+    enrollment_id Int
+    latitude    Float?      @default(0)
+    longitude   Float?      @default(0)
+    address     String?    @db.VarChar
+    report      String?    @db.VarChar
+    image       Bytes
+    user_id     Int
+    emotion     String?
+    associate_id Int
+    emotion_count   Json?
+    emotion_analysis   Json?
+    created_at       DateTime  @default(now()) @db.Timestamptz(6)
+    enrolled_face    enrolled_face @relation(fields: [enrollment_id], references: [id])
+    user    user @relation(fields: [user_id], references: [id])
+}
+
+model vehicle_detection {
+    id            Int     @id @default(autoincrement())
+    vehicle_id    BigInt
+    latitude    Float?      @default(0)
+    longitude   Float?      @default(0)
+    address     String?    @db.VarChar
+    report      String?    @db.VarChar
+    image       Bytes
+    user_id     Int
+    created_at       DateTime  @default(now()) @db.Timestamptz(6)
+    vehicle    vehicle @relation(fields: [vehicle_id], references: [id])
+    user    user @relation(fields: [user_id], references: [id])
 }

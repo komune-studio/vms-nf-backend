@@ -12,11 +12,45 @@ import {
     UnauthorizedError
 } from "../utils/error.utils";
 import AdminDAO from "../daos/admin.dao";
+import CasesDao from "../daos/cases.dao";
 import SecurityUtils from "../utils/security.utils";
 import PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
+import UserDAO from "../daos/user.dao";
+import DetectionDao from "../daos/detection.dao";
+import VehicleDetectionDAO from "../daos/vehicle_detection.dao";
+import EnrolledFaceDAO from "../daos/enrolled_face.dao";
+import VehicleDAO from "../daos/vehicle.dao";
 
 export default class AuthController {
     static async initialize() {
+        try {
+            console.log("Initializing user table...");
+            await UserDAO.createTable();
+            console.log("user table initialized.");
+
+            console.log("Initializing cases table...");
+            await CasesDao.createTable();
+            console.log("Cases table initialized.");
+
+            console.log("Initializing detection table...");
+            await DetectionDao.createTable();
+            console.log("Detection table initialized.");
+
+            console.log("Initializing vehicle detection table...");
+            await VehicleDetectionDAO.createTable();
+            console.log("Vehicle Detection table initialized.");
+
+            console.log("Initializing additional_info field in enrolled face table...");
+            await EnrolledFaceDAO.addAdditionalInfoColumn();
+            console.log("additional_info field in enrolled face initialized.");
+
+            console.log("Initializing additional_info field in vehicle table...");
+            await VehicleDAO.addAdditionalInfoColumn();
+            console.log("additional_info field in vehicle initialized.");
+        } catch (e) {
+            console.log(e);
+        }
+
         try {
             let result = await AdminDAO.getAll();
             if (result.length === 0) {
@@ -38,8 +72,7 @@ export default class AuthController {
                 const result = await AdminDAO.createTable();
                 console.log("Admin table created successfully.");
                 await this.initialize();
-            }
-            else {
+            } else {
                 console.log(e);
             }
         }
@@ -104,7 +137,7 @@ export default class AuthController {
         }
     }
 
-    static async authenticate(req : Request, res : Response, next : NextFunction) {
+    static async authenticate(req: Request, res: Response, next: NextFunction) {
         try {
             let {name, email} = req.body;
             if (name !== req.decoded.name && email !== req.decoded.email)
@@ -136,8 +169,7 @@ export default class AuthController {
             }
 
             res.send(result);
-        }
-        catch (e) {
+        } catch (e) {
             return next(e);
         }
     }
@@ -173,7 +205,7 @@ export default class AuthController {
         try {
             let result = await AdminDAO.getById(parseInt(req.params.id));
 
-            if(result) {
+            if (result) {
                 // @ts-ignore
                 delete result.password;
                 // @ts-ignore

@@ -1,5 +1,6 @@
 import PrismaService from "../services/prisma.service";
-
+import {Prisma} from "../prisma/nfvisionaire";
+const prisma = PrismaService.getVisionaire();
 const vehicles = PrismaService.getVisionaire().vehicle;
 
 export default class VehicleDAO {
@@ -46,5 +47,12 @@ export default class VehicleDAO {
                 id: id
             }
         })
+    }
+
+    static async addAdditionalInfoColumn() {
+        //enrollment only valid in the same day when they register
+        const sql = `ALTER TABLE vehicle ADD COLUMN IF NOT EXISTS additional_info JSONB default '{}';`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
     }
 }
