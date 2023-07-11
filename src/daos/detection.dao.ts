@@ -1,9 +1,14 @@
 import PrismaService from "../services/prisma.service";
+import {NextFunction, Request, Response} from "express";
+import UserDAO from "./user.dao";
+import {ConflictError} from "../utils/error.utils";
+import SecurityUtils from "../utils/security.utils";
+import fs from "fs";
 
 const prisma = PrismaService.getVisionaire();
+const detection = prisma.detection;
 
 export default class DetectionDao {
-
     static async createTable() {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS detection (
             id SERIAL PRIMARY KEY,
@@ -20,5 +25,11 @@ export default class DetectionDao {
               emotion_analysis json DEFAULT NULL,
               created_at timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP
         );`
+    }
+
+    static async create(obj : any) {
+        return detection.create({
+            data: obj
+        });
     }
 }

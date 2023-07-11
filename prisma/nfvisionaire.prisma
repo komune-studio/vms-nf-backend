@@ -47,6 +47,7 @@ model enrolled_face {
   birth_place     String?   @db.VarChar(200)
   birth_date      DateTime? @db.Date
   detection   detection[]
+  additional_info Json
 }
 
 model vehicle {
@@ -62,6 +63,7 @@ model vehicle {
   created_at   DateTime  @default(now()) @db.Timestamptz(6)
   updated_at   DateTime  @default(now()) @db.Timestamptz(6)
   vehicle_detection   vehicle_detection[]
+  additional_info Json
 
   @@index([id], map: "vehicle_auto_index_id")
   @@index([name], map: "vehicle_index_name")
@@ -102,9 +104,10 @@ model cases {
   deleted_at DateTime? @db.Timestamptz(6)
 }
 
-model user {
+model users {
   id          Int       @id @default(autoincrement())
-  photo       Bytes
+  photo       Bytes?
+  email        String    @db.VarChar(255)
   name        String    @db.VarChar(32)
   password    String    @db.VarChar(86)
   salt        String    @db.VarChar(32)
@@ -125,12 +128,12 @@ model detection {
     image       Bytes
     user_id     Int
     emotion     String?
-    associate_id Int
+    associate_id Int?
     emotion_count   Json?
     emotion_analysis   Json?
     created_at       DateTime  @default(now()) @db.Timestamptz(6)
     enrolled_face    enrolled_face @relation(fields: [enrollment_id], references: [id])
-    user    user @relation(fields: [user_id], references: [id])
+    user    users @relation(fields: [user_id], references: [id])
 }
 
 model vehicle_detection {
@@ -144,5 +147,5 @@ model vehicle_detection {
     user_id     Int
     created_at       DateTime  @default(now()) @db.Timestamptz(6)
     vehicle    vehicle @relation(fields: [vehicle_id], references: [id])
-    user    user @relation(fields: [user_id], references: [id])
+    user    users @relation(fields: [user_id], references: [id])
 }

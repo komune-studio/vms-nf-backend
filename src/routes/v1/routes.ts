@@ -8,6 +8,9 @@ import routesVehicle from "./vehicle.routes";
 import routesSite from "./site.routes";
 import routesMapSiteStream from "./map_site_stream.routes";
 import routesFremisn from "./fremisn.routes";
+import routesCase from "./case.routes";
+import routesUser from "./user.routes";
+import routesDetection from "./detection.routes";
 
 const router = express.Router();
 
@@ -20,5 +23,8 @@ routesSite(router);
 routesMapSiteStream(router);
 routesFace(router);
 routesFremisn(router);
+routesCase(router);
+routesUser(router);
+routesDetection(router);
 
 export default router;

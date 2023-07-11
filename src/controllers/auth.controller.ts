@@ -12,7 +12,7 @@ import {
     UnauthorizedError
 } from "../utils/error.utils";
 import AdminDAO from "../daos/admin.dao";
-import CasesDao from "../daos/cases.dao";
+import CaseDao from "../daos/case.dao";
 import SecurityUtils from "../utils/security.utils";
 import PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
 import UserDAO from "../daos/user.dao";
@@ -29,7 +29,7 @@ export default class AuthController {
             console.log("user table initialized.");
 
             console.log("Initializing cases table...");
-            await CasesDao.createTable();
+            await CaseDao.createTable();
             console.log("Cases table initialized.");
 
             console.log("Initializing detection table...");

@@ -14,4 +14,7 @@ export default function routesVehicle(router : Router) {
 
     router.route('/vehicle/:plate/plate')
         .get(VehicleController.getByPlate)
+
+    router.route('/vehicle/:id/user_id')
+        .put(VehicleController.updateUserId)
 }

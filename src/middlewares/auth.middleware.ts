@@ -48,6 +48,18 @@ export async function authSuperAdmin(req : Request, res : Response, next : NextF
     }
 }
 
+export async function authUser(req : Request, res : Response, next : NextFunction) {
+    try {
+        await processToken(req);
+
+        if (req.decoded.role !== "USER")
+            return next(new ForbiddenError("User is not authorized to access this resource."))
+        next();
+    } catch (e) {
+        return next(e);
+    }
+}
+
 export async function authAdmin(req : Request, res : Response, next : NextFunction) {
     try {
         await processToken(req);

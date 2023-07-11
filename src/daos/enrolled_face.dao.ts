@@ -32,4 +32,31 @@ export default class EnrolledFaceDAO {
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async getAdditionalInfo(id : number) {
+        let result = enrolledFace.findFirst({
+            where: {
+                id
+            },
+            select: {
+                additional_info: true
+            }
+        });
+
+        return result;
+    }
+
+
+    static async updateAdditionalInfo(id : string, additionalInfo : any) {
+        let result = enrolledFace.update({
+            where: {
+                id: parseInt(id)
+            },
+            data: {
+                additional_info: additionalInfo
+            }
+        });
+
+        return result;
+    }
 }

@@ -2,7 +2,8 @@ import {NextFunction, Request, Response} from "express";
 import request, {requestWithFile} from "../utils/api.utils";
 import FormData from "form-data";
 import fs from "fs";
-import {BadRequestError} from "../utils/error.utils";
+import {BadRequestError, NotFoundError} from "../utils/error.utils";
+import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 
 export default class FaceController {
 
@@ -28,6 +29,11 @@ export default class FaceController {
             body.append('images', fs.createReadStream(file.path));
             // @ts-ignore
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
+
+            // @ts-ignore
+            await EnrolledFaceDAO.updateAdditionalInfo(result.enrollment.id, JSON.parse(req.body.additional_info))
+            console.log(result)
+
             res.send(result);
         } catch (e) {
             return next(e);
@@ -40,7 +46,15 @@ export default class FaceController {
         try {
             // @ts-ignore
             let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment?${new URLSearchParams(req.query)}`, 'GET');
-            console.log(result);
+
+            for(const enrollment of result.results.enrollments) {
+                const additionalInfo = await EnrolledFaceDAO.getAdditionalInfo(enrollment.id)
+
+                if(additionalInfo) {
+                    enrollment.additional_info = additionalInfo.additional_info;
+                }
+            }
+
             res.send(result);
         } catch (e) {
             return next(e);
@@ -52,6 +66,13 @@ export default class FaceController {
 
         try {
             let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
+            const additionalInfo = await EnrolledFaceDAO.getAdditionalInfo(parseInt(id));
+
+            if(result.enrollment && additionalInfo) {
+                result.enrollment.additional_info = additionalInfo.additional_info;
+            }
+
+            console.log(result)
 
             res.send(result)
         } catch (e) {
@@ -69,14 +90,25 @@ export default class FaceController {
 
         try {
             const body = new FormData();
+
             Object.keys(req.body).forEach(key => {
                 body.append(key, req.body[key]);
             });
+
+
             if(file) {
+                let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
+
+                for(const face of result.enrollment.faces) {
+                    body.append('deleted_variations', face.variation);
+                }
+
                 body.append('images', fs.createReadStream(file.path));
             }
 
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'PUT', body);
+
+            await EnrolledFaceDAO.updateAdditionalInfo(id, JSON.parse(req.body.additional_info))
 
             res.send(result);
         } catch (e) {

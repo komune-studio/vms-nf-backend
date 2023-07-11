@@ -6,10 +6,10 @@ import SecurityUtils from "../utils/security.utils";
 export default class VehicleController {
     static async createVehicle(req : Request, res : Response, next : NextFunction) {
         try {
-            const {plate_number, type, brand, color, name, status} = req.body;
+            const {plate_number, type, brand, color, name, status, additional_info} = req.body;
 
             let body = {
-                plate_number, type, brand, color, name, status,
+                plate_number, type, brand, color, name, status, additional_info,
                 unique_id: SecurityUtils.generateId(),
             }
             let vehicle = await VehicleDAO.create(body);
@@ -61,6 +61,9 @@ export default class VehicleController {
 
             // @ts-ignore
             vehicle = {...vehicle, id: vehicle.id.toString()}
+
+            console.log(vehicle)
+
             res.send(vehicle);
         }
         catch (err) {
@@ -74,11 +77,13 @@ export default class VehicleController {
         try {
             let vehicle = await VehicleDAO.getByUniqueId(id);
 
-            const {plate_number, type, brand, color, name, status} = req.body;
+            const {plate_number, type, brand, color, name, status, additional_info} = req.body;
 
             const body = {
-                plate_number, type, brand, color, name, status
+                plate_number, type, brand, color, name, status, additional_info
             }
+
+            console.log(body)
 
             if (vehicle === null) {
                 return next(new NotFoundError("Vehicle not found.", "id"));
@@ -107,6 +112,29 @@ export default class VehicleController {
             }
 
             await VehicleDAO.deleteVehicle(id);
+
+            res.send({success: true});
+        }
+        catch (err) {
+            return next(err);
+        }
+    }
+
+    static async updateUserId(req : Request, res : Response, next : NextFunction) {
+        let {id} = req.params;
+
+        // @ts-ignore
+        try {
+            let vehicle = await VehicleDAO.getByUniqueId(id);
+
+            const {user_id} = req.body;
+
+            if (vehicle === null) {
+                return next(new NotFoundError("Vehicle not found.", "id"));
+            }
+
+            // @ts-ignore
+            await VehicleDAO.updateVehicle(id, {...vehicle, additional_info: {...vehicle.additional_info, user_id: parseInt(user_id)}});
 
             res.send({success: true});
         }
