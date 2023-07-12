@@ -4,6 +4,18 @@ const prisma = PrismaService.getVisionaire();
 const enrolledFace = prisma.enrolled_face;
 
 export default class EnrolledFaceDAO {
+    static async getById(id : number) {
+        const faceId = BigInt(id);
+
+        let result = enrolledFace.findFirst({
+            where: {
+                id
+            }
+        });
+
+        return result;
+    }
+
     static async getByFaceId(id : string) {
         const faceId = BigInt(id);
 

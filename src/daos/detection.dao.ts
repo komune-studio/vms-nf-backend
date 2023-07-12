@@ -27,9 +27,65 @@ export default class DetectionDao {
         );`
     }
 
-    static async create(obj : any) {
+    static async create(obj: any) {
         return detection.create({
             data: obj
+        });
+    }
+
+    static async getAll(enrollmentId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string) {
+
+        console.log(search)
+
+        return detection.findMany({
+            include: {
+                enrolled_face: {
+                    select: {name: true, identity_number: true}
+                },
+                user: {
+                    select: {name: true}
+                }
+            },
+            where: {
+                created_at: {
+                    gte: startDate ? new Date(startDate) : undefined,
+                    lte: endDate ? new Date(endDate) : undefined
+                },
+                user_id: userId ? parseInt(userId) : undefined,
+                enrollment_id: enrollmentId ? parseInt(enrollmentId) : undefined,
+                enrolled_face: {
+                    name: {
+                      contains: search,
+                      mode: 'insensitive'
+                    },
+                    additional_info: caseId ? {
+                        path: ['case_id'],
+                        equals: parseInt(caseId)
+                    } : undefined
+                }
+            },
+            orderBy: {
+                created_at: 'desc'
+            }
+        });
+    }
+
+    static async getTopAssociates(enrollmentId : string) {
+        return detection.groupBy({
+            by: ['associate_id'],
+            _count: {
+                associate_id: true
+            },
+            where: {
+              enrollment_id: parseInt(enrollmentId),
+                associate_id: {not: null}
+            },
+            orderBy: {
+                _count: {
+                    associate_id: 'desc',
+                }
+            },
+            take: 1
         });
     }
 }

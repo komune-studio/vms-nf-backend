@@ -6,4 +6,8 @@ import upload from "../../utils/multer.utils";
 export default function routesAuth(router : Router) {
     router.route('/detections')
         .post(authUser, DetectionController.create)
+        .get(DetectionController.getAll)
+
+    router.route('/detection/:enrollment_id/associate')
+        .get(DetectionController.getTopAssociate)
 }

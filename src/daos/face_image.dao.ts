@@ -23,4 +23,18 @@ export default class FaceImageDAO {
 
         return result;
     }
+
+    static async getLatestImgThumbnail(id : number) {
+        let result = faceImage.findFirst({
+            orderBy: {id: 'desc'},
+            select: {
+                image_thumbnail: true
+            },
+            where: {
+                enrolled_face_id: id
+            }
+        });
+
+        return result;
+    }
 }
