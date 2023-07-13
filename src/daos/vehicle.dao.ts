@@ -10,7 +10,11 @@ export default class VehicleDAO {
         })
     }
     static async getVehicles() {
-        return vehicles.findMany();
+        return vehicles.findMany({
+            orderBy: {
+                created_at: 'desc'
+            }
+        });
     }
     static async getByPlate(plate : string) {
         return vehicles.findFirst({

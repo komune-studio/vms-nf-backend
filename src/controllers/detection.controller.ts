@@ -28,10 +28,10 @@ export default class DetectionController {
 
     static async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const {enrollment_id, case_id, search, user_id, start_date, end_date} = req.query;
+            const {enrollment_id, case_id, search, user_id, start_date, end_date, id} = req.query;
 
             // @ts-ignore
-            const data = await DetectionDAO.getAll(enrollment_id, case_id, search, user_id, start_date, end_date)
+            const data = await DetectionDAO.getAll(enrollment_id, case_id, search, user_id, start_date, end_date, id)
 
             res.send(data.map(item => ({...item, image: Buffer.from(item.image).toString('base64')})))
         } catch (err) {
@@ -56,7 +56,7 @@ export default class DetectionController {
                     const thumbnail = Buffer.from(faceImage.image_thumbnail).toString('base64')
 
                     // @ts-ignore
-                    res.send([
+                    return res.send([
                         {
                             count: data[0]._count.associate_id,
                             enrolled_face: thumbnail,
@@ -68,6 +68,51 @@ export default class DetectionController {
             }
 
             res.send([])
+        } catch (err) {
+            console.log(err)
+
+            return next(err);
+        }
+    }
+
+    static async getTopTarget(req: Request, res: Response, next: NextFunction) {
+        try {
+            const data = await DetectionDAO.getTopTarget()
+            const output = [];
+
+            for(const datum of data) {
+                const enrolledFace = await EnrolledFaceDAO.getById(datum.enrollment_id);
+                const faceImage = await FaceImageDAO.getLatestImgThumbnail(datum.enrollment_id)
+
+                if(enrolledFace && faceImage) {
+                    // @ts-ignore
+                    const thumbnail = Buffer.from(faceImage.image_thumbnail).toString('base64')
+
+                    output.push(
+                        {
+                            count: datum._count.enrollment_id,
+                            enrolled_face: thumbnail,
+                            full_name: enrolledFace.name,
+                            nik: enrolledFace.identity_number
+                        }
+                    )
+                }
+            }
+
+            res.send(output)
+        } catch (err) {
+            console.log(err)
+
+            return next(err);
+        }
+    }
+
+    static async getDetectionDistribution(req: Request, res: Response, next: NextFunction) {
+        try {
+            const data = await DetectionDAO.getDetectionDistribution()
+
+            // @ts-ignore
+            res.send(data.map(item => ({...item, count: parseInt(item.count)})))
         } catch (err) {
             console.log(err)
 

@@ -130,4 +130,14 @@ export default class FaceController {
             return next(e);
         }
     }
+
+    static async getCaseDistribution(req: Request, res: Response, next: NextFunction) {
+        try {
+            let result = await EnrolledFaceDAO.getCaseDistribution();
+            // @ts-ignore
+            res.send(result.map(item => ({...item, count: parseInt(item.count)})));
+        } catch (e) {
+            return next(e);
+        }
+    }
 }

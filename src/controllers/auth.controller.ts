@@ -20,6 +20,7 @@ import DetectionDao from "../daos/detection.dao";
 import VehicleDetectionDAO from "../daos/vehicle_detection.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import VehicleDAO from "../daos/vehicle.dao";
+import CustomLogoDAO from "../daos/custom_logo.dao";
 
 export default class AuthController {
     static async initialize() {
@@ -39,6 +40,10 @@ export default class AuthController {
             console.log("Initializing vehicle detection table...");
             await VehicleDetectionDAO.createTable();
             console.log("Vehicle Detection table initialized.");
+
+            console.log("Initializing custom logo table...");
+            await CustomLogoDAO.createTable();
+            console.log("Custom Logo table initialized.");
 
             console.log("Initializing additional_info field in enrolled face table...");
             await EnrolledFaceDAO.addAdditionalInfoColumn();

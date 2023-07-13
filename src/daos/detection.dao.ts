@@ -4,6 +4,7 @@ import UserDAO from "./user.dao";
 import {ConflictError} from "../utils/error.utils";
 import SecurityUtils from "../utils/security.utils";
 import fs from "fs";
+import {Prisma} from "../prisma/nfvisionaire";
 
 const prisma = PrismaService.getVisionaire();
 const detection = prisma.detection;
@@ -33,20 +34,18 @@ export default class DetectionDao {
         });
     }
 
-    static async getAll(enrollmentId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string) {
-
-        console.log(search)
-
+    static async getAll(enrollmentId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string, id? : string) {
         return detection.findMany({
             include: {
                 enrolled_face: {
-                    select: {name: true, identity_number: true}
+                    select: {name: true, identity_number: true, additional_info: true}
                 },
                 user: {
                     select: {name: true}
                 }
             },
             where: {
+                id: id ? parseInt(id) : undefined,
                 created_at: {
                     gte: startDate ? new Date(startDate) : undefined,
                     lte: endDate ? new Date(endDate) : undefined
@@ -87,5 +86,26 @@ export default class DetectionDao {
             },
             take: 1
         });
+    }
+
+    static async getTopTarget() {
+        return detection.groupBy({
+            by: ['enrollment_id'],
+            _count: {
+                enrollment_id: true
+            },
+            orderBy: {
+                _count: {
+                    enrollment_id: 'desc',
+                }
+            },
+            take: 5
+        });
+    }
+
+    static async getDetectionDistribution() {
+        const sql = `select DATE(created_at) as timestamp, count(*) as count from detection group by DATE(created_at) order by DATE(created_at) ASC LIMIT 10`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
     }
 }

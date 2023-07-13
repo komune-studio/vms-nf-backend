@@ -11,6 +11,8 @@ import routesFremisn from "./fremisn.routes";
 import routesCase from "./case.routes";
 import routesUser from "./user.routes";
 import routesDetection from "./detection.routes";
+import routesVehicleDetection from "./vehicle_detection.routes";
+import routesCustomLogo from "./custom_logo.routes";
 
 const router = express.Router();
 
@@ -26,5 +28,7 @@ routesFremisn(router);
 routesCase(router);
 routesUser(router);
 routesDetection(router);
+routesVehicleDetection(router);
+routesCustomLogo(router);
 
 export default router;

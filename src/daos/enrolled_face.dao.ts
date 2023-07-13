@@ -71,4 +71,10 @@ export default class EnrolledFaceDAO {
 
         return result;
     }
+
+    static async getCaseDistribution() {
+        const sql = `select cases.name, count(*) from enrolled_face LEFT JOIN cases on cast(additional_info->>'case_id' as int) = cases.id where enrolled_face.deleted_at is null AND additional_info->>'case_id' IS NOT NULL GROUP BY cases.id ORDER BY cases.name ASC;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }

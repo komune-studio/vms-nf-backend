@@ -149,3 +149,9 @@ model vehicle_detection {
     vehicle    vehicle @relation(fields: [vehicle_id], references: [id])
     user    users @relation(fields: [user_id], references: [id])
 }
+
+model custom_logo {
+    id            Int     @id @default(autoincrement())
+    image         Bytes
+    height        Int
+}
