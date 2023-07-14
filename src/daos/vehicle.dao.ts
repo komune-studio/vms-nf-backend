@@ -1,5 +1,6 @@
 import PrismaService from "../services/prisma.service";
-
+import {Prisma} from "../prisma/nfvisionaire";
+const prisma = PrismaService.getVisionaire();
 const vehicles = PrismaService.getVisionaire().vehicle;
 
 export default class VehicleDAO {
@@ -9,7 +10,11 @@ export default class VehicleDAO {
         })
     }
     static async getVehicles() {
-        return vehicles.findMany();
+        return vehicles.findMany({
+            orderBy: {
+                created_at: 'desc'
+            }
+        });
     }
     static async getByLicensePlate(plate : string) {
         return vehicles.findFirst({
@@ -46,5 +51,15 @@ export default class VehicleDAO {
                 id: id
             }
         })
+    }
+
+    static async getLatestDetection(plate_nums : string[]) {
+        plate_nums = plate_nums.map(plate => `'${plate}'`)
+
+        const sql = `select distinct on (detection->'pipeline_data'->>'plate_number') detection->'pipeline_data'->>'plate_number' plate_number, detection->>'stream_name' as stream_name, event_time from event where (type = 'NFV4-LPR' OR type = 'NFV4-LPR2') AND detection->'pipeline_data'->>'plate_number' in (${plate_nums.join(", ")}) ORDER BY detection->'pipeline_data'->>'plate_number', event_time DESC ;`
+
+        console.log(sql)
+
+        return prisma.$queryRaw(Prisma.raw(sql))
     }
 }

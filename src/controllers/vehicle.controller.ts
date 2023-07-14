@@ -29,6 +29,22 @@ export default class VehicleController {
     static async getAllVehicles(req : Request, res : Response, next : NextFunction) {
         try {
             let vehicles : any = await VehicleDAO.getVehicles();
+
+            // @ts-ignore
+            const plateNums = vehicles.map(vehicle => vehicle.plate_number)
+
+            const latestDetections = await VehicleDAO.getLatestDetection(plateNums);
+
+            // @ts-ignore
+            vehicles.forEach(vehicle => {
+                // @ts-ignore
+                latestDetections.forEach(detection => {
+                    if(vehicle.plate_number === detection.plate_number) {
+                        vehicle.last_recognized = detection;
+                    }
+                })
+            })
+
             // @ts-ignore
             vehicles = vehicles.map(vehicle => ({...vehicle, id: vehicle.id.toString()}))
             res.send(vehicles);
