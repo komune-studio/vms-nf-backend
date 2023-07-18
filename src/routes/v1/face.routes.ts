@@ -9,7 +9,7 @@ export default function routesFace(router : Router) {
         .post(upload.single('images'), FaceController.createFace);
 
     router.route('/face/reenroll')
-        .post(authAdmin, upload.single('images'), FaceController.reenroll)
+        .post(upload.single('images'), FaceController.reenroll)
 
     router.route('/face/match')
         .post(FaceController.faceMatch)

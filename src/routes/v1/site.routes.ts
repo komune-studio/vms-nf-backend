@@ -10,7 +10,7 @@ export default function routesSite(router : Router) {
         .post(authSuperAdmin, upload.single('images'), SiteController.create)
 
     router.route('/site/:id')
-        .get(authAdmin, SiteController.getById)
+        .get(SiteController.getById)
         .put(authSuperAdmin, upload.single('images'), SiteController.update)
         .delete(authSuperAdmin, SiteController.delete)
 

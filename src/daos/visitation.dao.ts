@@ -78,7 +78,8 @@ export default class VisitationDAO {
                 created_at: new Date(),
                 allowed_sites: data.allowed_sites,
                 image: data.image,
-                approved: data.approved
+                approved: data.approved,
+                approved_at: data.approved_at
             }
         })
     }
@@ -400,7 +401,7 @@ export default class VisitationDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async checkOut(id: number, adminId : number) {
+    static async checkOut(id: number, adminId? : number) {
         return visitation.update({
             where: {id: id},
             data: {

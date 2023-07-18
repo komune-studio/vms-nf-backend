@@ -55,6 +55,51 @@ export default class VisitationController {
         }
     }
 
+    static async selfCheckIn(req : Request, res : Response, next : NextFunction) {
+        const {file} = req;
+        const {enrolled_face_id, location_id, employee_id, allowed_sites, purpose, security_id} = req.body;
+
+        // if (!file) {
+        //     return next(new BadRequestError("Image is required."));
+        // }
+
+        if (!purpose) {
+            return next(new BadRequestError(`Please specify: ${!enrolled_face_id ? "enrolled_face_id" : ""} ${!purpose ? "purpose" : ""}`));
+        }
+
+        try {
+            let body = {
+                enrolled_face_id: parseInt(enrolled_face_id),
+                location_id: location_id ? parseInt(location_id) : undefined,
+                employee_id: employee_id ? parseInt(employee_id) : undefined,
+                allowed_sites: allowed_sites ? [parseInt(allowed_sites)] : [],
+                purpose: purpose,
+                security_id: security_id ? parseInt(security_id) : undefined,
+                image: file ? fs.readFileSync(file.path) : null,
+                approved: true,
+                approved_at: new Date()
+            }
+            console.log(body)
+            let result : any = await VisitationDAO.createVisit(body);
+            result = {
+                ...result,
+                enrolled_face_id: result.enrolled_face_id ? result.enrolled_face_id.toString() : null,
+                allowed_sites: result.allowed_sites.map((site : any) => site.toString()),
+            }
+
+            res.send(result);
+
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        } finally {
+            if(file) {
+                fs.rmSync(file.path);
+            }
+        }
+    }
+
     static async getAllVisits(req : Request, res : Response, next : NextFunction) {
         try {
             let {limit, page, search, searchBy, start_date, end_date, start_time, end_time, gender, age, form, download} = req.query;
@@ -253,6 +298,24 @@ export default class VisitationController {
 
         try {
             let result : any = await VisitationDAO.checkOut(id, req.decoded.id);
+
+            // @ts-ignore
+            res.send({...result, allowed_sites: result.allowed_sites.map(data => parseInt(data))});
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
+
+    static async selfCheckOut(req : Request, res : Response, next : NextFunction) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid id."));
+        }
+
+        try {
+            let result : any = await VisitationDAO.checkOut(id);
 
             // @ts-ignore
             res.send({...result, allowed_sites: result.allowed_sites.map(data => parseInt(data))});

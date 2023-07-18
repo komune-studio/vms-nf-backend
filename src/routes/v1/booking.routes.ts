@@ -9,5 +9,5 @@ export default function routesBlacklist(router : Router) {
         .post(upload.single('images'), BookingController.create);
 
     router.route('/booking/:id')
-        .get(authAll, BookingController.getById)
+        .get(BookingController.getById)
 }

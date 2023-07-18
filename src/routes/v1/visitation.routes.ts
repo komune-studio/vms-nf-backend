@@ -8,6 +8,9 @@ export default function routesVisitation(router : Router) {
         .post(authAll, upload.single('images'), VisitationController.createVisit)
         .get(authAll, VisitationController.getAllVisits);
 
+    router.route('/visitation/check-in')
+        .post(upload.single('images'), VisitationController.selfCheckIn)
+
     router.route('/visitation/member')
         .get(VisitationController.getMember);
 
@@ -19,10 +22,13 @@ export default function routesVisitation(router : Router) {
         .get(VisitationController.getByEnrolledFaceId)
 
     router.route('/visitation/:id/approve')
-        .post(authSuperAdmin, VisitationController.approve)
+        .post(VisitationController.approve)
 
     router.route('/visitation/:id/check-out')
         .post(authAll, VisitationController.checkOut)
+
+    router.route('/visitation/:id/check-out/self')
+        .post(VisitationController.selfCheckOut)
 
     router.route('/visitation/event/:id')
         .get(VisitationController.getByEventId);
