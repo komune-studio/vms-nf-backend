@@ -82,4 +82,23 @@ export default class EventController {
             return next(e);
         }
     }
+
+    static async getByEventId(req: Request, res: Response, next: NextFunction) {
+        const eventId = req.params.event_id;
+
+        try {
+            // @ts-ignore
+            let event = await EventDAO.getByEventId(eventId);
+
+            if(!event) {
+                return next(new NotFoundError("Event not found.", "event_id"));
+            }
+
+            res.send({...event, primary_image: Buffer.from(event.primary_image).toString('base64'), secondary_image: Buffer.from(event.secondary_image).toString('base64')});
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
 }

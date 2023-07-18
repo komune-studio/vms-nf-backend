@@ -100,4 +100,19 @@ export default class EventDAO {
 
         return result;
     }
+
+    static async getByEventId(eventId: string) {
+        console.log(eventId)
+
+        let result = event.findFirst({
+            where: {
+                detection: {
+                    path: ['pipeline_data', 'event_id'],
+                    equals: eventId
+                }
+            }
+        });
+
+        return result;
+    }
 }
