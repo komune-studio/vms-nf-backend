@@ -140,7 +140,9 @@ export default class FaceController {
 
             const sites = await SiteDAO.getAll();
 
-            result.forEach((row, idx) => {
+            for(const idx in result) {
+                const row = result[idx];
+
                 if(active) {
                     visitData.forEach(data => {
                         // @ts-ignore
@@ -176,6 +178,11 @@ export default class FaceController {
                             result[idx].allowed_sites = data.allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));
                         }
                     })
+                } else {
+                    const latestVisitData = await VisitationDAO.getLatestByEnrolledFaceId(row.id)
+
+                    // @ts-ignore
+                    result[idx].employee = latestVisitData.employee;
                 }
 
                 // @ts-ignore
@@ -190,7 +197,8 @@ export default class FaceController {
                         result[idx].faces.push({...data, id: data.id.toString(), enrolled_face_id: data.enrolled_face_id.toString(), ...imageThumbnail})
                     }
                 })
-            })
+            }
+
 
             const enrollments = result.map(row => ({...row, face_id: row.face_id.toString()}));
 
