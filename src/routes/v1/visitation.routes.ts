@@ -22,7 +22,7 @@ export default function routesVisitation(router : Router) {
         .get(VisitationController.getByEnrolledFaceId)
 
     router.route('/visitation/:id/approve')
-        .post(VisitationController.approve)
+        .post(authAll, VisitationController.approve)
 
     router.route('/visitation/:id/check-out')
         .post(authAll, VisitationController.checkOut)

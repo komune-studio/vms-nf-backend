@@ -175,7 +175,7 @@ export default class VisitationController {
                 current_page: page ? page : 1,
                 total_data: count._count.id,
                 total_page: totalPage,
-                results: result,
+                results: result.map(data => ({...data, allowed_sites: data.allowed_sites.map(site => parseInt(String(site)))})),
             });
         } catch (e) {
             console.log(e)
