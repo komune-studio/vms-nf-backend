@@ -4,10 +4,12 @@ import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import EventDAO from "../daos/event.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import moment from "moment";
-
+const json2csv = require('json2csv').parse;
 export default class EventController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
-        let {keyword, status, stream, page, limit, analytic, start_date, end_date} = req.query;
+        let {keyword, status, stream, page, limit, analytic, start_date, end_date, download} = req.query;
+
+        download = download === 'true';
 
         if (!page || !limit) {
             return next(new BadRequestError({
@@ -26,10 +28,26 @@ export default class EventController {
             }
 
             // @ts-ignore
-            let count = await EventDAO.getCountWithPagination(keyword, status, stream, analytic, startDate, endDate);
+            let event = await EventDAO.getAllWithPagination(keyword, status, stream, analytic, startDate, endDate, download ? null : parseInt(page), download ? null : parseInt(limit));
+
+            if(download) {
+                const fields = ['Result', 'Timestamp', 'Location'];
+
+                const docs = event.map(item => ({
+                    result: item.result.label + ` (${item.result.result})`,
+                    timestamp: item.event_time,
+                    location: item.detection.stream_name
+                }))
+
+                const data = json2csv(docs, fields);
+
+                res.attachment('event-history.csv');
+
+                return res.send(data)
+            }
 
             // @ts-ignore
-            let event = await EventDAO.getAllWithPagination(keyword, status, stream, analytic, startDate, endDate, parseInt(page), parseInt(limit));
+            let count = await EventDAO.getCountWithPagination(keyword, status, stream, analytic, startDate, endDate);
 
             // @ts-ignore
             res.send({
@@ -76,6 +94,25 @@ export default class EventController {
                     }
                 })
             });
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
+
+    static async getByEventId(req: Request, res: Response, next: NextFunction) {
+        const eventId = req.params.event_id;
+
+        try {
+            // @ts-ignore
+            let event = await EventDAO.getByEventId(eventId);
+
+            if(!event) {
+                return next(new NotFoundError("Event not found.", "event_id"));
+            }
+
+            res.send({...event, primary_image: Buffer.from(event.primary_image).toString('base64'), secondary_image: Buffer.from(event.secondary_image).toString('base64')});
         } catch (e) {
             console.log(e)
 

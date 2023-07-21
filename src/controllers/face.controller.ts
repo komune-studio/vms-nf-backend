@@ -4,6 +4,8 @@ import FormData from "form-data";
 import fs from "fs";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
+import {BadRequestError} from "../utils/error.utils";
+import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 
 export default class FaceController {
 
@@ -54,6 +56,17 @@ export default class FaceController {
                     enrollment.additional_info = additionalInfo.additional_info;
                 }
             }
+
+
+            for(const enrollment of result.results.enrollments) {
+                const response = await EnrolledFaceDAO.getFaceIdByEnrolledFaceId(enrollment.id);
+
+                if(response) {
+                    enrollment.face_id = response.face_id.toString()
+                }
+            }
+
+            console.log(result.results.enrollments)
 
             res.send(result);
         } catch (e) {

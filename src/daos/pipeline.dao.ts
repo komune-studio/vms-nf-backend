@@ -31,7 +31,10 @@ export default class PipelineDAO {
                 streams: {
                     select: {
                         id: true,
-                        name: true
+                        name: true,
+                        latitude: true,
+                        longitude: true,
+                        node_num: true
                     }
                 }
             }

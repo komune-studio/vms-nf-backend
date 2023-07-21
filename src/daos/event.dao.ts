@@ -66,7 +66,7 @@ export default class EventDAO {
         // @ts-ignore
         analytic = analytic === 'null' ? null : analytic
 
-        const sql = `SELECT id, type, stream_id, detection, primary_image, secondary_image, result, status, event_time, created_at  FROM event WHERE ${status && analytic === 'NFV4-FR' ? ` status = '${status}' ` : status && analytic === 'NFV4-LPR2' ? ` result->>'result' ${status === 'UNKNOWN' ? ' not ' : ''} ilike '%-%' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC LIMIT ${limit} OFFSET ${limit * (page - 1)};`
+        const sql = `SELECT id, type, stream_id, detection, ${limit && page ? ` primary_image, secondary_image, ` : ''} result, status, event_time, created_at  FROM event WHERE ${status && analytic === 'NFV4-FR' ? ` status = '${status}' ` : status && analytic === 'NFV4-LPR2' ? ` result->>'result' ${status === 'UNKNOWN' ? ' not ' : ''} ilike '%-%' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -95,6 +95,21 @@ export default class EventDAO {
                     }
                 ]
 
+            }
+        });
+
+        return result;
+    }
+
+    static async getByEventId(eventId: string) {
+        console.log(eventId)
+
+        let result = event.findFirst({
+            where: {
+                detection: {
+                    path: ['pipeline_data', 'event_id'],
+                    equals: eventId
+                }
             }
         });
 
