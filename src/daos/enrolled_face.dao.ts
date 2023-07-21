@@ -15,4 +15,17 @@ export default class EnrolledFaceDAO {
 
         return result;
     }
+
+    static async getFaceIdByEnrolledFaceId(id : number) {
+        let result = enrolledFace.findFirst({
+            select: {
+                face_id: true
+            },
+            where: {
+                id: id
+            }
+        });
+
+        return result;
+    }
 }
