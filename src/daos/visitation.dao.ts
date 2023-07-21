@@ -409,4 +409,16 @@ export default class VisitationDAO {
             }
         })
     }
+
+    static async getCountGroupByGender () {
+        const sql = `select gender, count(*) from visitation left join enrolled_face on visitation.enrolled_face_id = enrolled_face.id where gender is not null and gender != '' and approved = true and visitation.created_at >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}' group by gender;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async getCountGroupByType () {
+        const sql = `select type, count(*) from visitation left join enrolled_face on visitation.enrolled_face_id = enrolled_face.id left join customized_forms on cast(enrolled_face.additional_info->'form_id' as integer) = customized_forms.id WHERE customized_forms.id is not null and approved = true and visitation.created_at >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}' group by customized_forms.id;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }

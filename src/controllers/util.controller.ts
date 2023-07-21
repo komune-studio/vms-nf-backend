@@ -30,6 +30,7 @@ export default class UtilController {
                 today: 0,
                 today_visitor: 0,
                 yesterday: 0,
+                yesterday_visitor: 0,
                 last_7_days: 1,
                 last_7_days_visitor: 0,
                 last_30_days: 0,
@@ -37,7 +38,9 @@ export default class UtilController {
                 daily_record: {},
                 daily_record_visitor: {},
                 heatmap_data: {},
-                location_data: []
+                location_data: [],
+                type_data: [],
+                gender_data: []
             }
             const {analytic, stream, start_date, end_date, start_time, end_time, gender, age} = req.query;
             const streamEqualsClause = stream === 'null' ? [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}] : [{stream_id: {equals: stream}}]
@@ -125,6 +128,20 @@ export default class UtilController {
 
             output.yesterday = yesterdaysCount._count.id;
 
+            const yesterdayCount = await VisitationDAO.getCount(
+                {
+                    AND: [
+                        {
+                            created_at: {gte: moment().subtract(1, 'day').format('YYYY-MM-DDT00:00:00Z')}
+                        },
+                        {
+                            created_at: {lte: new Date(moment().subtract(1, 'day').format('YYYY-MM-DDT23:59:59Z'))}
+                        },
+                    ]
+                })
+
+            output.yesterday_visitor = yesterdayCount._count.id;
+
             //last 7 day's count
             const last7DaysCount = await EventDAO.getCount(
                 {
@@ -180,7 +197,7 @@ export default class UtilController {
             const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
 
             // @ts-ignore
-            countByTimeAndStatus.forEach(data => {
+            visitationCountByTime.forEach(data => {
                 data.event_time = data.interval_alias
 
                 if (moment(data.event_time).isSameOrAfter(moment().startOf('week').format('YYYY-MM-DDT00:00:00Z')) && moment(data.event_time).isSameOrBefore(moment().endOf('week').format('YYYY-MM-DDT00:00:00Z'))) {
@@ -246,6 +263,13 @@ export default class UtilController {
             // @ts-ignore
             output.location_data = countByStreamId.map(data => ({...data, count: parseInt(data.count)}))
 
+            const countByGender = await VisitationDAO.getCountGroupByGender();
+            // @ts-ignore
+            output.gender_data = countByGender.map(data => ({...data, count: parseInt(data.count)}))
+
+            const countByType = await VisitationDAO.getCountGroupByType();
+            // @ts-ignore
+            output.type_data = countByType.map(data => ({...data, count: parseInt(data.count)}))
 
             res.send(output);
         } catch (e) {
