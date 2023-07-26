@@ -6,12 +6,28 @@ import BookingDAO from "../daos/booking.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import moment from "moment";
 import AdminDAO from "../daos/admin.dao";
-import SecurityUtils from "../utils/security.utils";
+import sharp from "sharp";
 import fs from "fs";
+import request from "../utils/api.utils";
+import aws from 'aws-sdk'
+import QRImage from 'qr-image'
+
+aws.config = new aws.Config();
+aws.config.accessKeyId = 'GUNXIGZGIXJEFQGGUXAK'
+aws.config.secretAccessKey = 'EcLSassM8xA9/EJpNMf2Hvt+E42+R2PYLvM0u8h3N44'
+
+const spacesEndpoint = new aws.Endpoint('sgp1.digitaloceanspaces.com');
+
+const s3 = new aws.S3({
+    endpoint: spacesEndpoint
+});
+
 
 export default class BookingController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
-        let {id, page, limit} = req.query;
+        let {id, page, limit, history} = req.query;
+
+        history = history === 'true'
 
         if (!page || !limit) {
             return next(new BadRequestError({
@@ -25,9 +41,7 @@ export default class BookingController {
             let count = await BookingDAO.getCount(id);
 
             // @ts-ignore
-            let data = await BookingDAO.getAll(id, parseInt(page), parseInt(limit));
-
-            console.log(data)
+            let data = await BookingDAO.getAll(id, parseInt(page), parseInt(limit), history);
 
             // @ts-ignore
             res.send({
@@ -65,6 +79,17 @@ export default class BookingController {
     }
 
     static async create(req: Request, res: Response, next: NextFunction) {
+        const uploadWithoutMulter = (key:string, body:any, contentType:string)=>{
+            return s3.upload({
+                Body: body,
+                Key: key,
+                ACL: 'public-read',
+                Bucket: 'wellsource',
+                ContentType: contentType
+            }).promise()
+
+        }
+
         const file = req.file;
         if (!file) {
             return next(new BadRequestError("Image is required."));
@@ -74,6 +99,22 @@ export default class BookingController {
         try {
             const response = await BookingDAO.create({...req.body, image: fs.readFileSync(file.path), employee_id: req.body.employee_id ? parseInt(req.body.employee_id) : null, birth_date:  req.body.birth_date ? new Date(req.body.birth_date) : null});
 
+            if(req.body.phone_num) {
+                const dir = `intellivent-register/qr`
+                const fileName = `vms_booking_qr-${response.id}_${Date.now()}.png`
+                const qrImg = QRImage.image(response.id.toString(), { type: "png" })
+
+                const result = await uploadWithoutMulter(`${dir}/${fileName}`, qrImg, 'image/png')
+
+                await request("https://sendtalk-api.taptalk.io/api/v1/message/send_whatsapp", 'POST', {
+                    "phone": req.body.phone_num.substring(1) === '0' ? '+62' + req.body.phone_num.substring(1) : req.body.phone_num,
+                    "messageType": "image",
+                    "caption": 'Your Booking QR',
+                    "filename": 'booking-qr.png',
+                    "body": result.Location
+                }, false, {'API-Key': '3eb70f01c405172336163f19fb0f246a09dd97fcc2babf5fd64f887a8ec502ce'});
+            }
+
             res.send({success: true, id: response.id.toString()});
         } catch (e) {
             console.log(e)
@@ -81,6 +122,53 @@ export default class BookingController {
             return next(e);
         }  finally {
             fs.rmSync(file.path);
+        }
+    }
+
+    static async inactivate(req: Request, res: Response, next: NextFunction) {
+        try {
+            await BookingDAO.inactivate(parseInt(req.params.id));
+
+            res.send({success: true});
+        } catch (e) {
+            console.error(e)
+
+            return next(e);
+        }
+    }
+
+    static async getBookingByFace(req: Request, res: Response, next: NextFunction) {
+        const THRESHOLD = .8;
+
+        try {
+            const booking = await BookingDAO.getAll(null, null, null, false);
+            const {image} = req.body;
+
+            let selectedBooking = null;
+
+            for(const data of booking) {
+                const buffer = await sharp(data.image).resize(1000).jpeg({quality: 80}).toBuffer();
+
+                const response = await request(`${process.env.NF_FREMISN_API_URL}/face/match`, 'POST', {
+                    image_a: {
+                        content: image
+                    },
+                    image_b: {
+                        content: Buffer.from(buffer).toString('base64')
+                    }
+                });
+
+                if(!selectedBooking || selectedBooking.similarity < response.face_match.similarity) {
+                    selectedBooking = {...data, similarity: response.face_match.similarity}
+                }
+
+            }
+
+            res.send(selectedBooking && selectedBooking.similarity >= THRESHOLD ? {...selectedBooking, id: parseInt(selectedBooking.id), image:  Buffer.from(selectedBooking.image).toString('base64')} : {});
+        } catch (e) {
+            console.error(e)
+
+            return next(e);
         }
     }
 }

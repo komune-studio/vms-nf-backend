@@ -102,7 +102,7 @@ export default class VisitationController {
 
     static async getAllVisits(req : Request, res : Response, next : NextFunction) {
         try {
-            let {limit, page, search, searchBy, start_date, end_date, start_time, end_time, gender, age, form, download} = req.query;
+            let {limit, page, search, searchBy, start_date, end_date, start_time, end_time, gender, age, type, download} = req.query;
             const {id} = req.decoded;
             const admin = await AdminDAO.getById(id);
 
@@ -113,7 +113,7 @@ export default class VisitationController {
             page = parseInt(page);
 
             // @ts-ignore
-            let result = await VisitationDAO.getAllVisits(download ? null : limit, download ? null : page, search, searchBy, null, start_date, end_date, start_time, end_time, gender, age, form, true, admin.role === 'SUPERADMIN' ? null : admin.site_access);
+            let result = await VisitationDAO.getAllVisits(download ? null : limit, download ? null : page, search, searchBy, null, start_date, end_date, start_time, end_time, gender, age, type, true, admin.role === 'SUPERADMIN' ? null : admin.site_access);
 
 
             if(download) {
@@ -138,7 +138,7 @@ export default class VisitationController {
             }
 
             // @ts-ignore
-            let count = await VisitationDAO.getVisitCount(search, searchBy, start_date, end_date, start_time, end_time, gender, age, form);
+            let count = await VisitationDAO.getVisitCount(search, searchBy, start_date, end_date, start_time, end_time, gender, age, type);
 
             // @ts-ignore
             const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.filter(row => row.enrolled_face).map(row => row.enrolled_face.id), true)

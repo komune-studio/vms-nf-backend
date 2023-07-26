@@ -18,6 +18,7 @@ export default class BookingDAO {
     image bytea NOT NULL,
     employee_id integer,
     purpose character varying(100) NOT NULL,
+    active boolean default true,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 `
@@ -35,8 +36,8 @@ export default class BookingDAO {
         });
     }
 
-    static async getAll(idNo: string, page: number, limit: number) {
-        const sql = `SELECT * FROM booking ${idNo ? ` WHERE cast(id as text) like '%${idNo}%' ` : ''} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${limit * (page - 1)};`
+    static async getAll(idNo: string, page: number, limit: number, history : boolean) {
+        const sql = `SELECT * FROM booking WHERE 1 = 1 ${idNo ? ` AND cast(id as text) like '%${idNo}%' ` : ''} ${!history ? ` AND active = true ` : ''} ORDER BY created_at DESC ${limit ? ` LIMIT ${limit} ` : '  '} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ``};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -44,6 +45,13 @@ export default class BookingDAO {
     static async create(obj : any) {
         return booking.create({
             data: obj
+        });
+    }
+
+    static async inactivate(id : number) {
+        return booking.update({
+            where: {id},
+            data: {active: false}
         });
     }
 }

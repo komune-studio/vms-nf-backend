@@ -21,6 +21,7 @@
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.7",
     "@types/node-fetch": "^2.6.2",
+    "@types/qr-image": "^3.2.5",
     "@types/websocket": "^1.0.5",
     "nodemon": "^2.0.20",
     "prisma": "^4.10.1",
@@ -29,6 +30,7 @@
   },
   "dependencies": {
     "@prisma/client": "^4.10.1",
+    "aws-sdk": "^2.1421.0",
     "body-parser": "^1.20.1",
     "cors": "^2.8.5",
     "date-fns": "^2.29.3",
@@ -42,6 +44,8 @@
     "multer": "^1.4.5-lts.1",
     "node-fetch": "^2.x",
     "node-schedule": "^2.1.1",
+    "qr-image": "^3.2.0",
+    "sharp": "^0.32.4",
     "websocket": "^1.0.34"
   }
 }

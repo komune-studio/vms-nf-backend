@@ -84,7 +84,7 @@ export default class VisitationDAO {
         })
     }
 
-    static async getAllVisits(limit?: number, page?: number, search?: string, searchBy?: string, distinct?: boolean, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string, approved?: boolean, sites?: BigInt[]) {
+    static async getAllVisits(limit?: number, page?: number, search?: string, searchBy?: string, distinct?: boolean, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, type?: string, approved?: boolean, sites?: BigInt[]) {
         console.log(sites)
 
         const enumerateDaysBetweenDates = (startDate: String, endDate: String) => {
@@ -134,14 +134,16 @@ export default class VisitationDAO {
             }
         }
 
-        let whereFormIdClause = {};
+        let whereTypeClause = {};
 
-        if (formId) {
-            whereFormIdClause = {
-                additional_info: {
-                    path: ['form_id'],
-                    equals: parseInt(formId)
-                }
+        if (type === 'member') {
+            whereTypeClause = {
+                employee_id: {equals: null},
+                security_id: {equals: null}
+            }
+        } else if (type === 'non-member') {
+            whereTypeClause = {
+                employee_id: {not: null},
             }
         }
 
@@ -165,6 +167,7 @@ export default class VisitationDAO {
                 approved,
                 ...whereDateClause,
                 ...whereSiteClause,
+                ...whereTypeClause,
                 purpose: searchBy === 'purpose' ? {contains: search, mode: 'insensitive'} : undefined,
                 enrolled_face: {
                     identity_number: searchBy === 'identity_number' ? {
@@ -174,7 +177,6 @@ export default class VisitationDAO {
                     name: searchBy === 'name' ? {contains: search, mode: 'insensitive'} : undefined,
                     gender: gender ? gender : undefined,
                     ...whereDOBClause,
-                    ...whereFormIdClause
                 },
                 location: {
                     name: searchBy === 'location' ? {contains: search, mode: 'insensitive'} : undefined
@@ -211,7 +213,7 @@ export default class VisitationDAO {
         });
     }
 
-    static async getVisitCount(search?: string, searchBy?: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, formId?: string, approved? : boolean) {
+    static async getVisitCount(search?: string, searchBy?: string, startDate?: string, endDate?: string, startTime?: string, endTime?: string, gender?: string, age?: string, type?: string, approved? : boolean) {
         const enumerateDaysBetweenDates = (startDate: String, endDate: String) => {
             let date = []
 
@@ -259,14 +261,16 @@ export default class VisitationDAO {
             }
         }
 
-        let whereFormIdClause = {};
+        let whereTypeClause = {};
 
-        if (formId) {
-            whereFormIdClause = {
-                additional_info: {
-                    path: ['form_id'],
-                    equals: parseInt(formId)
-                }
+        if (type === 'member') {
+            whereTypeClause = {
+                employee_id: {equals: null},
+                security_id: {equals: null}
+            }
+        } else if (type === 'non-member') {
+            whereTypeClause = {
+                employee_id: {not: null},
             }
         }
 
@@ -275,6 +279,7 @@ export default class VisitationDAO {
             where: {
                 approved,
                 ...whereDateClause,
+                ...whereTypeClause,
                 purpose: searchBy === 'purpose' ? {contains: search, mode: 'insensitive'} : undefined,
                 enrolled_face: {
                     identity_number: searchBy === 'identity_number' ? {
@@ -284,7 +289,6 @@ export default class VisitationDAO {
                     name: searchBy === 'name' ? {contains: search, mode: 'insensitive'} : undefined,
                     gender: gender ? gender : undefined,
                     ...whereDOBClause,
-                    ...whereFormIdClause
                 },
                 location: {
                     name: searchBy === 'location' ? {contains: search, mode: 'insensitive'} : undefined

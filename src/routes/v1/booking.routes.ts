@@ -8,6 +8,12 @@ export default function routesBlacklist(router : Router) {
         .get(authAll, BookingController.getAll)
         .post(upload.single('images'), BookingController.create);
 
+    router.route('/booking/face')
+        .post(BookingController.getBookingByFace)
+
     router.route('/booking/:id')
         .get(BookingController.getById)
+
+    router.route('/booking/:id/inactivate')
+        .post(BookingController.inactivate)
 }

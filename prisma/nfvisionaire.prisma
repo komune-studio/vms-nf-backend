@@ -169,5 +169,6 @@ model booking {
    image           Bytes
    employee_id     Int?
    purpose         String      @db.VarChar(100)
+   active          Boolean?    @default(true)
    created_at      DateTime    @default(now()) @db.Timestamptz(6)
 }

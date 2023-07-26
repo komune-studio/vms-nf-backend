@@ -91,25 +91,36 @@ export default class FaceController {
 
     static async getFace(req: Request, res: Response, next: NextFunction) {
         try {
-            let {limit, page, search, status, active, start_date, end_date, start_time, end_time, gender, age, download, form} = req.query;
+            let {limit, page, search, status, active, start_date, end_date, start_time, end_time, gender, age, download, type} = req.query;
             // @ts-ignore
             limit = parseInt(limit);
 
             // @ts-ignore
             page = parseInt(page);
 
-            // @ts-ignore
-            active = active !== 'false'
+            if(active) {
+                // @ts-ignore
+                active = active !== 'false'
+            }
 
             let visitData = await VisitationDAO.getAllVisits(undefined, undefined, undefined, undefined, true, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
-            visitData = visitData.filter(data => active
-                ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_at
-                : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_at)
+
+            if(active !== undefined) {
+                visitData = visitData.filter(data => active
+                    ? moment(data.created_at).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD') && !data.check_out_at
+                    : moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_at)
+            }
+
+            if(type === 'member') {
+                visitData = visitData.filter(data => !data.employee && !data.security_id)
+            } else if (type === 'non-member') {
+                visitData = visitData.filter(data => data.employee)
+            }
 
             const ids = visitData.filter(data => data.enrolled_face).map(data => data.enrolled_face?.id)
 
             // @ts-ignore
-            let result = await EnrolledFaceDAO.getAll(download ? null : limit, download ? null : page, search, status, active, ids, start_date, end_date, start_time, end_time, gender, age, form)
+            let result = await EnrolledFaceDAO.getAll(download ? null : limit, download ? null : page, search, status, active, ids, start_date, end_date, start_time, end_time, gender, age)
 
             if(download) {
                 const fields = ['Created At', 'Identity Number', 'Name', 'Gender', 'Birth Place', 'Birth Date'];
@@ -131,7 +142,7 @@ export default class FaceController {
             }
 
             // @ts-ignore
-            let count = await EnrolledFaceDAO.getCount(search, status, active, ids, start_date, end_date, start_time, end_time, gender, age, form)
+            let count = await EnrolledFaceDAO.getCount(search, status, active, ids, start_date, end_date, start_time, end_time, gender, age)
 
             const faceImages = await FaceImageDAO.getByEnrolledFaceIds(result.map(row => row.id), !active)
 
@@ -140,10 +151,16 @@ export default class FaceController {
             for(const idx in result) {
                 const row = result[idx];
 
-                if(active) {
                     visitData.forEach(data => {
                         // @ts-ignore
                         if(data.enrolled_face && row.id === data.enrolled_face.id) {
+                            // @ts-ignore
+                            result[idx].employee = data.employee;
+                            // @ts-ignore
+                            result[idx].location = data.location;
+
+                            if(moment(data.created_at).format('YYYY-MM-DD') !== moment().format('YYYY-MM-DD') || data.check_out_at) return;
+
                             // @ts-ignore
                             result[idx].visit_id = data.id;
                             // @ts-ignore
@@ -154,9 +171,6 @@ export default class FaceController {
 
                             // @ts-ignore
                             result[idx].registered_by = data.registered_by;
-
-                            // @ts-ignore
-                            result[idx].employee = data.employee;
 
                             // @ts-ignore
                             result[idx].security_id = data.security_id;
@@ -175,12 +189,7 @@ export default class FaceController {
                             result[idx].allowed_sites = data.allowed_sites.map(site => sites.find(data => data.id.toString() === site.toString()));
                         }
                     })
-                } else {
-                    const latestVisitData = await VisitationDAO.getLatestByEnrolledFaceId(row.id)
 
-                    // @ts-ignore
-                    result[idx].employee = latestVisitData.employee;
-                }
 
                 // @ts-ignore
                 result[idx].faces = [];

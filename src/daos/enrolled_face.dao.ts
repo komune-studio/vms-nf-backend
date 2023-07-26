@@ -19,7 +19,7 @@ export default class EnrolledFaceDAO {
         return result;
     }
 
-    static async getAll(limit : number, page : number, search : string, status : string, active : boolean = true, ids? : number[], startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string, formId?: string) {
+    static async getAll(limit : number, page : number, search : string, status : string, active : boolean = true, ids? : number[], startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string) {
         const enumerateDaysBetweenDates = (startDate : String, endDate : String) => {
             let date = []
 
@@ -62,16 +62,6 @@ export default class EnrolledFaceDAO {
             }
         }
 
-        let whereFormIdClause = {};
-
-        if(formId) {
-            whereFormIdClause = {
-                additional_info: {
-                    path: ['form_id'],
-                    equals: parseInt(formId)
-                }
-            }
-        }
 
         let result = enrolledFace.findMany({
             orderBy: {
@@ -92,15 +82,13 @@ export default class EnrolledFaceDAO {
                 gender: gender ? gender : undefined,
                 ...whereDateClause,
                 ...whereDOBClause,
-                ...whereFormIdClause
-
             },
         });
 
         return result;
     }
 
-    static async getCount(search : string, status : string, active : boolean = true, ids? : number[], startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string, formId? : string) {
+    static async getCount(search : string, status : string, active : boolean = true, ids? : number[], startDate? : string, endDate? : string, startTime? : string, endTime? : string, gender? : string, age? : string) {
         const enumerateDaysBetweenDates = (startDate : String, endDate : String) => {
             let date = []
 
@@ -143,16 +131,6 @@ export default class EnrolledFaceDAO {
             }
         }
 
-        let whereFormIdClause = {};
-
-        if(formId) {
-            whereFormIdClause = {
-                additional_info: {
-                    path: ['form_id'],
-                    equals: parseInt(formId)
-                }
-            }
-        }
 
         let result = enrolledFace.aggregate({
             _count: {id: true},
@@ -169,7 +147,6 @@ export default class EnrolledFaceDAO {
                 gender: gender ? gender : undefined,
                 ...whereDateClause,
                 ...whereDOBClause,
-                ...whereFormIdClause
             },
         });
 
