@@ -9,6 +9,7 @@ import handleErrors from "./middlewares/error.middleware";
 import v1 from "./routes/v1/routes";
 import PrismaService from "./services/prisma.service";
 import {NotFoundError} from "./utils/error.utils";
+import FremisnDAO from "./daos/fremisn.dao";
 
 dotenv.config();
 
@@ -38,6 +39,13 @@ app.use(handleErrors);
 
     try {
         await AuthController.initialize();
+        console.log('Creating keyspace: recognized')
+        await FremisnDAO.createKeyspace('recognized');
+        console.log('Keyspace created: recognized')
+
+        console.log('Creating keyspace: unrecognized')
+        await FremisnDAO.createKeyspace('unrecognized');
+        console.log('Keyspace created: unrecognized')
     } catch (e) {
         console.log(e);
         return;
