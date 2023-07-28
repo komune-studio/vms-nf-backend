@@ -97,7 +97,16 @@ export default class BookingController {
 
 
         try {
-            const response = await BookingDAO.create({...req.body, image: fs.readFileSync(file.path), employee_id: req.body.employee_id ? parseInt(req.body.employee_id) : null, birth_date:  req.body.birth_date ? new Date(req.body.birth_date) : null});
+            const lastId = await BookingDAO.getLastId();
+            let id;
+
+            if(!lastId) {
+                id = 1000000000
+            } else {
+                id = lastId.id + BigInt(1)
+            }
+
+            const response = await BookingDAO.create({id, ...req.body, image: fs.readFileSync(file.path), employee_id: req.body.employee_id ? parseInt(req.body.employee_id) : null, birth_date:  req.body.birth_date ? new Date(req.body.birth_date) : null});
 
             if(req.body.phone_num) {
                 const dir = `intellivent-register/qr`

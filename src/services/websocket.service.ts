@@ -77,7 +77,7 @@ export default class WebsocketService {
 
                 let payload : any;
 
-                if(data.analytic_id === 'NFV4-FR') {
+                if(data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
                     const setting = await GlobalSettingDAO.getAll();
                     const similarity = setting[0]?.similarity || 0.7;
                     console.log(similarity, data.pipeline_data.similarity)

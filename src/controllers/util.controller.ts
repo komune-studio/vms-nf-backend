@@ -42,7 +42,7 @@ export default class UtilController {
             const {analytic, stream, start_date, end_date, start_time, end_time, gender, age} = req.query;
             const streamEqualsClause = stream === 'null' ? [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}] : [{stream_id: {equals: stream}}]
 
-            if(analytic === 'NFV4-FR') {
+            if(analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') {
                 const todaysCount = await VisitationDAO.getCount(
                     {
                         AND: [
@@ -206,7 +206,7 @@ export default class UtilController {
                 data.status = data.status === 'KNOWN' ? 'recognized' : data.status === 'UNKNOWN' ? 'unrecognized' : data.status
                 // @ts-ignore
                 if (!output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]) {
-                    if (analytic === 'NFV4-FR') {
+                    if (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') {
                         // @ts-ignore
                         output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = {
                             recognized: 0,
@@ -229,7 +229,7 @@ export default class UtilController {
                         output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = parseInt(data.count)
                     }
                 } else {
-                    if (analytic === 'NFV4-FR' || analytic === 'NFV4-VC') {
+                    if (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR' || analytic === 'NFV4-VC') {
                         // @ts-ignore
                         (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')])[data.status] += parseInt(data.count);
                     } else {

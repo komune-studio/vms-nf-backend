@@ -54,4 +54,12 @@ export default class BookingDAO {
             data: {active: false}
         });
     }
+
+    static async getLastId() {
+        return booking.findFirst({
+            orderBy: {
+                id: 'desc'
+            },
+        });
+    }
 }

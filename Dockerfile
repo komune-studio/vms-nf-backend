@@ -1,4 +1,4 @@
-FROM node:19
+FROM node:18
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -8,7 +8,9 @@ WORKDIR /usr/src/app
 # where available (npm@5+)
 COPY package*.json ./
 
-RUN npm install
+RUN apt-get update && apt-get install -y libvips-dev --no-install-recommends
+
+RUN npm install --unsafe-perm
 # If you are building your code for production
 # RUN npm ci --only=production
 
