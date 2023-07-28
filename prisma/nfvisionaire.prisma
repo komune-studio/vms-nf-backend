@@ -48,6 +48,16 @@ model enrolled_face {
   birth_date      DateTime? @db.Date
 }
 
+model face_image {
+  id               BigInt    @id @default(autoincrement())
+  enrolled_face_id BigInt
+  variation        String    @db.VarChar
+  image            Bytes
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at       DateTime? @db.Timestamptz(6)
+  image_thumbnail  Bytes?
+}
+
 model vehicle {
   id           BigInt    @id @default(autoincrement())
   plate_number String    @db.VarChar(100)
@@ -82,4 +92,21 @@ model map_site_stream {
   site_id    BigInt   @db.BigInt
   stream_id  String   @db.VarChar(200)
   created_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model recognized_event {
+  id           BigInt    @id @default(autoincrement())
+  face_id    BigInt   @db.BigInt
+  timestamp  BigInt   @db.BigInt
+  stream_name String
+  image Bytes
+  enrollment_id  BigInt   @db.BigInt
+}
+
+model unrecognized_event {
+  id           BigInt    @id @default(autoincrement())
+  face_id    BigInt   @db.BigInt
+  timestamp  BigInt   @db.BigInt
+  stream_name String
+  image Bytes
 }

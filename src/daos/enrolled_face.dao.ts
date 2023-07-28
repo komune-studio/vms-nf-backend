@@ -28,4 +28,18 @@ export default class EnrolledFaceDAO {
 
         return result;
     }
+
+    static async getByIds(ids : number[]) {
+        console.log(ids)
+
+        let result = enrolledFace.findMany({
+            where: {
+                id: {
+                    in: ids
+                }
+            }
+        });
+
+        return result;
+    }
 }

@@ -7,6 +7,8 @@ import routesStream from "./stream.routes";
 import routesVehicle from "./vehicle.routes";
 import routesSite from "./site.routes";
 import routesMapSiteStream from "./map_site_stream.routes";
+import routesRecognizedEvent from "./recognized_event.routes";
+import routesUnrecognizedEvent from "./unrecognized_event.routes";
 
 const router = express.Router();
 
@@ -18,5 +20,7 @@ routesVehicle(router);
 routesSite(router);
 routesMapSiteStream(router);
 routesFace(router);
+routesRecognizedEvent(router);
+routesUnrecognizedEvent(router);
 
 export default router;
