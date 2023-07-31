@@ -277,4 +277,16 @@ export default class UtilController {
             return next(e);
         }
     }
+
+    static async getRecording(req: Request, res: Response, next: NextFunction) {
+        try {
+            const recording = await request(`${process.env.RECORDING_API_URL}/recording-list`, "GET")
+
+            // @ts-ignore
+            res.send(recording.data.map(data => ({...data, url: `${process.env.RECORDING_API_URL}/download=${data.file_name}`})))
+        } catch (e) {
+            console.log(e)
+            return next(e);
+        }
+    }
 }
