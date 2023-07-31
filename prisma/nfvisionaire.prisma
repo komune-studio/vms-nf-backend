@@ -171,5 +171,6 @@ model booking {
    employee_id     Int?
    purpose         String      @db.VarChar(100)
    active          Boolean?    @default(true)
+   check_out          Boolean?    @default(false)
    created_at      DateTime    @default(now()) @db.Timestamptz(6)
 }

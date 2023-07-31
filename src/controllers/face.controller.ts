@@ -299,6 +299,29 @@ export default class FaceController {
         }
     }
 
+    static async getByBookingNo(req: Request, res: Response, next: NextFunction) {
+        const {booking_no} = req.params;
+
+        const enrolledFace = await EnrolledFaceDAO.getByBookingNo(parseInt(booking_no));
+
+        if (enrolledFace === null) {
+            return res.send({enrollment: null})
+        }
+
+        const latestVisitData = await VisitationDAO.getLatestByEnrolledFaceId(enrolledFace.id);
+        const faceImages = await FaceImageDAO.getByEnrolledFaceId(enrolledFace.id);
+
+        // @ts-ignore
+        const faces = [];
+
+        faceImages.forEach(data => {
+            faces.push(Buffer.from(data.image).toString('base64'))
+        })
+
+        // @ts-ignore
+        res.send({enrollment: {...enrolledFace, faces, face_id: parseInt(enrolledFace.face_id)}, latest_visit_data: {...latestVisitData, allowed_sites: latestVisitData.allowed_sites.map(data => parseInt(data))}})
+    }
+
     static async getByIdentityNumber(req: Request, res: Response, next: NextFunction) {
         const {identity_number} = req.params;
 

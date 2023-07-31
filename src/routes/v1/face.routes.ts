@@ -30,4 +30,7 @@ export default function routesFace(router : Router) {
 
     router.route('/face/:identity_number/identity_number')
         .get(FaceController.getByIdentityNumber)
+
+    router.route('/face/:booking_no/booking_number')
+        .get(FaceController.getByBookingNo)
 }

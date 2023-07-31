@@ -165,6 +165,22 @@ export default class EnrolledFaceDAO {
         return result;
     }
 
+    static async getByBookingNo(bookingNo : number) {
+        console.log(bookingNo)
+
+        let result = enrolledFace.findFirst({
+            where: {
+                additional_info: {
+                    path: ['booking_id'],
+                    equals: bookingNo
+                },
+                deleted_at: {equals: null}
+            }
+        });
+
+        return result;
+    }
+
     static async getByIdentityNumber(identityNo : string) {
         let result = enrolledFace.findFirst({
             where: {

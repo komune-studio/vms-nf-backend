@@ -19,6 +19,7 @@ export default class BookingDAO {
     employee_id integer,
     purpose character varying(100) NOT NULL,
     active boolean default true,
+    check_out boolean default false,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 `
@@ -36,8 +37,8 @@ export default class BookingDAO {
         });
     }
 
-    static async getAll(idNo: string, page: number, limit: number, history : boolean) {
-        const sql = `SELECT * FROM booking WHERE 1 = 1 ${idNo ? ` AND cast(id as text) like '%${idNo}%' ` : ''} ${!history ? ` AND active = true ` : ''} ORDER BY created_at DESC ${limit ? ` LIMIT ${limit} ` : '  '} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ``};`
+    static async getAll(idNo: string, page: number, limit: number, history : boolean, checkout? : boolean) {
+        const sql = `SELECT * FROM booking WHERE 1 = 1 ${idNo ? ` AND cast(id as text) like '%${idNo}%' ` : ''} ${!history ? ` AND active = true ` : ''} ${checkout ? ` AND check_out = true ` : ''} ORDER BY created_at DESC ${limit ? ` LIMIT ${limit} ` : '  '} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ``};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -52,6 +53,13 @@ export default class BookingDAO {
         return booking.update({
             where: {id},
             data: {active: false}
+        });
+    }
+
+    static async checkout(id : number) {
+        return booking.update({
+            where: {id},
+            data: {check_out: true}
         });
     }
 

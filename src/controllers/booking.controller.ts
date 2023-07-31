@@ -115,13 +115,17 @@ export default class BookingController {
 
                 const result = await uploadWithoutMulter(`${dir}/${fileName}`, qrImg, 'image/png')
 
-                await request("https://sendtalk-api.taptalk.io/api/v1/message/send_whatsapp", 'POST', {
-                    "phone": req.body.phone_num.substring(1) === '0' ? '+62' + req.body.phone_num.substring(1) : req.body.phone_num,
+
+
+                const waResponse = await request("https://sendtalk-api.taptalk.io/api/v1/message/send_whatsapp", 'POST', {
+                    "phone": req.body.phone_num.charAt(0) === '0' ? '+62' + req.body.phone_num.substring(1) : req.body.phone_num,
                     "messageType": "image",
                     "caption": 'Your Booking QR',
                     "filename": 'booking-qr.png',
                     "body": result.Location
                 }, false, {'API-Key': '3eb70f01c405172336163f19fb0f246a09dd97fcc2babf5fd64f887a8ec502ce'});
+
+                console.log(waResponse)
             }
 
             res.send({success: true, id: response.id.toString()});
@@ -146,12 +150,25 @@ export default class BookingController {
         }
     }
 
+    static async checkOut(req: Request, res: Response, next: NextFunction) {
+        try {
+            await BookingDAO.checkout(parseInt(req.params.id));
+
+            res.send({success: true});
+        } catch (e) {
+            console.error(e)
+
+            return next(e);
+        }
+    }
+
     static async getBookingByFace(req: Request, res: Response, next: NextFunction) {
         const THRESHOLD = .8;
 
         try {
-            const booking = await BookingDAO.getAll(null, null, null, false);
-            const {image} = req.body;
+            const {image, mode} = req.body;
+
+            const booking = await BookingDAO.getAll(null, null, null, mode !== "CHECK_IN", mode === "CHECK_OUT" ? false : null);
 
             let selectedBooking = null;
 
@@ -172,6 +189,8 @@ export default class BookingController {
                 }
 
             }
+
+            console.log({...selectedBooking, id: parseInt(selectedBooking.id)})
 
             res.send(selectedBooking && selectedBooking.similarity >= THRESHOLD ? {...selectedBooking, id: parseInt(selectedBooking.id), image:  Buffer.from(selectedBooking.image).toString('base64')} : {});
         } catch (e) {

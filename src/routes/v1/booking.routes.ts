@@ -16,4 +16,7 @@ export default function routesBlacklist(router : Router) {
 
     router.route('/booking/:id/inactivate')
         .post(BookingController.inactivate)
+
+    router.route('/booking/:id/check-out')
+        .post(BookingController.checkOut)
 }
