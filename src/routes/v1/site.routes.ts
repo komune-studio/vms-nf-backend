@@ -9,7 +9,7 @@ export default function routesSite(router : Router) {
         .post(authSuperAdmin, SiteController.create)
 
     router.route('/site/:id')
-        .get(authAdmin, SiteController.getById)
+        .get(authAll, SiteController.getById)
         .put(authSuperAdmin, SiteController.update)
         .delete(authSuperAdmin, SiteController.delete)
 

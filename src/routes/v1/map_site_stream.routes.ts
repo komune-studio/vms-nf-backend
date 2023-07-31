@@ -3,5 +3,5 @@ import MapSiteStreamController from "../../controllers/map_site_stream.controlle
 import {authAdmin, authAll} from "../../middlewares/auth.middleware";
 export default function routesStream(router : Router) {
     router.route('/map_site_streams')
-        .get(authAdmin, MapSiteStreamController.getByStreamId)
+        .get(authAll, MapSiteStreamController.getByStreamId)
 }
