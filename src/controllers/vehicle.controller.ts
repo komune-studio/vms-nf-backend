@@ -42,7 +42,7 @@ export default class VehicleController {
         try {
             let vehicle : any = await VehicleDAO.getByPlate(req.params.plate);
 
-            res.send(vehicle ? {...vehicle, id: vehicle.id.toString()} : vehicle);
+            res.send(vehicle ? {...vehicle, id: vehicle.id.toString()} : {});
         }
         catch (err) {
             return next(err);
