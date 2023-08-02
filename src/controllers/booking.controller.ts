@@ -120,7 +120,7 @@ export default class BookingController {
                 const waResponse = await request("https://sendtalk-api.taptalk.io/api/v1/message/send_whatsapp", 'POST', {
                     "phone": req.body.phone_num.charAt(0) === '0' ? '+62' + req.body.phone_num.substring(1) : req.body.phone_num,
                     "messageType": "image",
-                    "caption": 'Your Booking QR',
+                    "caption": `Your Booking QR (booking number: ${response.id})`,
                     "filename": 'booking-qr.png',
                     "body": result.Location
                 }, false, {'API-Key': '3eb70f01c405172336163f19fb0f246a09dd97fcc2babf5fd64f887a8ec502ce'});
