@@ -42,13 +42,16 @@ app.use(handleErrors);
 
     try {
         await AuthController.initialize();
-        console.log('Creating keyspace: recognized')
-        await FremisnDAO.createKeyspace('recognized');
-        console.log('Keyspace created: recognized')
 
-        console.log('Creating keyspace: unrecognized')
-        await FremisnDAO.createKeyspace('unrecognized');
-        console.log('Keyspace created: unrecognized')
+        if(process.env.RECORD_FACE_DETECTION) {
+            console.log('Creating keyspace: recognized')
+            await FremisnDAO.createKeyspace('recognized');
+            console.log('Keyspace created: recognized')
+
+            console.log('Creating keyspace: unrecognized')
+            await FremisnDAO.createKeyspace('unrecognized');
+            console.log('Keyspace created: unrecognized')
+        }
 
         console.log('Creating recognized_event table')
         await RecognizedEventDAO.createTable();
@@ -66,5 +69,7 @@ app.use(handleErrors);
         console.log(`Server listening on port ${PORT}!`);
     });
 
-    await WebsocketService.initialize(server);
+    if(process.env.RECORD_FACE_DETECTION) {
+        await WebsocketService.initialize(server);
+    }
 })();
