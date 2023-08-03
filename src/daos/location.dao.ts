@@ -12,8 +12,7 @@ export default class LocationDAO {
             site_id BIGINT NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             modified_at TIMESTAMPTZ DEFAULT NOW(),
-            deleted_at TIMESTAMPTZ,
-            site_id bigint      
+            deleted_at TIMESTAMPTZ
         );`
     }
 
