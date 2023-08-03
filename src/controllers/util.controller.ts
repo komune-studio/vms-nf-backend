@@ -266,4 +266,14 @@ export default class UtilController {
             return next(e);
         }
     }
+
+    static async uploadVideo(req: Request, res: Response, next: NextFunction) {
+        try {
+            if(req.file) {
+                res.send({file: req.file.filename})
+            }
+        } catch (e) {
+            return next(e);
+        }
+    }
 }
