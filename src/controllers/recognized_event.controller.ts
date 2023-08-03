@@ -24,6 +24,7 @@ export default class RecognizedEventController {
             res.send(candidates.map(candidate => {
                 let event = {};
 
+                // @ts-ignore
                 recognizedEvents.forEach(data => {
                     if(data.face_id === BigInt(candidate.face_id)) {
                         enrolledFaces.forEach(face => {
