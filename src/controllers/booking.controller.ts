@@ -3,9 +3,6 @@ import {NextFunction, Request, Response} from "express";
 import VisitEventDAO from "../daos/visit_event.dao";
 import {BadRequestError, ConflictError, NotFoundError} from "../utils/error.utils";
 import BookingDAO from "../daos/booking.dao";
-import EnrolledFaceDAO from "../daos/enrolled_face.dao";
-import moment from "moment";
-import AdminDAO from "../daos/admin.dao";
 import sharp from "sharp";
 import fs from "fs";
 import request from "../utils/api.utils";
@@ -195,6 +192,26 @@ export default class BookingController {
             res.send(selectedBooking && selectedBooking.similarity >= THRESHOLD ? {...selectedBooking, id: parseInt(selectedBooking.id), image:  Buffer.from(selectedBooking.image).toString('base64')} : {});
         } catch (e) {
             console.error(e)
+
+            return next(e);
+        }
+    }
+
+    static async delete(req: Request, res: Response, next: NextFunction) {
+        let id = parseInt(req.params.id);
+
+        try {
+            let booking = await BookingDAO.getById(id);
+
+            if (booking === null) {
+                return next(new NotFoundError("Booking not found.", "id"));
+            }
+
+            await BookingDAO.delete(id);
+
+            res.send({success: true});
+        } catch (e) {
+            console.log(e)
 
             return next(e);
         }

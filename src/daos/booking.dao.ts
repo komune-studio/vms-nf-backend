@@ -70,4 +70,12 @@ export default class BookingDAO {
             },
         });
     }
+
+    static async delete(id : number) {
+        return booking.delete({
+            where: {
+                id
+            }
+        })
+    }
 }
