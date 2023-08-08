@@ -2,6 +2,7 @@ import {NextFunction, Request, Response} from "express";
 import {ForbiddenError, InternalServerError, UnauthorizedError} from "../utils/error.utils";
 import jwt from "jsonwebtoken";
 import AdminDAO from "../daos/admin.dao";
+import UserDAO from "../daos/user.dao";
 
 async function processToken(req : Request) {
     if (!req.headers['authorization'])
@@ -18,12 +19,22 @@ async function processToken(req : Request) {
     try {
         req.decoded = jwt.verify(token, secret);
 
-        const admin = await AdminDAO.getById(req.decoded.id)
+        if(req.decoded.role === 'USER') {
+            const user = await UserDAO.getById(req.decoded.id)
 
-        // @ts-ignore
-        if(!admin.active) {
-            throw new UnauthorizedError("EXPIRED_TOKEN");
+            // @ts-ignore
+            if(!user.active) {
+                throw new UnauthorizedError("EXPIRED_TOKEN");
+            }
+        } else {
+            const admin = await AdminDAO.getById(req.decoded.id)
+
+            // @ts-ignore
+            if(!admin.active) {
+                throw new UnauthorizedError("EXPIRED_TOKEN");
+            }
         }
+
     } catch (e : any) {
         console.log(e)
 

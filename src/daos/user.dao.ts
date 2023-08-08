@@ -34,7 +34,7 @@ export default class UserDAO {
 
     static async getByEmail(email : string) {
         return user.findFirst({
-            where: {email, active: true}
+            where: {email: {equals: email, mode: 'insensitive'}, active: true}
         });
     }
 
