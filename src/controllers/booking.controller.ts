@@ -35,7 +35,7 @@ export default class BookingController {
 
         try {
             // @ts-ignore
-            let count = await BookingDAO.getCount(id);
+            let count = await BookingDAO.getCount(id, history);
 
             // @ts-ignore
             let data = await BookingDAO.getAll(id, parseInt(page), parseInt(limit), history);

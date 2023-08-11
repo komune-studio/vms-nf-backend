@@ -25,8 +25,8 @@ export default class BookingDAO {
 `
     }
 
-    static async getCount(id: string) {
-        const sql = `SELECT count(id) FROM booking ${id ? ` WHERE cast(id as text) like '%${id}%' ` : ''};`
+    static async getCount(id: string, history : boolean) {
+        const sql = `SELECT count(id) FROM booking  WHERE 1 = 1 ${id ? ` AND cast(id as text) like '%${id}%' ` : ''} ${!history ? ` AND active = true ` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
