@@ -11,7 +11,7 @@ import fs from "fs";
 
 export default class BookingController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
-        let {id, page, limit} = req.query;
+        let {id, page, limit, history} = req.query;
 
         if (!page || !limit) {
             return next(new BadRequestError({
@@ -21,11 +21,13 @@ export default class BookingController {
         }
 
         try {
-            // @ts-ignore
-            let count = await BookingDAO.getCount(id);
+            history = history === 'true'
 
             // @ts-ignore
-            let data = await BookingDAO.getAll(id, parseInt(page), parseInt(limit));
+            let count = await BookingDAO.getCount(id, history);
+
+            // @ts-ignore
+            let data = await BookingDAO.getAll(id, parseInt(page), parseInt(limit), history);
 
             console.log(data)
 
@@ -81,6 +83,38 @@ export default class BookingController {
             return next(e);
         }  finally {
             fs.rmSync(file.path);
+        }
+    }
+
+    static async inactivate(req: Request, res: Response, next: NextFunction) {
+        try {
+            await BookingDAO.inactivate(parseInt(req.params.id));
+
+            res.send({success: true});
+        } catch (e) {
+            console.error(e)
+
+            return next(e);
+        }
+    }
+
+    static async delete(req: Request, res: Response, next: NextFunction) {
+        let id = parseInt(req.params.id);
+
+        try {
+            let booking = await BookingDAO.getById(id);
+
+            if (booking === null) {
+                return next(new NotFoundError("Booking not found.", "id"));
+            }
+
+            await BookingDAO.delete(id);
+
+            res.send({success: true});
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
         }
     }
 }

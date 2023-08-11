@@ -18,13 +18,14 @@ export default class BookingDAO {
     image bytea NOT NULL,
     employee_id integer,
     purpose character varying(100) NOT NULL,
+    active boolean default true,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 `
     }
 
-    static async getCount(id: string) {
-        const sql = `SELECT count(id) FROM booking ${id ? ` WHERE cast(id as text) like '%${id}%' ` : ''};`
+    static async getCount(id: string, history : boolean) {
+        const sql = `SELECT count(id) FROM booking WHERE 1 = 1 ${id ? ` AND cast(id as text) like '%${id}%' ` : ''} ${!history ? ` AND active = true ` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -35,8 +36,8 @@ export default class BookingDAO {
         });
     }
 
-    static async getAll(idNo: string, page: number, limit: number) {
-        const sql = `SELECT * FROM booking ${idNo ? ` WHERE cast(id as text) like '%${idNo}%' ` : ''} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${limit * (page - 1)};`
+    static async getAll(idNo: string, page: number, limit: number, history : boolean) {
+        const sql = `SELECT * FROM booking WHERE 1 = 1 ${idNo ? ` AND cast(id as text) like '%${idNo}%' ` : ''} ${!history ? ` AND active = true ` : ''} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${limit * (page - 1)};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -45,5 +46,20 @@ export default class BookingDAO {
         return booking.create({
             data: obj
         });
+    }
+
+    static async inactivate(id : number) {
+        return booking.update({
+            where: {id},
+            data: {active: false}
+        });
+    }
+
+    static async delete(id : number) {
+        return booking.delete({
+            where: {
+                id
+            }
+        })
     }
 }
