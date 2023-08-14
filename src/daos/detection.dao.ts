@@ -35,8 +35,10 @@ export default class DetectionDAO {
         });
     }
 
-    static async getAll(enrollmentId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string, id? : string) {
+    static async getAll(enrollmentId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string, id? : string, page? : string, limit? : string) {
         return detection.findMany({
+            skip: page && limit ? parseInt(page) * parseInt(limit) : undefined,
+            take: limit ? parseInt(limit) : undefined,
             include: {
                 enrolled_face: {
                     select: {name: true, identity_number: true, additional_info: true}
@@ -66,6 +68,31 @@ export default class DetectionDAO {
             },
             orderBy: {
                 created_at: 'desc'
+            }
+        });
+    }
+
+    static async getCount(enrollmentId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string, id? : string) {
+        return detection.aggregate({
+            _count: {id: true},
+            where: {
+                id: id ? parseInt(id) : undefined,
+                created_at: {
+                    gte: startDate ? new Date(startDate) : undefined,
+                    lte: endDate ? new Date(endDate) : undefined
+                },
+                user_id: userId ? parseInt(userId) : undefined,
+                enrollment_id: enrollmentId ? parseInt(enrollmentId) : undefined,
+                enrolled_face: {
+                    name: {
+                        contains: search,
+                        mode: 'insensitive'
+                    },
+                    additional_info: caseId ? {
+                        path: ['case_id'],
+                        equals: parseInt(caseId)
+                    } : undefined
+                }
             }
         });
     }

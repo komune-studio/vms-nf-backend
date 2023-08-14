@@ -28,12 +28,22 @@ export default class DetectionController {
 
     static async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const {enrollment_id, case_id, search, user_id, start_date, end_date, id} = req.query;
+            const {enrollment_id, case_id, search, user_id, start_date, end_date, id, page, limit} = req.query;
 
             // @ts-ignore
-            const data = await DetectionDAO.getAll(enrollment_id, case_id, search, user_id, start_date, end_date, id)
+            const data = await DetectionDAO.getAll(enrollment_id, case_id, search, user_id, start_date, end_date, id, page, limit)
 
-            res.send(data.map(item => ({...item, image: Buffer.from(item.image).toString('base64')})))
+            const output = {data: data.map(item => ({...item, image: Buffer.from(item.image).toString('base64')}))};
+
+            if(page !== undefined && limit !== undefined) {
+                // @ts-ignore
+               const detectionCount = await DetectionDAO.getCount(enrollment_id, case_id, search, user_id, start_date, end_date, id)
+
+                // @ts-ignore
+                output.total_data = detectionCount._count.id
+            }
+
+            res.send(output)
         } catch (err) {
             console.log(err)
 

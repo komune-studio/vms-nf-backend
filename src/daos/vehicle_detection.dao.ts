@@ -26,8 +26,10 @@ export default class VehicleDetectionDAO {
         });
     }
 
-    static async getAll(vehicleId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string, id? : string) {
+    static async getAll(vehicleId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string, id? : string, page? : string, limit? : string) {
         return vehicle_detection.findMany({
+            skip: page && limit ? parseInt(page) * parseInt(limit) : undefined,
+            take: limit ? parseInt(limit) : undefined,
             include: {
                 user: {
                     select: {name: true}
@@ -57,6 +59,31 @@ export default class VehicleDetectionDAO {
             },
             orderBy: {
                 created_at: 'desc'
+            }
+        });
+    }
+
+    static async getCount(vehicleId?: string, caseId?: string, search? : string, userId? : string, startDate? : string, endDate? : string, id? : string) {
+        return vehicle_detection.aggregate({
+            _count: {id: true},
+            where: {
+                id: id ? parseInt(id) : undefined,
+                created_at: {
+                    gte: startDate ? new Date(startDate) : undefined,
+                    lte: endDate ? new Date(endDate) : undefined
+                },
+                user_id: userId ? parseInt(userId) : undefined,
+                vehicle_id: vehicleId ? parseInt(vehicleId) : undefined,
+                vehicle: {
+                    name: {
+                        contains: search,
+                        mode: 'insensitive'
+                    },
+                    additional_info: caseId ? {
+                        path: ['case_id'],
+                        equals: parseInt(caseId)
+                    } : undefined
+                }
             }
         });
     }
