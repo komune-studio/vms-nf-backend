@@ -9,7 +9,7 @@ import {Prisma} from "../prisma/nfvisionaire";
 const prisma = PrismaService.getVisionaire();
 const detection = prisma.detection;
 
-export default class DetectionDao {
+export default class DetectionDAO {
     static async createTable() {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS detection (
             id SERIAL PRIMARY KEY,
@@ -19,11 +19,12 @@ export default class DetectionDao {
               address varchar(500) DEFAULT NULL,
               report text,
               image bytea NOT NULL,
-              user_id int DEFAULT NULL,
+              user_id int,
               emotion varchar(50) DEFAULT NULL,
               associate_id int DEFAULT NULL,
               emotion_count json DEFAULT NULL,
               emotion_analysis json DEFAULT NULL,
+              stream_name text,
               created_at timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP
         );`
     }

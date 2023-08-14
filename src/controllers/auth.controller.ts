@@ -16,7 +16,7 @@ import CaseDao from "../daos/case.dao";
 import SecurityUtils from "../utils/security.utils";
 import PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
 import UserDAO from "../daos/user.dao";
-import DetectionDao from "../daos/detection.dao";
+import DetectionDAO from "../daos/detection.dao";
 import VehicleDetectionDAO from "../daos/vehicle_detection.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import VehicleDAO from "../daos/vehicle.dao";
@@ -34,7 +34,7 @@ export default class AuthController {
             console.log("Cases table initialized.");
 
             console.log("Initializing detection table...");
-            await DetectionDao.createTable();
+            await DetectionDAO.createTable();
             console.log("Detection table initialized.");
 
             console.log("Initializing vehicle detection table...");

@@ -14,7 +14,8 @@ export default class VehicleDetectionDAO {
   address varchar(255) DEFAULT NULL,
   report text,
   image bytea NOT NULL,
-  user_id int NOT NULL,
+  user_id int,
+  stream_name text,
   created_at timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );`
     }

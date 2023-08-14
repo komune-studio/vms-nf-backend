@@ -127,14 +127,15 @@ model detection {
     address     String?    @db.VarChar
     report      String?    @db.VarChar
     image       Bytes
-    user_id     Int
+    user_id     Int?
     emotion     String?
     associate_id Int?
     emotion_count   Json?
     emotion_analysis   Json?
+    stream_name   String?
     created_at       DateTime  @default(now()) @db.Timestamptz(6)
     enrolled_face    enrolled_face @relation(fields: [enrollment_id], references: [id])
-    user    users @relation(fields: [user_id], references: [id])
+    user    users? @relation(fields: [user_id], references: [id])
 }
 
 model vehicle_detection {
@@ -145,10 +146,11 @@ model vehicle_detection {
     address     String?    @db.VarChar
     report      String?    @db.VarChar
     image       Bytes
-    user_id     Int
+    user_id     Int?
+    stream_name String?
     created_at       DateTime  @default(now()) @db.Timestamptz(6)
     vehicle    vehicle @relation(fields: [vehicle_id], references: [id])
-    user    users @relation(fields: [user_id], references: [id])
+    user    users? @relation(fields: [user_id], references: [id])
 }
 
 model custom_logo {

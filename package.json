@@ -21,7 +21,8 @@
     "nodemon": "^2.0.20",
     "prisma": "^4.10.1",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "@types/websocket": "^1.0.5"
   },
   "dependencies": {
     "@prisma/client": "^4.10.1",
@@ -36,6 +37,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "node-fetch": "^2.6.9",
-    "json2csv": "^6.0.0-alpha.2"
+    "json2csv": "^6.0.0-alpha.2",
+    "websocket": "^1.0.34"
   }
 }

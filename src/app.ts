@@ -5,6 +5,7 @@ import logger from "morgan";
 import AuthController from "./controllers/auth.controller";
 
 import handleErrors from "./middlewares/error.middleware";
+import WebsocketService from "./services/websocket.service";
 
 import v1 from "./routes/v1/routes";
 import PrismaService from "./services/prisma.service";
@@ -43,7 +44,9 @@ app.use(handleErrors);
         return;
     }
 
-    app.listen(PORT, async () => {
+    const server = app.listen(PORT, async () => {
         console.log(`Server listening on port ${PORT}!`);
     });
+
+    await WebsocketService.initialize(server);
 })();
