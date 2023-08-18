@@ -7,4 +7,10 @@ import CameraResolutionController from "../../controllers/camera_resolution.cont
 export default function routesCameraResolution(router : Router) {
     router.route('/cameraResolution/:streamId')
         .get(CameraResolutionController.getByStreamId)
+
+    router.route('/cameraResolution')
+        .post(CameraResolutionController.create)
+
+    router.route('/cameraResolution/:id')
+        .put(CameraResolutionController.update)
 }
