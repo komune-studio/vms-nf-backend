@@ -111,3 +111,9 @@ model unrecognized_event {
   stream_name String
   image Bytes
 }
+
+model camera_resolution {
+  id         Int      @id @default(autoincrement())
+  stream_id  String   @db.VarChar(200)
+  resolution String   @db.VarChar(200)
+}
