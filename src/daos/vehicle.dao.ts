@@ -59,4 +59,10 @@ export default class VehicleDAO {
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async getCaseDistribution() {
+        const sql = `select cases.name, count(*) from vehicle LEFT JOIN cases on cast(additional_info->>'case_id' as int) = cases.id where additional_info->>'case_id' IS NOT NULL GROUP BY cases.id ORDER BY cases.name ASC;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }

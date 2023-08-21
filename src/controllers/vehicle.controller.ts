@@ -2,6 +2,7 @@ import {NextFunction, Request, Response} from "express";
 import VehicleDAO from "../daos/vehicle.dao";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import SecurityUtils from "../utils/security.utils";
+import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 
 export default class VehicleController {
     static async createVehicle(req : Request, res : Response, next : NextFunction) {
@@ -140,6 +141,16 @@ export default class VehicleController {
         }
         catch (err) {
             return next(err);
+        }
+    }
+
+    static async getCaseDistribution(req: Request, res: Response, next: NextFunction) {
+        try {
+            let result = await VehicleDAO.getCaseDistribution();
+            // @ts-ignore
+            res.send(result.map(item => ({...item, count: parseInt(item.count)})));
+        } catch (e) {
+            return next(e);
         }
     }
 }

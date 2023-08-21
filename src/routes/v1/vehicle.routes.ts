@@ -7,6 +7,9 @@ export default function routesVehicle(router : Router) {
         .post(authAdmin, VehicleController.createVehicle)
         .get(authAll, VehicleController.getAllVehicles);
 
+    router.route('/vehicle/case-distribution')
+        .get(VehicleController.getCaseDistribution)
+
     router.route('/vehicle/:id')
         .get(authAll, VehicleController.getVehicle)
         .put(authAdmin, VehicleController.updateVehicle)

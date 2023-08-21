@@ -1,4 +1,5 @@
 import PrismaService from "../services/prisma.service";
+import {Prisma} from "../prisma/nfvisionaire";
 
 const prisma = PrismaService.getVisionaire();
 const vehicle_detection = prisma.vehicle_detection;
@@ -86,5 +87,11 @@ export default class VehicleDetectionDAO {
                 }
             }
         });
+    }
+
+    static async getDetectionDistribution() {
+        const sql = `select DATE(created_at) as timestamp, count(*) as count from vehicle_detection group by DATE(created_at) order by DATE(created_at) ASC LIMIT 10`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
     }
 }

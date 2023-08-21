@@ -53,4 +53,17 @@ export default class DetectionController {
             return next(err);
         }
     }
+
+    static async getDetectionDistribution(req: Request, res: Response, next: NextFunction) {
+        try {
+            const data = await VehicleDetectionDAO.getDetectionDistribution()
+
+            // @ts-ignore
+            res.send(data.map(item => ({...item, count: parseInt(item.count)})))
+        } catch (err) {
+            console.log(err)
+
+            return next(err);
+        }
+    }
 }

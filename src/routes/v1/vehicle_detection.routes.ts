@@ -8,4 +8,7 @@ export default function routesVehicleDetection(router : Router) {
     router.route('/vehicle-detections')
         .post(authUser, VehicleDetectionController.create)
         .get(VehicleDetectionController.getAll)
+
+    router.route('/vehicle-detection/distribution')
+        .get(VehicleDetectionController.getDetectionDistribution)
 }
