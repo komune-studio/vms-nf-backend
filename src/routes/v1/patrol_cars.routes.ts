@@ -16,6 +16,11 @@ export default function patrolCarsRoutes(router : Router) {
     router.route('/patrol_cars/:id')
         .get(PatrolCarsController.getById)
 
+    router.route('/patrol_cars/:id')
+        .delete(PatrolCarsController.delete)
+
     router.route('/patrol_cars')
         .get(PatrolCarsController.getAll)
+
+
 }

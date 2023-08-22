@@ -1,7 +1,7 @@
 import PrismaService from "../services/prisma.service";
 
 const prisma = PrismaService.getVisionaire();
-const patrolCarsCoordinates = prisma.patrol_cars_coordinate;
+const patrolCarsCoordinates = prisma.patrol_cars_coordinates;
 
 export default class PatrolCarsCoordinatesDAO {
 

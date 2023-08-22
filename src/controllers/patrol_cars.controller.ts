@@ -45,6 +45,18 @@ export default class PatrolCarsController {
         }
     }
 
+    static async delete(req: Request, res: Response, next: NextFunction) {
+        try {
+            let result = await PatrolCarsDAO.delete(parseInt(req.params.id));
+
+            res.send({success:true});
+        } catch (e) {
+            console.error(e)
+
+            return next(e);
+        }
+    }
+
     static async update(req: Request, res: Response, next: NextFunction) {
         let id = parseInt(req.params.id);
 

@@ -121,6 +121,7 @@ model camera_resolution {
 model patrol_cars {
     id         Int      @id @default(autoincrement())
     name       String   @db.VarChar(200)
+    deleted_at DateTime? @db.Timestamptz(6)
 }
 
 model patrol_cars_coordinates {

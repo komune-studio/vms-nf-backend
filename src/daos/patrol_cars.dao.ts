@@ -1,4 +1,5 @@
 import PrismaService from "../services/prisma.service";
+import {now} from "moment";
 
 const prisma = PrismaService.getVisionaire();
 const patrolCars = prisma.patrol_cars;
@@ -7,8 +8,9 @@ export default class PatrolCarsDAO {
 
     static async createTable() {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS public.patrol_cars (
-        id         BIGSERIAL PRIMARY KEY,
-        name       text NOT NULL
+        id             BIGSERIAL   PRIMARY KEY,
+        name           text        NOT NULL,
+        deleted_at     date        NULL
 );`
     }
 
@@ -16,7 +18,13 @@ export default class PatrolCarsDAO {
         return patrolCars.findMany({
             select: {
                 id: true,
-                name: true
+                name: true,
+
+            },
+            where:{
+                deleted_at: {
+                    equals: null
+                }
             },
             orderBy: {
                 name: 'asc'
@@ -43,6 +51,16 @@ export default class PatrolCarsDAO {
     static async create(obj : any) {
         return patrolCars.create({
             data: obj
+        });
+    }
+
+    static async delete(id: number) {
+        return patrolCars.update({
+            where: {
+                id: id
+            }, data:{
+                deleted_at: new Date()
+            }
         });
     }
 }

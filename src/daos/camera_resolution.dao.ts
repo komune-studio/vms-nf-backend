@@ -41,4 +41,6 @@ export default class CameraResolutionDAO {
             data: obj
         });
     }
+
+
 }
