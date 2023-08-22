@@ -18,10 +18,12 @@ import WebsocketService from "./services/websocket.service";
 import CameraResolutionController from "./controllers/camera_resolution.controller";
 import PatrolCarsDAO from "./daos/patrol_cars.dao";
 import PatrolCarsCoordinatesDAO from "./daos/patrol_cars_coordinates.dao";
+import EventMasterDataDAO from "./daos/event_master_data.dao";
 
 dotenv.config();
 
 const app = express();
+const url : any[] = [];
 
 const PORT = process.env.SERVER_PORT || 3000;
 
@@ -42,7 +44,27 @@ app.use('*', (req: Request, res: Response, next : NextFunction) => {
 
 app.use(handleErrors);
 
+const startAggregator = async () => {
+    const initialData = [
+        {
+            id: 1,
+            url: 'localhost:4004'
+        }
+    ]
+
+    for(const data of initialData) {
+        if(!url.includes(data.url)) {
+            await WebsocketService.initialize(`ws://${data.url}/event_channel`);
+            url.push(data.url)
+        } else {
+            console.log(`Ignore id ${data.id}!`)
+        }
+    }
+}
+
 (async () => {
+   //startAggregator()
+
     await PrismaService.initialize();
 
     try {
@@ -77,6 +99,10 @@ app.use(handleErrors);
         console.log('Creating patrol_cars_coordinates table')
         await PatrolCarsCoordinatesDAO.createTable();
         console.log("patrol_cars_coordinates table created successfully.");
+
+        console.log('Creating event_master_data table')
+        await EventMasterDataDAO.createTable();
+        console.log("event_master_data table created successfully.");
 
     } catch (e) {
         console.log(e);

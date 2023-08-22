@@ -130,3 +130,18 @@ model patrol_cars_coordinates {
     latitude            Float    @db.DoublePrecision
     longitude           Float    @db.DoublePrecision
 }
+
+model event_master_data {
+  id              Int       @id @default(autoincrement())
+  type            String
+  stream_id       String
+  detection       Json
+  primary_image   Bytes?
+  secondary_image Bytes?
+  result          Json?
+  status          String?
+  event_time      DateTime?
+  created_at      DateTime? @default(now())
+  latitude        Float    @db.DoublePrecision @default(0)
+  longitude       Float    @db.DoublePrecision @default(0)
+}

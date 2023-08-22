@@ -6,12 +6,11 @@ import RecognizedEventDAO from "../daos/recognized_event.dao";
 import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 import FremisnDAO from "../daos/fremisn.dao";
 
-const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
+// const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
 
 export default class WebsocketService {
     private static instance: WebsocketService;
     private client : WebsocketClient;
-    private server : WebsocketServer;
     private connections : connection[];
 
     static getInstance(): WebsocketService | null {
@@ -22,27 +21,21 @@ export default class WebsocketService {
         return WebsocketService.instance;
     }
 
-    static async initialize(server : http.Server): Promise<void> {
-        if (!WebsocketService.instance) {
-            WebsocketService.instance = new WebsocketService(server);
-        }
+    static async initialize(url : string): Promise<void> {
+        WebsocketService.instance = new WebsocketService(url);
     }
 
-    private constructor(server : http.Server) {
+    private constructor(url : string) {
 
         this.connections = [];
 
         this.client = new WebsocketClient();
-        this.server = new WebsocketServer({
-            httpServer: server,
-            autoAcceptConnections: false,
-        });
 
         this.client.on('connectFailed', (error) => {
             console.log('Connect Error: ' + error.toString());
             console.log("Retrying in 5 seconds...");
             setTimeout(() => {
-                this.client.connect(requestUrl);
+                this.client.connect(url);
             }, 5000);
         });
 
@@ -53,13 +46,13 @@ export default class WebsocketService {
                 console.log("Connection Error: " + error.toString());
                 console.log("Retrying in 5 seconds...");
                 setTimeout(() => {
-                    this.client.connect(requestUrl);
+                    this.client.connect(url);
                 }, 5000);
             });
             connection.on('close', () => {
                 console.log("Client disconnected. Retrying in 5 seconds...");
                 setTimeout(() => {
-                    this.client.connect(requestUrl);
+                    this.client.connect(url);
                 }, 5000);
             });
             connection.on('message', async (message) => {
@@ -97,24 +90,7 @@ export default class WebsocketService {
             });
         });
 
-        this.server.on('request', (request) => {
-            // Note: add origin verification if necessary
-            // if (!originIsAllowed(request.origin)) {
-            //     // Make sure we only accept requests from an allowed origin
-            //     request.reject();
-            //     console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
-            //     return;
-            // }
-
-            const connection = request.accept();
-            connection.on('close', () => {
-                this.connections = this.connections.filter(c => c !== connection);
-            });
-            console.log((new Date()) + ' Connection accepted from ' + request.origin + '.');
-            this.connections.push(connection);
-        });
-
-        this.client.connect(requestUrl);
+        this.client.connect(url);
     }
 
 
