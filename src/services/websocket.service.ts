@@ -5,6 +5,7 @@ import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import RecognizedEventDAO from "../daos/recognized_event.dao";
 import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 import FremisnDAO from "../daos/fremisn.dao";
+import FaceImageDAO from "../daos/face_image.dao";
 
 const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
 
@@ -68,27 +69,57 @@ export default class WebsocketService {
 
                 let payload : any;
 
-                if(data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
-                    payload = {
-                        timestamp: data.timestamp,
-                        stream_name: data.stream_name,
-                        image: Buffer.from(data.image_jpeg, 'base64')
-                    }
+                let label = '';
+                let status = '';
+                let result = '';
+                let primaryImage = null;
 
-                    const response = await FremisnDAO.faceEnrollment(data.pipeline_data.status === 'KNOWN' ? 'recognized' : 'unrecognized', data.image_jpeg)
-                    payload.face_id = BigInt(response.face_id)
+                if (data.analytic_id === 'NFV4-FR') {
+                    status = data.pipeline_data.status;
 
-                    if(data.pipeline_data.status === 'KNOWN') {
-                        const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
+                    if (data.pipeline_data.status === 'KNOWN') {
+                        const enrollment = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
 
-                        if(!face) return;
+                        if(enrollment) {
+                            const faceImage = await FaceImageDAO.getThumbnailByEnrolledFaceIds([enrollment.id])
 
-                        payload.enrollment_id = face.id
+                            if(faceImage[0].image_thumbnail) {
+                                primaryImage = faceImage[0].image_thumbnail.toString('base64');
+                            }
 
-                        await RecognizedEventDAO.create(payload)
+                            result = (data.pipeline_data.similarity === 1 ? "99.99" : Math.floor(data.pipeline_data.similarity * 100)) + "% - " + enrollment.name
+                        }
+
+                        label = 'recognized';
                     } else {
-                        await UnrecognizedEventDAO.create(payload)
+                        label = 'unrecognized';
+                        result = data.pipeline_data.face_id
                     }
+                } else if (data.analytic_id === 'NFV4-LPR' || data.analytic_id === 'NFV4-LPR2') {
+                    result = data.pipeline_data.label;
+                    label = data.pipeline_data.plate_number
+                }
+
+                const detection = {...data};
+                delete detection.image_jpeg;
+
+                payload = {
+                    type: data.analytic_id,
+                    detection,
+                    stream_id: data.stream_id,
+                    primary_image: primaryImage,
+                    secondary_image: data.image_jpeg,
+                    result: {
+                        location: data.stream_name,
+                        label,
+                        result,
+                        timestamp: moment.unix(data.timestamp).utc().format("YYYY-MM-DDTHH:mm:ss") + 'Z'
+                    },
+                    status,
+                    event_time: moment.unix(data.timestamp).utc().format('YYYY-MM-DD HH:mm:ss+00'),
+                    event_id: data.pipeline_data.event_id,
+                    latitude: data.stream_latitude,
+                    longitude: data.stream_longitude
                 }
 
                 // console.log(payload)
