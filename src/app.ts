@@ -48,5 +48,5 @@ app.use(handleErrors);
         console.log(`Server listening on port ${PORT}!`);
     });
 
-    // await WebsocketService.initialize(server);
+    await WebsocketService.initialize(server);
 })();
