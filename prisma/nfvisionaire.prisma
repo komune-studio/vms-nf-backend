@@ -117,3 +117,8 @@ model camera_resolution {
   stream_id  String   @db.VarChar(200)
   resolution String   @db.VarChar(200)
 }
+
+model patrol_cars {
+    id         Int      @id @default(autoincrement())
+    name       String   @db.VarChar(200)
+}

@@ -16,6 +16,7 @@ import CameraResolutionDAO from "./daos/camera_resolution.dao";
 import UnrecognizedEventDAO from "./daos/unrecognized_event.dao";
 import WebsocketService from "./services/websocket.service";
 import CameraResolutionController from "./controllers/camera_resolution.controller";
+import PatrolCarsDAO from "./daos/patrol_cars.dao";
 
 dotenv.config();
 
@@ -67,6 +68,10 @@ app.use(handleErrors);
         console.log('Creating camera_resolution table')
         await CameraResolutionDAO.createTable();
         console.log("camera_resolution table created successfully.");
+
+        console.log('Creating patrol_cars table')
+        await PatrolCarsDAO.createTable();
+        console.log("patrol_cars table created successfully.");
 
     } catch (e) {
         console.log(e);
