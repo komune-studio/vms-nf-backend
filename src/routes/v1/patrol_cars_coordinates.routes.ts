@@ -2,12 +2,12 @@ import {Router} from "express";
 import PatrolCarsCoordinatesController from "../../controllers/patrol_cars_coordinates.controller";
 
 export default function patrolCarsCoordinatesRoutes(router : Router) {
-    router.route('/patrolCarsCoordinates')
+    router.route('/patrol-cars-coordinates')
         .post(PatrolCarsCoordinatesController.create)
 
-    router.route('/patrolCarsCoordinates/:id')
+    router.route('/patrol-cars-coordinates/:id')
         .put(PatrolCarsCoordinatesController.update)
 
-    router.route('/patrolCarsCoordinates')
+    router.route('/patrol-cars-coordinates')
         .get(PatrolCarsCoordinatesController.getAll)
 }

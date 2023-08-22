@@ -7,12 +7,15 @@ import CameraResolutionDAO from "../../daos/camera_resolution.dao";
 import PatrolCarsDAO from "../../daos/patrol_cars.dao";
 
 export default function patrolCarsRoutes(router : Router) {
-    router.route('/patrolCars')
+    router.route('/patrol-cars')
         .post(PatrolCarsController.create)
 
-    router.route('/patrolCars/:id')
+    router.route('/patrol-cars/:id')
         .put(PatrolCarsController.update)
 
-    router.route('/patrolCars')
+    router.route('/patrol-cars/:id')
+        .get(PatrolCarsController.getById)
+
+    router.route('/patrol-cars')
         .get(PatrolCarsController.getAll)
 }

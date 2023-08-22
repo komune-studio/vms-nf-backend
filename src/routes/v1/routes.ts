@@ -26,6 +26,7 @@ routesFace(router);
 routesRecognizedEvent(router);
 routesUnrecognizedEvent(router);
 routesCameraResolution(router);
-
+routesPatrolCars(router);
+routesPatrolCarsCoordinates(router);
 
 export default router;

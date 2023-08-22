@@ -16,7 +16,7 @@ export default class PatrolCarsController {
     static async create(req : Request, res : Response, next : NextFunction) {
         try {
             let result = await PatrolCarsDAO.create(req.body);
-            res.send(result)
+            res.send({success: true})
         }
         catch (err) {
             return next(err);
@@ -30,6 +30,18 @@ export default class PatrolCarsController {
             res.send(data)
         } catch (err) {
             return next(err);
+        }
+    }
+
+    static async getById(req: Request, res: Response, next: NextFunction) {
+        try {
+            let result = await PatrolCarsDAO.getById(parseInt(req.params.id));
+
+            res.send(result[0]);
+        } catch (e) {
+            console.error(e)
+
+            return next(e);
         }
     }
 
@@ -50,7 +62,7 @@ export default class PatrolCarsController {
             let result = await PatrolCarsDAO.getById(id)
 
             //Send the result
-            res.send(result);
+            res.send({success: true});
         } catch (e) {
             console.log(e)
 
