@@ -10,6 +10,8 @@ import routesMapSiteStream from "./map_site_stream.routes";
 import routesRecognizedEvent from "./recognized_event.routes";
 import routesUnrecognizedEvent from "./unrecognized_event.routes";
 import routesCameraResolution from "./camera_resolution.routes";
+import routesPatrolCars from "./patrol_cars.routes";
+import routesPatrolCarsCoordinates from "./patrol_cars_coordinates.routes";
 
 const router = express.Router();
 
