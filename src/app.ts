@@ -23,7 +23,7 @@ import EventMasterDataDAO from "./daos/event_master_data.dao";
 dotenv.config();
 
 const app = express();
-const url : any[] = [];
+const ip : any[] = [];
 
 const PORT = process.env.SERVER_PORT || 3000;
 
@@ -48,14 +48,14 @@ const startAggregator = async () => {
     const initialData = [
         {
             id: 1,
-            url: 'localhost:4004'
+            ip: 'localhost'
         }
     ]
 
     for(const data of initialData) {
-        if(!url.includes(data.url)) {
-            await WebsocketService.initialize(`ws://${data.url}/event_channel`);
-            url.push(data.url)
+        if(!ip.includes(data.ip)) {
+            await WebsocketService.initialize(`ws://${data.ip}:3031`);
+            ip.push(data.ip)
         } else {
             console.log(`Ignore id ${data.id}!`)
         }
@@ -63,7 +63,7 @@ const startAggregator = async () => {
 }
 
 (async () => {
-   //startAggregator()
+   startAggregator()
 
     await PrismaService.initialize();
 
@@ -109,11 +109,7 @@ const startAggregator = async () => {
         return;
     }
 
-    const server = app.listen(PORT, async () => {
+    app.listen(PORT, async () => {
         console.log(`Server listening on port ${PORT}!`);
     });
-
-    if(process.env.RECORD_FACE_DETECTION) {
-        await WebsocketService.initialize(server);
-    }
 })();

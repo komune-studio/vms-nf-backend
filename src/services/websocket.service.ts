@@ -2,7 +2,7 @@ import moment from "moment";
 import {client as WebsocketClient, connection, server as WebsocketServer} from "websocket";
 import * as http from "http";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
-import RecognizedEventDAO from "../daos/recognized_event.dao";
+import EventMasterDataDAO from "../daos/event_master_data.dao";
 import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 import FremisnDAO from "../daos/fremisn.dao";
 
@@ -61,28 +61,12 @@ export default class WebsocketService {
 
                 let payload : any;
 
-                if(data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
-                    payload = {
-                        timestamp: data.timestamp,
-                        stream_name: data.stream_name,
-                        image: Buffer.from(data.image_jpeg, 'base64')
-                    }
-
-                    const response = await FremisnDAO.faceEnrollment(data.pipeline_data.status === 'KNOWN' ? 'recognized' : 'unrecognized', data.image_jpeg)
-                    payload.face_id = BigInt(response.face_id)
-
-                    if(data.pipeline_data.status === 'KNOWN') {
-                        const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
-
-                        if(!face) return;
-
-                        payload.enrollment_id = face.id
-
-                        await RecognizedEventDAO.create(payload)
-                    } else {
-                        await UnrecognizedEventDAO.create(payload)
-                    }
-                }
+                await EventMasterDataDAO.create({
+                    ...data,
+                    primary_image: data.primary_image ? new Buffer(data.primary_image, 'base64') : null,
+                    secondary_image: new Buffer(data.secondary_image, 'base64'),
+                    event_time: new Date(data.event_time)
+                })
 
                 // console.log(payload)
                 console.log(this.connections.length)
