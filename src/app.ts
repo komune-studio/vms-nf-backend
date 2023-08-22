@@ -17,6 +17,7 @@ import UnrecognizedEventDAO from "./daos/unrecognized_event.dao";
 import WebsocketService from "./services/websocket.service";
 import CameraResolutionController from "./controllers/camera_resolution.controller";
 import PatrolCarsDAO from "./daos/patrol_cars.dao";
+import PatrolCarsCoordinatesDAO from "./daos/patrol_cars_coordinates.dao";
 
 dotenv.config();
 
@@ -72,6 +73,10 @@ app.use(handleErrors);
         console.log('Creating patrol_cars table')
         await PatrolCarsDAO.createTable();
         console.log("patrol_cars table created successfully.");
+
+        console.log('Creating patrol_cars_coordinates table')
+        await PatrolCarsCoordinatesDAO.createTable();
+        console.log("patrol_cars_coordinates table created successfully.");
 
     } catch (e) {
         console.log(e);

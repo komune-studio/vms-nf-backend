@@ -42,7 +42,7 @@ export default class PatrolCarsController {
 
             //Check if result exists
             if (check.length === 0) {
-                return next(new NotFoundError("Patrol Car not found.", "id"));
+                return next(new NotFoundError("Patrol car coordinate not found.", "id"));
             }
 
             //Update by ID

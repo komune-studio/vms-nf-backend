@@ -122,3 +122,10 @@ model patrol_cars {
     id         Int      @id @default(autoincrement())
     name       String   @db.VarChar(200)
 }
+
+model patrol_cars_coordinates {
+    id                  Int      @id @default(autoincrement())
+    patrol_car_id       BigInt   @db.BigInt
+    latitude            Float    @db.DoublePrecision
+    longitude           Float    @db.DoublePrecision
+}
