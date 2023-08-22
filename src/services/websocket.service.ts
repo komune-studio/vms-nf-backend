@@ -117,7 +117,6 @@ export default class WebsocketService {
                     },
                     status,
                     event_time: moment.unix(data.timestamp).utc().format('YYYY-MM-DD HH:mm:ss+00'),
-                    event_id: data.pipeline_data.event_id,
                     latitude: data.stream_latitude,
                     longitude: data.stream_longitude
                 }
