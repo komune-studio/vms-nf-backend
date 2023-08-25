@@ -67,46 +67,77 @@ export default class WebsocketService {
                 }, 5000);
             });
             connection.on('message', async (message) => {
-                if (message.type !== 'utf8') return;
-                const data = JSON.parse(message.utf8Data);
+                try {
+                    if (message.type !== 'utf8') return;
+                    const data = JSON.parse(message.utf8Data);
 
-                let payload : any;
+                    let payload: any;
 
-                if(data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
-                    payload = {
-                        timestamp: data.timestamp,
-                        stream_name: data.stream_name,
-                        image: Buffer.from(data.image_jpeg, 'base64')
+                    if (data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
+                        payload = {
+                            timestamp: data.timestamp,
+                            stream_name: data.stream_name,
+                            image: Buffer.from(data.image_jpeg, 'base64')
+                        }
+
+                        const response = await FremisnDAO.faceEnrollment(data.pipeline_data.status === 'KNOWN' ? 'recognized' : 'unrecognized', data.image_jpeg)
+
+                        payload.face_id = BigInt(response.face_id)
+
+                        if (data.pipeline_data.status === 'KNOWN') {
+                            const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
+
+                            if (!face) return;
+
+                            payload.enrollment_id = face.id
+
+                            await RecognizedEventDAO.create(payload)
+                        } else {
+                            await UnrecognizedEventDAO.create(payload)
+                        }
                     }
 
-                    const response = await FremisnDAO.faceEnrollment(data.pipeline_data.status === 'KNOWN' ? 'recognized' : 'unrecognized', data.image_jpeg)
-
-                    payload.face_id = BigInt(response.face_id)
-
-                    if(data.pipeline_data.status === 'KNOWN') {
+                    if ((data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') && data.pipeline_data.status === 'KNOWN') {
                         const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
 
-                        if(!face) return;
+                        if (face) {
+                            const stream = await StreamDAO.getStreamsById([data.stream_id])
 
-                        payload.enrollment_id = face.id
+                            if (stream.length > 0 && stream[0].latitude && stream[0].longitude) {
+                                let geocode = await request(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${stream[0].latitude},${stream[0].longitude}&sensor=true&key=AIzaSyA-gTcxlBrW55343FxPYZNQJdVmd0z3OcA`, 'GET');
+                                ``
+                                await DetectionDAO.create({
+                                    enrollment_id: face.id,
+                                    latitude: stream[0].latitude,
+                                    longitude: stream[0].longitude,
+                                    image: Buffer.from(data.image_jpeg, 'base64'),
+                                    stream_name: stream[0].name,
+                                    address: geocode.results[0].formatted_address
+                                })
+                            }
 
-                        await RecognizedEventDAO.create(payload)
-                    } else {
-                        await UnrecognizedEventDAO.create(payload)
-                    }
-                }
 
-                if((data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') && data.pipeline_data.status === 'KNOWN') {
-                    const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
+                            console.log(face.id)
+                        }
+                    } else if (data.analytic_id === 'NFV4-LPR2') {
+                        const vehicle = await VehicleDAO.getByPlate(data.pipeline_data.plate_number)
 
-                    if(face) {
-                        const stream = await StreamDAO.getStreamsById([data.stream_id])
+                        if (vehicle) {
+                            const stream = await StreamDAO.getStreamsById([data.stream_id])
 
-                        if(stream.length > 0 && stream[0].latitude && stream[0].longitude) {
                             let geocode = await request(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${stream[0].latitude},${stream[0].longitude}&sensor=true&key=AIzaSyA-gTcxlBrW55343FxPYZNQJdVmd0z3OcA`, 'GET');
-``
-                            await DetectionDAO.create({
-                                enrollment_id: face.id,
+
+                            console.log({
+                                vehicle_id: vehicle.id,
+                                latitude: stream[0].latitude,
+                                longitude: stream[0].longitude,
+                                image: Buffer.from(data.image_jpeg, 'base64'),
+                                stream_name: stream[0].name,
+                                address: geocode.results[0].formatted_address
+                            })
+
+                            await VehicleDetectionDAO.create({
+                                vehicle_id: vehicle.id,
                                 latitude: stream[0].latitude,
                                 longitude: stream[0].longitude,
                                 image: Buffer.from(data.image_jpeg, 'base64'),
@@ -114,36 +145,9 @@ export default class WebsocketService {
                                 address: geocode.results[0].formatted_address
                             })
                         }
-
-
-                        console.log(face.id)
                     }
-                } else if (data.analytic_id === 'NFV4-LPR2') {
-                    const vehicle = await VehicleDAO.getByPlate(data.pipeline_data.plate_number)
-
-                    if(vehicle) {
-                        const stream = await StreamDAO.getStreamsById([data.stream_id])
-
-                        let geocode = await request(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${stream[0].latitude},${stream[0].longitude}&sensor=true&key=AIzaSyA-gTcxlBrW55343FxPYZNQJdVmd0z3OcA`, 'GET');
-
-                        console.log({
-                            vehicle_id: vehicle.id,
-                            latitude: stream[0].latitude,
-                            longitude: stream[0].longitude,
-                            image: Buffer.from(data.image_jpeg, 'base64'),
-                            stream_name: stream[0].name,
-                            address: geocode.results[0].formatted_address
-                        })
-
-                        await VehicleDetectionDAO.create({
-                            vehicle_id: vehicle.id,
-                            latitude: stream[0].latitude,
-                            longitude: stream[0].longitude,
-                            image: Buffer.from(data.image_jpeg, 'base64'),
-                            stream_name: stream[0].name,
-                            address: geocode.results[0].formatted_address
-                        })
-                    }
+                } catch (e) {
+                    console.log(e)
                 }
             });
         });
