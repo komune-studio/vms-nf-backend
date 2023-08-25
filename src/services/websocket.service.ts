@@ -7,6 +7,9 @@ import StreamDAO from "../daos/stream.dao";
 import request from "../utils/api.utils";
 import VehicleDetectionDAO from "../daos/vehicle_detection.dao";
 import VehicleDAO from "../daos/vehicle.dao";
+import FremisnDAO from "../daos/fremisn.dao";
+import RecognizedEventDAO from "../daos/recognized_event.dao";
+import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
 
 export default class WebsocketService {
@@ -66,6 +69,32 @@ export default class WebsocketService {
             connection.on('message', async (message) => {
                 if (message.type !== 'utf8') return;
                 const data = JSON.parse(message.utf8Data);
+
+                let payload : any;
+
+                if(data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
+                    payload = {
+                        timestamp: data.timestamp,
+                        stream_name: data.stream_name,
+                        image: Buffer.from(data.image_jpeg, 'base64')
+                    }
+
+                    const response = await FremisnDAO.faceEnrollment(data.pipeline_data.status === 'KNOWN' ? 'recognized' : 'unrecognized', data.image_jpeg)
+
+                    payload.face_id = BigInt(response.face_id)
+
+                    if(data.pipeline_data.status === 'KNOWN') {
+                        const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
+
+                        if(!face) return;
+
+                        payload.enrollment_id = face.id
+
+                        await RecognizedEventDAO.create(payload)
+                    } else {
+                        await UnrecognizedEventDAO.create(payload)
+                    }
+                }
 
                 if((data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') && data.pipeline_data.status === 'KNOWN') {
                     const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);

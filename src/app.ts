@@ -10,6 +10,9 @@ import WebsocketService from "./services/websocket.service";
 import v1 from "./routes/v1/routes";
 import PrismaService from "./services/prisma.service";
 import {NotFoundError} from "./utils/error.utils";
+import FremisnDAO from "./daos/fremisn.dao";
+import RecognizedEventDAO from "./daos/recognized_event.dao";
+import UnrecognizedEventDAO from "./daos/unrecognized_event.dao";
 
 dotenv.config();
 
@@ -39,6 +42,24 @@ app.use(handleErrors);
 
     try {
         await AuthController.initialize();
+
+        console.log('Creating keyspace: recognized')
+        await FremisnDAO.createKeyspace('recognized');
+        console.log('Keyspace created: recognized')
+
+        console.log('Creating keyspace: unrecognized')
+        await FremisnDAO.createKeyspace('unrecognized');
+        console.log('Keyspace created: unrecognized')
+
+        console.log('Creating recognized_event table')
+        await RecognizedEventDAO.createTable();
+        console.log("recognized_event table created successfully.");
+
+        console.log('Creating unrecognized_event table')
+        await UnrecognizedEventDAO.createTable();
+        console.log("unrecognized_event table created successfully.");
+
+
     } catch (e) {
         console.log(e);
         return;

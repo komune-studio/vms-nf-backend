@@ -90,4 +90,18 @@ export default class EnrolledFaceDAO {
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async getByIds(ids : number[]) {
+        console.log(ids)
+
+        let result = enrolledFace.findMany({
+            where: {
+                id: {
+                    in: ids
+                }
+            }
+        });
+
+        return result;
+    }
 }

@@ -158,3 +158,20 @@ model custom_logo {
     image         Bytes
     height        Int
 }
+
+model recognized_event {
+  id         BigInt    @id @default(autoincrement())
+  face_id    BigInt   @db.BigInt
+  timestamp  BigInt   @db.BigInt
+  stream_name String
+  image Bytes
+  enrollment_id  BigInt   @db.BigInt
+}
+
+model unrecognized_event {
+  id           BigInt    @id @default(autoincrement())
+  face_id    BigInt   @db.BigInt
+  timestamp  BigInt   @db.BigInt
+  stream_name String
+  image Bytes
+}
