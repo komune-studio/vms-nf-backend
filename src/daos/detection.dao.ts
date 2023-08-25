@@ -41,7 +41,7 @@ export default class DetectionDAO {
             take: limit ? parseInt(limit) : undefined,
             include: {
                 enrolled_face: {
-                    select: {name: true, identity_number: true, additional_info: true}
+                    select: {id: true, name: true, identity_number: true, additional_info: true, gender: true, birth_date: true}
                 },
                 user: {
                     select: {name: true}

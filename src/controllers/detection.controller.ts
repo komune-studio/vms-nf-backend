@@ -33,7 +33,33 @@ export default class DetectionController {
             // @ts-ignore
             const data = await DetectionDAO.getAll(enrollment_id, case_id, search, user_id, start_date, end_date, id, page, limit)
 
-            const output = {data: data.map(item => ({...item, image: Buffer.from(item.image).toString('base64')}))};
+            let output = {data: data.map(item => ({...item, image: Buffer.from(item.image).toString('base64')}))};
+
+            for (const idx in output.data) {
+                const datum = output.data[idx]
+                let associate = null;
+
+                if(datum.associate_id) {
+                   associate = await EnrolledFaceDAO.getById(datum.associate_id);
+
+
+                   if(associate) {
+                       const faceImage = await FaceImageDAO.getLatestImgThumbnail(associate.id)
+
+                       // @ts-ignore
+                       associate.face_id = associate.face_id.toString();
+                       // @ts-ignore
+                       associate.thumbnail = Buffer.from(faceImage.image_thumbnail).toString('base64');
+                   }
+                }
+
+                const faceImage = await FaceImageDAO.getLatestImgThumbnail(datum.enrolled_face.id)
+
+                if(faceImage) {
+                    // @ts-ignore
+                    output.data[idx] = {...datum, enrolled_face: {...datum.enrolled_face, thumbnail: Buffer.from(faceImage.image_thumbnail).toString('base64')}, associate}
+                }
+            }
 
             if(page !== undefined && limit !== undefined) {
                 // @ts-ignore
