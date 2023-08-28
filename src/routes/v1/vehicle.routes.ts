@@ -4,7 +4,7 @@ import {authAdmin, authAll} from "../../middlewares/auth.middleware";
 
 export default function routesVehicle(router : Router) {
     router.route('/vehicles')
-        .post(authAdmin, VehicleController.createVehicle)
+        .post(authAll, VehicleController.createVehicle)
         .get(authAll, VehicleController.getAllVehicles);
 
     router.route('/vehicle/case-distribution')
