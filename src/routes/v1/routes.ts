@@ -12,6 +12,7 @@ import routesUnrecognizedEvent from "./unrecognized_event.routes";
 import routesCameraResolution from "./camera_resolution.routes";
 import routesPatrolCars from "./patrol_cars.routes";
 import routesPatrolCarsCoordinates from "./patrol_cars_coordinates.routes";
+import routesBlockchain from "./blockchain.routes";
 
 const router = express.Router();
 
@@ -28,5 +29,6 @@ routesUnrecognizedEvent(router);
 routesCameraResolution(router);
 routesPatrolCars(router);
 routesPatrolCarsCoordinates(router);
+routesBlockchain(router);
 
 export default router;
