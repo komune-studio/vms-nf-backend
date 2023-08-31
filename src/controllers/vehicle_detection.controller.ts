@@ -66,4 +66,17 @@ export default class DetectionController {
             return next(err);
         }
     }
+
+    static async getTop3(req: Request, res: Response, next: NextFunction) {
+        try {
+            const data = await VehicleDetectionDAO.getTop3()
+
+            // @ts-ignore
+            res.send(data.map(item => ({...item, count: parseInt(item.count)})))
+        } catch (err) {
+            console.log(err)
+
+            return next(err);
+        }
+    }
 }

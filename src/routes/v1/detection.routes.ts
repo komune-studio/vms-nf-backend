@@ -14,6 +14,9 @@ export default function routesAuth(router : Router) {
     router.route('/detection/distribution')
         .get(DetectionController.getDetectionDistribution)
 
+    router.route('/detection/top-3')
+        .get(DetectionController.getTop3)
+
     router.route('/detection/:enrollment_id/associate')
         .get(DetectionController.getTopAssociate)
 }

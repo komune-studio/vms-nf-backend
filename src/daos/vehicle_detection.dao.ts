@@ -94,4 +94,10 @@ export default class VehicleDetectionDAO {
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async getTop3() {
+        const sql = `select count(*), vehicle.plate_number from vehicle_detection left join vehicle on vehicle_id = vehicle.id group by vehicle.id order by count DESC LIMIT 3;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }

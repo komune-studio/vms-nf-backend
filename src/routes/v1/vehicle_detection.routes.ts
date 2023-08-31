@@ -11,4 +11,7 @@ export default function routesVehicleDetection(router : Router) {
 
     router.route('/vehicle-detection/distribution')
         .get(VehicleDetectionController.getDetectionDistribution)
+
+    router.route('/vehicle-detection/top-3')
+        .get(VehicleDetectionController.getTop3)
 }

@@ -136,4 +136,12 @@ export default class DetectionDAO {
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async getTop3() {
+        const sql = `select count(*), enrolled_face.name, encode(image_thumbnail, 'base64') from detection 
+LEFT JOIN enrolled_face on enrollment_id = enrolled_face.id LEFT JOIN face_image on enrolled_face_id = enrolled_face.id
+group by enrolled_face.id, face_image.id order by count  DESC LIMIT 3;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }
