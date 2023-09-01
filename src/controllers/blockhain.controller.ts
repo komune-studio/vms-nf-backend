@@ -44,17 +44,20 @@ export default class BlockhainController {
         }
     }
 
-    static async create(req: Request, res: Response, next: NextFunction) {
+    static async create(action : string, detail : any) {
         try {
             const loginResult = await BlockhainController.login();
 
-            let result = await request(`${process.env.TRACEABILITY_URL}/activity/create`, 'POST', req.body, {
+            let result = await request(`${process.env.TRACEABILITY_URL}/activity/create`, 'POST', {
+                action,
+                detail
+            }, {
                 Authorization: `Bearer ${loginResult.accessToken}`
             });
 
-            res.send(result);
+            return result;
         } catch (e) {
-            return next(e);
+           console.log(e)
         }
     }
 }

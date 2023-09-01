@@ -14,6 +14,8 @@ import {
 import AdminDAO from "../daos/admin.dao";
 import SecurityUtils from "../utils/security.utils";
 import PrismaClientKnownRequestError = Prisma.PrismaClientKnownRequestError;
+import BlockhainController from "./blockhain.controller";
+import request from "../utils/api.utils";
 
 export default class AuthController {
     static async initialize() {
@@ -68,6 +70,7 @@ export default class AuthController {
                 return next(new InvalidCredentialsError("Invalid credentials."));
             }
 
+
             let passwordIsCorrect = SecurityUtils.comparePassword(admin.password, password, admin.salt);
 
             if (!passwordIsCorrect) {
@@ -99,6 +102,31 @@ export default class AuthController {
 
             res.send(result);
 
+            BlockhainController.create('session', {
+                type: 'login',
+                user: {id: admin.id, email: admin.email, name: admin.name, role: admin.role}
+            })
+        } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async logout(req: Request, res: Response, next: NextFunction) {
+        const {id} = req.decoded;
+
+        try {
+            let admin = await AdminDAO.getById(id);
+
+            if (admin === null || !admin.active) {
+                return next(new InvalidCredentialsError("Invalid credentials."));
+            }
+
+            BlockhainController.create('session', {
+                type: 'logout',
+                user: {id, email: admin.email, name: admin.name, role: admin.role}
+            })
+
+            res.send({success: true});
         } catch (e) {
             return next(e);
         }
@@ -295,4 +323,6 @@ export default class AuthController {
             return next(e);
         }
     }
+
+
 }

@@ -6,6 +6,9 @@ export default function routesAuth(router : Router) {
     router.route('/login')
         .post(AuthController.login);
 
+    router.route('/logout')
+        .post(authAll, AuthController.logout);
+
     router.route('/authenticate')
         .post(authAll, AuthController.authenticate);
 

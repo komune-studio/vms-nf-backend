@@ -63,7 +63,7 @@ const startAggregator = async () => {
 }
 
 (async () => {
-   startAggregator()
+   // startAggregator()
 
     await PrismaService.initialize();
 
