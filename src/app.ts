@@ -19,11 +19,14 @@ import CameraResolutionController from "./controllers/camera_resolution.controll
 import PatrolCarsDAO from "./daos/patrol_cars.dao";
 import PatrolCarsCoordinatesDAO from "./daos/patrol_cars_coordinates.dao";
 import EventMasterDataDAO from "./daos/event_master_data.dao";
+import StreamMasterDataDAO from "./daos/stream_master_data.dao";
+import PipelineMasterDataDAO from "./daos/pipeline_master_data.dao";
+import request from "./utils/api.utils";
 
 dotenv.config();
 
 const app = express();
-const ip : any[] = [];
+const ip: any[] = [];
 
 const PORT = process.env.SERVER_PORT || 3000;
 
@@ -38,7 +41,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/v1', v1)
 
-app.use('*', (req: Request, res: Response, next : NextFunction) => {
+app.use('*', (req: Request, res: Response, next: NextFunction) => {
     return next(new NotFoundError("Endpoint does not exist."))
 })
 
@@ -47,9 +50,39 @@ app.use(handleErrors);
 const startAggregator = async () => {
     try {
         const response = await PatrolCarsDAO.getAll()
+        await StreamMasterDataDAO.deleteAll();
+        await PipelineMasterDataDAO.deleteAll();
 
-        for(const data of response) {
-            if(!ip.includes(data.ip)) {
+
+        for (const data of response) {
+            const streams = await request(`http://${data.ip}:4004/streams`, 'GET');
+
+            for (const stream of streams.streams) {
+                await StreamMasterDataDAO.create({
+                    stream_id: stream.stream_id,
+                    address: stream.stream_address,
+                    name: stream.stream_name,
+                    node_num: stream.stream_node_num,
+                    latitude: stream.stream_latitude,
+                    longitude: stream.stream_longitude,
+                    patrol_car_id: data.id
+                })
+                // console.log(stream)
+
+                const pipelines = await request(`http://${data.ip}:4004/streams/${stream.stream_node_num}/${stream.stream_id}`, 'GET');
+
+                for (const pipeline of pipelines.pipelines) {
+                    console.log(pipeline)
+
+                    await PipelineMasterDataDAO.create({
+                        stream_id: stream.stream_id,
+                        analytic_id: pipeline,
+                        patrol_car_id: data.id
+                    })
+                }
+            }
+
+            if (!ip.includes(data.ip)) {
                 await WebsocketService.initialize(`ws://${data.ip}:3031`, data.id);
                 ip.push(data.ip)
             } else {
@@ -78,14 +111,14 @@ const startAggregator = async () => {
 }
 
 (async () => {
-   startAggregator()
+    startAggregator()
 
     await PrismaService.initialize();
 
     try {
         await AuthController.initialize();
 
-        if(process.env.RECORD_FACE_DETECTION) {
+        if (process.env.RECORD_FACE_DETECTION) {
             console.log('Creating keyspace: recognized')
             await FremisnDAO.createKeyspace('recognized');
             console.log('Keyspace created: recognized')
@@ -119,6 +152,13 @@ const startAggregator = async () => {
         await EventMasterDataDAO.createTable();
         console.log("event_master_data table created successfully.");
 
+        console.log('Creating stream_master_data table')
+        await StreamMasterDataDAO.createTable();
+        console.log("stream_master_data table created successfully.");
+
+        console.log('Creating pipeline_master_data table')
+        await PipelineMasterDataDAO.createTable();
+        console.log("pipeline_master_data table created successfully.");
     } catch (e) {
         console.log(e);
         return;
