@@ -45,25 +45,40 @@ app.use('*', (req: Request, res: Response, next : NextFunction) => {
 app.use(handleErrors);
 
 const startAggregator = async () => {
-    const initialData = [
-        {
-            id: 1,
-            ip: 'localhost'
-        }
-    ]
+    try {
+        const response = await PatrolCarsDAO.getAll()
 
-    for(const data of initialData) {
-        if(!ip.includes(data.ip)) {
-            await WebsocketService.initialize(`ws://${data.ip}:3031`);
-            ip.push(data.ip)
-        } else {
-            console.log(`Ignore id ${data.id}!`)
+        for(const data of response) {
+            if(!ip.includes(data.ip)) {
+                await WebsocketService.initialize(`ws://${data.ip}:3031`, data.id);
+                ip.push(data.ip)
+            } else {
+                console.log(`Ignore id ${data.id}!`)
+            }
         }
+    } catch (e) {
+        console.log(e)
     }
+
+    // const initialData = [
+    //     {
+    //         id: 1,
+    //         ip: 'localhost'
+    //     }
+    // ]
+    //
+    // for(const data of initialData) {
+    //     if(!ip.includes(data.ip)) {
+    //         await WebsocketService.initialize(`ws://${data.ip}:3031`);
+    //         ip.push(data.ip)
+    //     } else {
+    //         console.log(`Ignore id ${data.id}!`)
+    //     }
+    // }
 }
 
 (async () => {
-   // startAggregator()
+   startAggregator()
 
     await PrismaService.initialize();
 

@@ -18,7 +18,8 @@ export default class EventMasterDataDAO {
         latitude            double precision   NOT NULL,
         longitude           double precision   NOT NULL,
         event_time          TIMESTAMPTZ,
-        created_at          TIMESTAMPTZ DEFAULT NOW()
+        created_at          TIMESTAMPTZ DEFAULT NOW(),
+        patrol_car_id       BigInt NOT NULL
 );`
     }
 

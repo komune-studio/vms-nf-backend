@@ -21,11 +21,11 @@ export default class WebsocketService {
         return WebsocketService.instance;
     }
 
-    static async initialize(url : string): Promise<void> {
-        WebsocketService.instance = new WebsocketService(url);
+    static async initialize(url : string, id : BigInt): Promise<void> {
+        WebsocketService.instance = new WebsocketService(url, id);
     }
 
-    private constructor(url : string) {
+    private constructor(url : string, id : BigInt) {
 
         this.connections = [];
 
@@ -65,7 +65,8 @@ export default class WebsocketService {
                     ...data,
                     primary_image: data.primary_image ? new Buffer(data.primary_image, 'base64') : null,
                     secondary_image: new Buffer(data.secondary_image, 'base64'),
-                    event_time: new Date(data.event_time)
+                    event_time: new Date(data.event_time),
+                    patrol_car_id: id
                 })
 
                 // console.log(payload)

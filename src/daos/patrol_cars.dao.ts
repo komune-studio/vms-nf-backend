@@ -10,6 +10,7 @@ export default class PatrolCarsDAO {
         return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS public.patrol_cars (
         id             BIGSERIAL   PRIMARY KEY,
         name           text        NOT NULL,
+        ip             text        NOT NULL,
         deleted_at     date        NULL
 );`
     }
@@ -19,7 +20,7 @@ export default class PatrolCarsDAO {
             select: {
                 id: true,
                 name: true,
-
+                ip: true
             },
             where:{
                 deleted_at: {

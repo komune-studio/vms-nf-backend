@@ -27,7 +27,7 @@ export default class PatrolCarsController {
         try {
             let data = await PatrolCarsDAO.getAll();
 
-            res.send(data)
+            res.send(data.map(item => ({...item, id: item.id.toString()})))
         } catch (err) {
             return next(err);
         }
