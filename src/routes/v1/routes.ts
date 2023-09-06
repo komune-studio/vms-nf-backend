@@ -13,6 +13,7 @@ import routesCameraResolution from "./camera_resolution.routes";
 import routesPatrolCars from "./patrol_cars.routes";
 import routesPatrolCarsCoordinates from "./patrol_cars_coordinates.routes";
 import routesBlockchain from "./blockchain.routes";
+import routesEventMasterData from "./event_master_data.routes";
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ routesCameraResolution(router);
 routesPatrolCars(router);
 routesPatrolCarsCoordinates(router);
 routesBlockchain(router);
+routesEventMasterData(router);
 
 export default router;
