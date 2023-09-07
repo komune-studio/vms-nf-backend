@@ -5,6 +5,7 @@ import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import EventMasterDataDAO from "../daos/event_master_data.dao";
 import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 import FremisnDAO from "../daos/fremisn.dao";
+import VehicleDAO from "../daos/vehicle.dao";
 
 // const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
 
@@ -58,6 +59,17 @@ export default class WebsocketService {
             connection.on('message', async (message) => {
                 if (message.type !== 'utf8') return;
                 const data = JSON.parse(message.utf8Data);
+
+                if(data.type === 'NFV4-LPR2') {
+                    const isPlateNumberExists = await VehicleDAO.getVehicleByPlate(data.detection.pipeline_data.plate_number);
+
+                    if(isPlateNumberExists) {
+                        data.result.result = `${data.result.result}-${isPlateNumberExists.status}-${isPlateNumberExists.name}`
+                        data.status = 'KNOWN'
+                    } else {
+                        data.status = 'UNKNOWN'
+                    }
+                }
 
                 let payload : any;
 
