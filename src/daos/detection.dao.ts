@@ -97,7 +97,7 @@ export default class DetectionDAO {
         });
     }
 
-    static async getTopAssociates(enrollmentId : string) {
+    static async getAssociates(enrollmentId : string, limit : number) {
         return detection.groupBy({
             by: ['associate_id'],
             _count: {
@@ -112,7 +112,7 @@ export default class DetectionDAO {
                     associate_id: 'desc',
                 }
             },
-            take: 1
+            take: limit
         });
     }
 

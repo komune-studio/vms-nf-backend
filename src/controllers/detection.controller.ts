@@ -77,11 +77,13 @@ export default class DetectionController {
         }
     }
 
-    static async getTopAssociate(req: Request, res: Response, next: NextFunction) {
+    static async getAssociates(req: Request, res: Response, next: NextFunction) {
         try {
             const {enrollment_id} = req.params;
+            const {limit} = req.query;
 
-            const data = await DetectionDAO.getTopAssociates(enrollment_id)
+            // @ts-ignore
+            const data = await DetectionDAO.getAssociates(enrollment_id, parseInt(limit))
 
             if(data.length > 0 && data[0].associate_id) {
                 const enrolledFace = await EnrolledFaceDAO.getById(data[0].associate_id);

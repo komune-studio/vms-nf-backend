@@ -69,5 +69,7 @@ app.use(handleErrors);
         console.log(`Server listening on port ${PORT}!`);
     });
 
-    await WebsocketService.initialize(server);
+    if(process.env.DISABLE_WEBSOCKET !== 'true') {
+        await WebsocketService.initialize(server);
+    }
 })();
