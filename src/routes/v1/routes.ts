@@ -10,6 +10,7 @@ import routesMapSiteStream from "./map_site_stream.routes";
 import routesRecognizedEvent from "./recognized_event.routes";
 import routesUnrecognizedEvent from "./unrecognized_event.routes";
 import routesCameraResolution from "./camera_resolution.routes";
+import routesPlayback from "./playback.routes";
 
 const router = express.Router();
 
@@ -24,6 +25,7 @@ routesFace(router);
 routesRecognizedEvent(router);
 routesUnrecognizedEvent(router);
 routesCameraResolution(router);
+routesPlayback(router);
 
 
 export default router;
