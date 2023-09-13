@@ -13,13 +13,18 @@ export default class PlaybackController {
     static async getRTSPUrls(req: Request, res: Response, next: NextFunction) {
         try {
             let body = req.body
+            if(!body.base64_auth){
+                return res.send({error: "Base64 auth is missing"})
+            }
+            let base64_auth = body.base64_auth
+            delete body.base64_auth
 
             const config = {
                 indent: ''
             }
             let xmlBody = toXML(body, config)
 
-            let responseFromDVR = await requestWithXML("http://192.168.103.244/ISAPI/ContentMgmt/search", "POST", xmlBody)
+            let responseFromDVR = await requestWithXML("http://192.168.103.244/ISAPI/ContentMgmt/search", "POST", xmlBody, base64_auth)
 
             // @ts-ignore
             let result1 = xml2json(responseFromDVR, {compact: true, spaces: 4});
