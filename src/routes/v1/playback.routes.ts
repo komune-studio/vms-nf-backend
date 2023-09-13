@@ -5,5 +5,5 @@ import PlaybackController from "../../controllers/playback.controller";
 
 export default function routesPlayback(router : Router) {
     router.route('/playback/rtsp-url')
-        .get(PlaybackController.getRTSPUrls)
+        .post(PlaybackController.getRTSPUrls)
 }
