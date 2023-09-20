@@ -60,6 +60,8 @@ export default class WebsocketService {
                 if (message.type !== 'utf8') return;
                 const data = JSON.parse(message.utf8Data);
 
+                if(data.status !== 'KNOWN') return;
+
                 if(data.type === 'NFV4-LPR2') {
                     const isPlateNumberExists = await VehicleDAO.getVehicleByPlate(data.detection.pipeline_data.plate_number);
 
