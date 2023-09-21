@@ -1,6 +1,6 @@
 import {ca} from "date-fns/locale";
 import {NextFunction, Request, Response} from "express";
-import PatrolCarsDAO from "../daos/patrol_cars.dao";
+import PatrolCarsDAO from "../daos/system.dao";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 import PipelineDAO from "../daos/pipeline.dao";
 import request from "../utils/api.utils";

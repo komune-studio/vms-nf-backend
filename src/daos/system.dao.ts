@@ -2,12 +2,12 @@ import PrismaService from "../services/prisma.service";
 import {now} from "moment";
 
 const prisma = PrismaService.getVisionaire();
-const patrolCars = prisma.patrol_cars;
+const system = prisma.system;
 
-export default class PatrolCarsDAO {
+export default class SystemDAO {
 
     static async createTable() {
-        return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS public.patrol_cars (
+        return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS public.system (
         id             BIGSERIAL   PRIMARY KEY,
         name           text        NOT NULL,
         ip             text        NOT NULL,
@@ -16,7 +16,7 @@ export default class PatrolCarsDAO {
     }
 
     static async getAll() {
-        return patrolCars.findMany({
+        return system.findMany({
             select: {
                 id: true,
                 name: true,
@@ -34,7 +34,7 @@ export default class PatrolCarsDAO {
     }
 
     static async getById(id: number) {
-        return patrolCars.findMany({
+        return system.findMany({
             where: {
                 id: id
             }
@@ -42,7 +42,7 @@ export default class PatrolCarsDAO {
     }
 
     static async update(id: number, data : any) {
-        return patrolCars.update({
+        return system.update({
             where: {
                 id
             }, data
@@ -50,13 +50,13 @@ export default class PatrolCarsDAO {
     }
 
     static async create(obj : any) {
-        return patrolCars.create({
+        return system.create({
             data: obj
         });
     }
 
     static async delete(id: number) {
-        return patrolCars.update({
+        return system.update({
             where: {
                 id: id
             }, data:{

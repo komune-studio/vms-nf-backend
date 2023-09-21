@@ -80,7 +80,7 @@ export default class WebsocketService {
                     primary_image: data.primary_image ? new Buffer(data.primary_image, 'base64') : null,
                     secondary_image: new Buffer(data.secondary_image, 'base64'),
                     event_time: new Date(data.event_time),
-                    patrol_car_id: id
+                    system_id: id
                 })
 
                 // console.log(payload)
