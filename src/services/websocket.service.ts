@@ -48,7 +48,10 @@ export default class WebsocketService {
                 connection.stream = stream
 
                 if(this.rtsp.filter(data => data.stream === stream).length === 0) {
-                    const ffmpeg = new rtsp.FFMpeg({input: stream});
+                    const ffmpeg = new rtsp.FFMpeg({
+                        input: stream,
+                        rate: 10
+                    });
                     const connections = this.connections;
                     const pipeStream = function(data : any) {
                         // @ts-ignore
@@ -60,6 +63,10 @@ export default class WebsocketService {
                     ffmpeg.on('data', pipeStream);
 
                     this.rtsp.push({stream, ffmpeg, pipeStream});
+
+                    ffmpeg.on('stop', () => {
+                        console.log('stream stopped')
+                    })
                 }
             }
 
