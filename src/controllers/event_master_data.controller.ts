@@ -8,7 +8,7 @@ import moment from "moment";
 const json2csv = require('json2csv').parse;
 export default class EventMasterDataController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
-        let {keyword, status, stream, page, limit, analytic, start_date, end_date, download} = req.query;
+        let {keyword, status, stream, page, limit, analytic, start_date, end_date, download, system} = req.query;
 
         download = download === 'true';
 
@@ -29,11 +29,10 @@ export default class EventMasterDataController {
             }
 
             // @ts-ignore
-            let event = await EventMasterDataDAO.getAllWithPagination(keyword, status, stream, analytic, startDate, endDate, download ? null : parseInt(page), download ? null : parseInt(limit));
-
+            let event = await EventMasterDataDAO.getAllWithPagination(keyword, status, stream, analytic, startDate, endDate, download ? null : parseInt(page), download ? null : parseInt(limit), system && system !== 'null' ? system : undefined);
 
             // @ts-ignore
-            let count = await EventMasterDataDAO.getCountWithPagination(keyword, status, stream, analytic, startDate, endDate);
+            let count = await EventMasterDataDAO.getCountWithPagination(keyword, status, stream, analytic, startDate, endDate, system && system !== 'null' ? system : undefined);
 
             // @ts-ignore
             res.send({

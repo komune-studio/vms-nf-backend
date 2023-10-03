@@ -24,7 +24,7 @@ export default class EventMasterDataDAO {
 );`
     }
 
-    static async getCountWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate : String, endDate  : String) {
+    static async getCountWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate : String, endDate  : String, system : string | undefined) {
         // @ts-ignore
         keyword = keyword === 'null' ? null : keyword
         // @ts-ignore
@@ -32,12 +32,12 @@ export default class EventMasterDataDAO {
         // @ts-ignore
         analytic = analytic === 'null' ? null : analytic
 
-        const sql = `SELECT count(id) FROM event_master_data WHERE ${status ? ` status = '${status}' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id in ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''};`
+        const sql = `SELECT count(id) FROM event_master_data WHERE ${status ? ` status = '${status}' ` : ' 1 = 1 '} ${system ? ` AND system_id = ${system} ` : ''} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id in ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getAllWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate : String, endDate  : String, page: number, limit: number) {
+    static async getAllWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate : String, endDate  : String, page: number, limit: number, system : string | undefined) {
         // @ts-ignore
         keyword = keyword === 'null' ? null : keyword
         // @ts-ignore
@@ -45,7 +45,7 @@ export default class EventMasterDataDAO {
         // @ts-ignore
         analytic = analytic === 'null' ? null : analytic
 
-        const sql = `SELECT type, stream_id, detection, primary_image, secondary_image, result, status, event_time, created_at, system.name as system_name  FROM event_master_data LEFT JOIN system on system_id = system.id WHERE ${status ? ` status = '${status}' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
+        const sql = `SELECT type, stream_id, detection, primary_image, secondary_image, result, status, event_time, created_at, system.name as system_name  FROM event_master_data LEFT JOIN system on system_id = system.id WHERE ${status ? ` status = '${status}' ` : ' 1 = 1 '} ${system ? ` AND system_id = ${system} ` : ''} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

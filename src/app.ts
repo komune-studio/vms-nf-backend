@@ -52,7 +52,6 @@ const startAggregator = async () => {
                 await WebsocketService.initialize(`ws://${data.ip}:3031`, data.id);
                 ip.push(data.ip)
             } else {
-                console.log(`Ignore id ${data.id}!`)
             }
         }
     } catch (e) {
@@ -62,6 +61,11 @@ const startAggregator = async () => {
 
 (async () => {
     startAggregator()
+
+    setInterval(() => {
+        startAggregator()
+    }, 60000)
+
 
     await PrismaService.initialize();
 
