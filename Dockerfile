@@ -15,5 +15,8 @@ RUN npm install
 # Bundle app source
 COPY . .
 
+RUN apt-get update
+RUN apt-get install ffmpeg -y
+
 CMD [ "node", "generate-env.js" ]
 CMD [ "npm", "start" ]

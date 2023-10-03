@@ -48,3 +48,25 @@ export async function requestWithFile(endpoint : string, method : string, body :
         throw response;
     }
 }
+
+// @ts-ignore
+export async function requestWithXML(endpoint : string, method : string, body? : any, base64_auth) {
+
+    console.log("Body", body)
+    let request  = {
+        method: method,
+        headers: {
+            "Content-Type": "application/xml",
+            "Authorization": `Basic ${base64_auth}`,
+        },
+        body: body,
+    }
+
+    try{
+        let result = await fetch(endpoint, request)
+        return result.text()
+    }catch (e) {
+        console.log(e)
+        return e
+    }
+}
