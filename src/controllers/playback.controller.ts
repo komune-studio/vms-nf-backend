@@ -19,12 +19,18 @@ export default class PlaybackController {
             let base64_auth = body.base64_auth
             delete body.base64_auth
 
+            if(!body.ip_address){
+                return res.send({error: "IP address is missing"})
+            }
+            let ip_address = body.ip_address
+            delete body.ip_address
+
             const config = {
                 indent: ''
             }
             let xmlBody = toXML(body, config)
 
-            let responseFromDVR = await requestWithXML("http://192.168.103.244/ISAPI/ContentMgmt/search", "POST", xmlBody, base64_auth)
+            let responseFromDVR = await requestWithXML(`http://${ip_address}/ISAPI/ContentMgmt/search`, "POST", xmlBody, base64_auth)
 
             // @ts-ignore
             let result1 = xml2json(responseFromDVR, {compact: true, spaces: 4});
