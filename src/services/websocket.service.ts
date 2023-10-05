@@ -49,8 +49,7 @@ export default class WebsocketService {
 
                 if(this.rtsp.filter(data => data.stream === stream).length === 0) {
                     const ffmpeg = new rtsp.FFMpeg({
-                        input: stream,
-                        rate: 10
+                        input: stream
                     });
                     const connections = this.connections;
                     const pipeStream = function(data : any) {
