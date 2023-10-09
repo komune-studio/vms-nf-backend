@@ -1,5 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import DashboardCustomizationDAO from "../daos/dashboard_customization.dao";
+import GlobalSettingDAO from "../daos/global_setting.dao";
 
 export default class DashboardCustomizationController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
@@ -13,6 +14,11 @@ export default class DashboardCustomizationController {
                output[item.key] = item.key === 'app_icon' ? Buffer.from(item.custom_file).toString('base64') : item.key === 'analytic' ? item.custom_json_array : item.custom_text;
            }
 
+            let result = await GlobalSettingDAO.getAll();
+
+           // @ts-ignore
+            output.similarity =  result.length === 0 ? .7 : result[0].similarity;
+
             res.send(output)
         } catch (err) {
             return next(err);
@@ -21,7 +27,7 @@ export default class DashboardCustomizationController {
 
     static async update(req: Request, res: Response, next: NextFunction) {
         try {
-            const {app_name, app_icon, analytic} = req.body;
+            let {app_name, app_icon, analytic, similarity} = req.body;
 
             if (app_name) {
                 let appNameExists = await DashboardCustomizationDAO.getByKey('app_name');
@@ -68,6 +74,18 @@ export default class DashboardCustomizationController {
                     await DashboardCustomizationDAO.update('analyticExists', {
                         custom_file: analytic
                     })
+                }
+            }
+
+            if(similarity) {
+                similarity = parseFloat(similarity);
+
+                let result = await GlobalSettingDAO.getAll();
+
+                if(result.length > 0) {
+                    await GlobalSettingDAO.update(result[0].id, {similarity})
+                } else {
+                    await GlobalSettingDAO.create({similarity})
                 }
             }
 
