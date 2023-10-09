@@ -11,7 +11,7 @@ export default class DashboardCustomizationController {
 
            for(const item of data) {
                // @ts-ignore
-               output[item.key] = item.key === 'app_icon' ? Buffer.from(item.custom_file).toString('base64') : item.key === 'analytic' ? item.custom_json_array : item.custom_text;
+               output[item.key] = item.key === 'app_icon' ? Buffer.from(item.custom_file).toString('base64') : item.key === 'app_name' ? item.custom_text : item.key === 'analytic' ? item.custom_json_array : item.custom_number;
            }
 
             let result = await GlobalSettingDAO.getAll();
@@ -27,7 +27,7 @@ export default class DashboardCustomizationController {
 
     static async update(req: Request, res: Response, next: NextFunction) {
         try {
-            let {app_name, app_icon, analytic, similarity} = req.body;
+            let {app_name, app_icon, icon_size, analytic, similarity} = req.body;
 
             if (app_name) {
                 let appNameExists = await DashboardCustomizationDAO.getByKey('app_name');
@@ -71,8 +71,23 @@ export default class DashboardCustomizationController {
                         custom_json_array: analytic
                     })
                 } else {
-                    await DashboardCustomizationDAO.update('analyticExists', {
-                        custom_file: analytic
+                    await DashboardCustomizationDAO.update('analytic', {
+                        custom_json_array: analytic
+                    })
+                }
+            }
+
+            if (icon_size) {
+                let iconSizeExists = await DashboardCustomizationDAO.getByKey('icon_size');
+
+                if (!iconSizeExists) {
+                    await DashboardCustomizationDAO.insert({
+                        key: 'icon_size',
+                        custom_number: icon_size
+                    })
+                } else {
+                    await DashboardCustomizationDAO.update('icon_size', {
+                        custom_number: icon_size
                     })
                 }
             }

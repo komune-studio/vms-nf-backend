@@ -123,6 +123,7 @@ model dashboard_customization {
   custom_text String?
   custom_file Bytes?
   custom_json_array   Json[]
+  custom_number Int?
 }
 
 model global_setting {

@@ -9,7 +9,8 @@ export default class DashboardCustomizationDAO {
             key text PRIMARY KEY,
             custom_text text,
             custom_file bytea,
-            custom_json_array jsonb[] default '{}'
+            custom_json_array jsonb[] default '{}',
+            custom_number Int
         );`
     }
 
