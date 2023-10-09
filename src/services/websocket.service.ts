@@ -5,6 +5,7 @@ import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import RecognizedEventDAO from "../daos/recognized_event.dao";
 import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 import FremisnDAO from "../daos/fremisn.dao";
+import GlobalSettingDAO from "../daos/global_setting.dao";
 
 const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
 
