@@ -16,6 +16,7 @@ import CameraResolutionDAO from "./daos/camera_resolution.dao";
 import UnrecognizedEventDAO from "./daos/unrecognized_event.dao";
 import WebsocketService from "./services/websocket.service";
 import CameraResolutionController from "./controllers/camera_resolution.controller";
+import DashboardCustomizationDAO from "./daos/dashboard_customization.dao";
 
 dotenv.config();
 
@@ -68,6 +69,9 @@ app.use(handleErrors);
         await CameraResolutionDAO.createTable();
         console.log("camera_resolution table created successfully.");
 
+        console.log('Creating dashboard_customization table')
+        await DashboardCustomizationDAO.createTable();
+        console.log("dashboard_customization table created successfully.");
     } catch (e) {
         console.log(e);
         return;

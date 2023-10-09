@@ -117,3 +117,10 @@ model camera_resolution {
   stream_id  String   @db.VarChar(200)
   resolution String   @db.VarChar(200)
 }
+
+model dashboard_customization {
+  key         String      @id
+  custom_text String?
+  custom_file Bytes?
+  custom_json_array   Json[]
+}
