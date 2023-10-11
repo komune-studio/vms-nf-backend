@@ -14,7 +14,6 @@ import routesPatrolCarsCoordinates from "./patrol_cars_coordinates.routes";
 import routesBlockchain from "./blockchain.routes";
 import routesEventMasterData from "./event_master_data.routes";
 import routesSystem from "./system.routes";
-import routesPlayback from "./playback.routes";
 
 const router = express.Router();
 
@@ -33,6 +32,5 @@ routesPatrolCarsCoordinates(router);
 routesBlockchain(router);
 routesEventMasterData(router);
 routesSystem(router);
-routesPlayback(router);
 
 export default router;

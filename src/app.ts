@@ -18,7 +18,6 @@ import StreamMasterDataDAO from "./daos/stream_master_data.dao";
 import PipelineMasterDataDAO from "./daos/pipeline_master_data.dao";
 import request from "./utils/api.utils";
 import SystemDAO from "./daos/system.dao";
-import WebsocketStreamerService from "./services/websocket-streamer.service";
 
 dotenv.config();
 
@@ -86,6 +85,4 @@ const startAggregator = async () => {
     const server = app.listen(PORT, async () => {
         console.log(`Server listening on port ${PORT}!`);
     });
-
-    await WebsocketStreamerService.initialize(server);
 })();
