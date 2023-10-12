@@ -72,6 +72,18 @@ app.use(handleErrors);
         console.log('Creating dashboard_customization table')
         await DashboardCustomizationDAO.createTable();
         console.log("dashboard_customization table created successfully.");
+
+        const isAppNameInitialized = await DashboardCustomizationDAO.getByKey("app_name")
+
+        if(!isAppNameInitialized) {
+            await DashboardCustomizationDAO.insert({
+                key: 'app_name',
+                custom_text: 'Komune Surveillance'
+            })
+
+            console.log("app_name initialized.");
+        }
+
     } catch (e) {
         console.log(e);
         return;
