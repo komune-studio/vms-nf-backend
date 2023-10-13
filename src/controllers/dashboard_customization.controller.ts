@@ -11,7 +11,7 @@ export default class DashboardCustomizationController {
 
            for(const item of data) {
                // @ts-ignore
-               output[item.key] = item.key === 'app_icon' ? Buffer.from(item.custom_file).toString('base64') : item.key === 'app_name' ? item.custom_text : item.key === 'analytic' ? item.custom_json_array : item.custom_number;
+               output[item.key] = item.key === 'app_icon' || item.key === 'favicon' ? Buffer.from(item.custom_file).toString('base64') : item.key === 'app_name' ? item.custom_text : item.key === 'analytic' ? item.custom_json_array : item.custom_number;
            }
 
             let result = await GlobalSettingDAO.getAll();
@@ -27,7 +27,7 @@ export default class DashboardCustomizationController {
 
     static async update(req: Request, res: Response, next: NextFunction) {
         try {
-            let {app_name, app_icon, icon_size, analytic, similarity} = req.body;
+            let {app_name, app_icon, favicon, icon_size, analytic, similarity} = req.body;
 
             if (app_name) {
                 let appNameExists = await DashboardCustomizationDAO.getByKey('app_name');
@@ -57,6 +57,23 @@ export default class DashboardCustomizationController {
                     })
                 } else {
                     await DashboardCustomizationDAO.update('app_icon', {
+                        custom_file
+                    })
+                }
+            }
+
+            if (favicon) {
+                let faviconExists = await DashboardCustomizationDAO.getByKey('favicon');
+
+                const custom_file = Buffer.from(favicon, 'base64');
+
+                if (!faviconExists) {
+                    await DashboardCustomizationDAO.insert({
+                        key: 'favicon',
+                        custom_file
+                    })
+                } else {
+                    await DashboardCustomizationDAO.update('favicon', {
                         custom_file
                     })
                 }
