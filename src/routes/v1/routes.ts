@@ -15,6 +15,7 @@ import routesVehicleDetection from "./vehicle_detection.routes";
 import routesCustomLogo from "./custom_logo.routes";
 import routesRecognizedEvent from "./recognized_event.routes";
 import routesUnrecognizedEvent from "./unrecognized_event.routes";
+import routesCameraResolution from "./camera_resolution.routes";
 
 const router = express.Router();
 
@@ -34,5 +35,6 @@ routesVehicleDetection(router);
 routesCustomLogo(router);
 routesRecognizedEvent(router);
 routesUnrecognizedEvent(router);
+routesCameraResolution(router)
 
 export default router;
