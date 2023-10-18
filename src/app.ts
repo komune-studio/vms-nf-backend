@@ -13,6 +13,7 @@ import {NotFoundError} from "./utils/error.utils";
 import FremisnDAO from "./daos/fremisn.dao";
 import RecognizedEventDAO from "./daos/recognized_event.dao";
 import UnrecognizedEventDAO from "./daos/unrecognized_event.dao";
+import CameraResolutionDAO from "./daos/camera_resolution.dao";
 
 dotenv.config();
 
@@ -58,6 +59,10 @@ app.use(handleErrors);
         console.log('Creating unrecognized_event table')
         await UnrecognizedEventDAO.createTable();
         console.log("unrecognized_event table created successfully.");
+
+        console.log('Creating camera_resolution table')
+        await CameraResolutionDAO.createTable();
+        console.log("camera_resolution table created successfully.");
 
 
     } catch (e) {

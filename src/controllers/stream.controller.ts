@@ -60,9 +60,11 @@ export default class StreamController {
                 return next(new NotFoundError("Stream not found.", "STREAM"));
             }
 
+            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}/${id}`, "GET")
+
             let pipelines = await PipelineDAO.getByStreamIds([id]);
             stream.pipelines = pipelines.map(pipeline => pipeline.analytic_id);
-
+            stream.stats = result.stream_stats;
             res.send(stream);
         } catch (e) {
             return next(e);
