@@ -121,14 +121,7 @@ export default class UtilController {
                 data.event_time = data.interval_alias
 
                 if (moment(data.event_time).isSameOrAfter(moment().startOf('isoWeeks').format('YYYY-MM-DDT00:00:00Z')) && moment(data.event_time).isSameOrBefore(moment().endOf('isoWeeks').format('YYYY-MM-DDT23:59:59Z'))) {
-                    let key;
-
-                    // console.log(moment(data.event_time).format('d'))
-                    if (parseInt(moment(data.event_time).format('m')) > 0) {
-                        key = moment(data.event_time).format('YYYY-MM-DDTHH:01:00Z')
-                    } else {
-                        key = moment(data.event_time).subtract(1, 'hour').format('YYYY-MM-DDTHH:01:00Z')
-                    }
+                    let key = moment(data.event_time).format('YYYY-MM-DDTHH:01:00Z');
 
                     // @ts-ignore
                     if (!output.heatmap_data[key]) {
