@@ -15,7 +15,7 @@ export default class UtilController {
             let mapSiteStream = [];
 
             // @ts-ignore
-            if(admin.role === 'SUPERADMIN') {
+            if (admin.role === 'SUPERADMIN') {
                 mapSiteStream = await MapSiteStreamDAO.getAll()
             } else {
                 // @ts-ignore
@@ -121,7 +121,8 @@ export default class UtilController {
             countByTimeAndStatus.forEach(data => {
                 data.event_time = data.interval_alias
 
-                if (moment(data.event_time).isSameOrAfter(moment().startOf('isoWeeks').format('YYYY-MM-DDT00:00:00Z')) && moment(data.event_time).isSameOrBefore(moment().endOf('isoWeeks').format('YYYY-MM-DDT23:59:59Z'))) {                    let key;
+                if (moment(data.event_time).isSameOrAfter(moment().startOf('isoWeeks').format('YYYY-MM-DDT00:00:00Z')) && moment(data.event_time).isSameOrBefore(moment().endOf('isoWeeks').format('YYYY-MM-DDT23:59:59Z'))) {
+                    let key;
 
                     // console.log(moment(data.event_time).format('d'))
                     if (parseInt(moment(data.event_time).format('m')) > 0) {
@@ -192,18 +193,90 @@ export default class UtilController {
         }
     }
 
+    static async getCameraDetailSummary(req: Request, res: Response, next: NextFunction) {
+        try {
+            const {analytic_id, stream_id, time} = req.params;
+
+            let startTime = moment()
+
+            if (time === 'this_week') {
+                startTime = moment().startOf('isoWeeks');
+            } else if (time === 'this_month') {
+                startTime = moment().startOf('month');
+            }
+
+            // @ts-ignore
+            startTime = startTime.format('YYYY-MM-DDT00:00:00Z');
+
+            let result: any = {}
+
+            if (analytic_id === 'NFV4-FR' || analytic_id === 'NFV4H-FR') {
+                result = {KNOWN: 0, UNKNOWN: 0}
+
+                // @ts-ignore
+                const response = await EventDAO.getFaceRecognitionSummary(stream_id, startTime)
+
+                response.forEach(data => {
+                    // @ts-ignore
+                    result[data.status] = parseInt(data._count.id)
+                })
+            } else if (analytic_id === 'NFV4-LPR2') {
+                result = {KNOWN: 0, UNKNOWN: 0}
+
+                // @ts-ignore
+                const response = await EventDAO.getLicensePlateRecognitionSummary(stream_id, startTime)
+
+                // @ts-ignore
+                if (response.length > 0) {
+                    // @ts-ignore
+                    if (response[0].KNOWN) {
+                        // @ts-ignore
+                        result['KNOWN'] = parseInt(response[0].KNOWN)
+                    }
+
+// @ts-ignore
+                    if (response[0].UNKNOWN) {
+                        // @ts-ignore
+                        result['UNKNOWN'] = parseInt(response[0].UNKNOWN)
+                    }
+                }
+            } else if (analytic_id === 'NFV4-VC') {
+                result = {car: 0, motorcycle: 0, truck: 0, bus: 0}
+
+                // @ts-ignore
+                const response = await EventDAO.getVehicleCountingSummary(stream_id, startTime)
+
+                // @ts-ignore
+                response.forEach(data => {
+                    result[data.label] = parseInt(data.count);
+                })
+            } else {
+                // @ts-ignore
+                const response = await EventDAO.getGeneralAnalyticSummary(analytic_id, stream_id, startTime)
+
+                result = {total: response._count.id};
+            }
+
+            res.send(result)
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
+
     static async getTopVisitors(req: Request, res: Response, next: NextFunction) {
         try {
             let {visitor, stream} = req.query;
             if (!visitor) visitor = "10";
 
             if (typeof visitor === "string") {
-                if(stream === 'null') {
+                if (stream === 'null') {
                     const admin = await AdminDAO.getById(req.decoded.id);
                     let mapSiteStream = []
 
                     // @ts-ignore
-                    if(admin.role === 'SUPERADMIN') {
+                    if (admin.role === 'SUPERADMIN') {
                         mapSiteStream = await MapSiteStreamDAO.getAll()
                     } else {
                         // @ts-ignore
@@ -217,7 +290,7 @@ export default class UtilController {
                 }
 
                 // @ts-ignore
-                if(stream.length === 0) {
+                if (stream.length === 0) {
                     return res.send([])
                 }
 
@@ -269,7 +342,7 @@ export default class UtilController {
 
     static async uploadVideo(req: Request, res: Response, next: NextFunction) {
         try {
-            if(req.file) {
+            if (req.file) {
                 res.send({file: req.file.filename})
             }
         } catch (e) {
@@ -282,7 +355,10 @@ export default class UtilController {
             const recording = await request(`${process.env.RECORDING_API_URL}/recording-list`, "GET")
 
             // @ts-ignore
-            res.send(recording.data.map(data => ({...data, url: `${process.env.RECORDING_API_URL}/download=${data.file_name}`})))
+            res.send(recording.data.map(data => ({
+                ...data,
+                url: `${process.env.RECORDING_API_URL}/download=${data.file_name}`
+            })))
         } catch (e) {
             console.log(e)
             return next(e);

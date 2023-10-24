@@ -28,7 +28,7 @@ export default class EventDAO {
     }
 
     static async getCountGroupByTimeAndStatus(streams: String[], analytic: String) {
-        if(streams.length === 0) return []
+        if (streams.length === 0) return []
 
         const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / 3600 )) * 3600) as interval_alias ${analytic === 'NFV4-CE' ? ` , avg(cast(detection->'pipeline_data'->>'estimation' as int)) ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}' GROUP BY status, interval_alias ORDER BY interval_alias ASC`
 
@@ -36,14 +36,14 @@ export default class EventDAO {
     }
 
     static async getCountGroupByStreamId(streams: String[], analytic: String) {
-        if(streams.length === 0) return []
+        if (streams.length === 0) return []
 
         const sql = `select count(id), result->>'location' as location from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = '${analytic}' AND event_time >= '${moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}'  group by result->>'location'  order by result->>'location' ASC;`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getCountWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate : String, endDate  : String) {
+    static async getCountWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate: String, endDate: String) {
         // @ts-ignore
         keyword = keyword === 'null' ? null : keyword
         // @ts-ignore
@@ -58,7 +58,7 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getAllWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate : String, endDate  : String, page: number, limit: number) {
+    static async getAllWithPagination(keyword: String, status: String, stream: String, analytic: String, startDate: String, endDate: String, page: number, limit: number) {
         // @ts-ignore
         keyword = keyword === 'null' ? null : keyword
         // @ts-ignore
@@ -110,6 +110,60 @@ export default class EventDAO {
                     path: ['pipeline_data', 'event_id'],
                     equals: eventId
                 }
+            }
+        });
+
+        return result;
+    }
+
+    static async getFaceRecognitionSummary(streamId : string, startTime : string) {
+        let result = event.groupBy({
+            by: ['status'],
+            _count: {id: true},
+            where: {
+                stream_id: streamId,
+                event_time: {
+                    gte: startTime
+                },
+                OR: [
+                    {type: 'NFV4-FR'},
+                    {type: 'NFV4H-FR'}
+                ],
+            }
+        });
+
+        return result;
+    }
+
+    static async getLicensePlateRecognitionSummary(streamId : string, startTime : string) {
+        const sql = `
+SELECT 
+    COUNT(CASE WHEN result->>'result' ilike '%-%' then 1 ELSE NULL END) as "KNOWN",
+    COUNT(CASE WHEN result->>'result' not ilike '%-%' then 1 ELSE NULL END) as "UNKNOWN"
+from event WHERE type = 'NFV4-LPR2'
+`
+
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async getVehicleCountingSummary(streamId : string, startTime : string) {
+        const sql = `
+select result->>'label' as label, count(*) from event where type = 'NFV4-VC' group by result->>'label'
+`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async getGeneralAnalyticSummary(analytic: string, streamId : string, startTime : string) {
+        let result = event.aggregate({
+            _count: {id: true},
+            where: {
+                type: analytic,
+                // stream_id: streamId,
+                // event_time: {
+                //     gte: startTime
+                // },
             }
         });
 
