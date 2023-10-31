@@ -115,7 +115,7 @@ export default class UtilController {
             output.last_30_days = last30DaysCount._count.id;
 
             // @ts-ignore
-            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
+            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic, moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z'))
 
             // @ts-ignore
             countByTimeAndStatus.forEach(data => {
@@ -234,20 +234,70 @@ export default class UtilController {
                     }
                 }
             } else if (analytic_id === 'NFV4-VC') {
-                result = {car: 0, motorcycle: 0, truck: 0, bus: 0}
+                result = {car: 0, motorcycle: 0, truck: 0, bus: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getVehicleCountingSummary(stream_id, startTime)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
 
                 // @ts-ignore
                 response.forEach(data => {
-                    result[data.label] = parseInt(data.count);
+                    result[data.status] += parseInt(data.count);
+                    result.heatmap_data.push({
+                        event_time: data.interval_alias,
+                        count: parseInt(data.count)
+                    })
+                })
+            } else if (analytic_id === 'NFV4-VD') {
+                result = {max: {}, min: {}, avg: 0, heatmap_data: []}
+
+                // @ts-ignore
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
+                // @ts-ignore
+                const avgDurationResponse = await EventDAO.getAvgDuration(stream_id, startTime)
+                // @ts-ignore
+                const maxDurationResponse = await EventDAO.getMaxDuration(stream_id, startTime)
+                // @ts-ignore
+                const minDurationResponse = await EventDAO.getMinDuration(stream_id, startTime)
+
+                // @ts-ignore
+                if(avgDurationResponse.length > 0) {
+                    // @ts-ignore
+                    result.avg = avgDurationResponse[0].avg;
+                }
+
+                // @ts-ignore
+                if(maxDurationResponse.length > 0) {
+                    // @ts-ignore
+                    result.max = maxDurationResponse[0];
+                }
+
+                // @ts-ignore
+                if(minDurationResponse.length > 0) {
+                    // @ts-ignore
+                    result.min = minDurationResponse[0];
+                }
+
+                // @ts-ignore
+                response.forEach(data => {
+                    result.heatmap_data.push({
+                        event_time: data.interval_alias,
+                        avg: data.avg
+                    })
                 })
             } else {
-                // @ts-ignore
-                const response = await EventDAO.getGeneralAnalyticSummary(analytic_id, stream_id, startTime)
+                result = {total: 0, heatmap_data: []}
 
-                result = {total: response._count.id};
+                // @ts-ignore
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
+
+                // @ts-ignore
+                response.forEach(data => {
+                    result.total += parseInt(data.count);
+                    result.heatmap_data.push({
+                        event_time: data.interval_alias,
+                        count: parseInt(data.count)
+                    })
+                })
             }
 
             res.send(result)
