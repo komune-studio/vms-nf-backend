@@ -243,7 +243,7 @@ export default class UtilController {
                 response.forEach(data => {
                     result[data.status] += parseInt(data.count);
                     result.heatmap_data.push({
-                        [data.status]: parseInt(data.count),
+                        label: data.status,
                         event_time: data.interval_alias,
                         count: parseInt(data.count)
                     })
