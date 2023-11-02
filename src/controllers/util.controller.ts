@@ -239,14 +239,35 @@ export default class UtilController {
                 // @ts-ignore
                 const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
 
+                const ranking : any = {};
+
                 // @ts-ignore
                 response.forEach(data => {
+                    if(!ranking[data.interval_alias]) {
+                        ranking[data.interval_alias] = parseInt(data.count)
+                    } else {
+                        ranking[data.interval_alias] += parseInt(data.count)
+                    }
+
+
                     result[data.status] += parseInt(data.count);
                     result.heatmap_data.push({
                         label: data.status,
                         event_time: data.interval_alias,
                         count: parseInt(data.count)
                     })
+                })
+
+
+                result.ranking = Object.entries(ranking)   // @ts-ignore
+                    .sort(([,a],[,b]) => b-a)
+                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+                //only return top 3 ranking
+                Object.keys(result.ranking).forEach((key, idx) => {
+                    if(idx > 2) {
+                        delete result.ranking[key]
+                    }
                 })
             } else if (analytic_id === 'NFV4-VD') {
                 result = {max: {}, min: {}, avg: 0, heatmap_data: []}
