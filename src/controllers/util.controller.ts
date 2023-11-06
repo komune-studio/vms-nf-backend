@@ -190,6 +190,7 @@ export default class UtilController {
         try {
             const {analytic_id, stream_id, time} = req.params;
 
+            const ranking : any = {};
             let startTime = moment()
 
             if (time === 'this_week') {
@@ -239,8 +240,6 @@ export default class UtilController {
                 // @ts-ignore
                 const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
 
-                const ranking : any = {};
-
                 // @ts-ignore
                 response.forEach(data => {
                     if(!ranking[data.interval_alias]) {
@@ -256,18 +255,6 @@ export default class UtilController {
                         event_time: data.interval_alias,
                         count: parseInt(data.count)
                     })
-                })
-
-
-                result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([,a],[,b]) => b-a)
-                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
-
-                //only return top 3 ranking
-                Object.keys(result.ranking).forEach((key, idx) => {
-                    if(idx > 2) {
-                        delete result.ranking[key]
-                    }
                 })
             } else if (analytic_id === 'NFV4-VD') {
                 result = {max: {}, min: {}, avg: 0, heatmap_data: []}
@@ -301,6 +288,8 @@ export default class UtilController {
 
                 // @ts-ignore
                 response.forEach(data => {
+                    ranking[data.interval_alias] = data.avg
+
                     result.heatmap_data.push({
                         event_time: data.interval_alias,
                         avg: data.avg
@@ -314,6 +303,8 @@ export default class UtilController {
 
                 // @ts-ignore
                 response.forEach(data => {
+                    ranking[data.interval_alias] = parseInt(data.count)
+
                     result.total += parseInt(data.count);
                     result.heatmap_data.push({
                         event_time: data.interval_alias,
@@ -321,6 +312,17 @@ export default class UtilController {
                     })
                 })
             }
+
+            result.ranking = Object.entries(ranking)   // @ts-ignore
+                .sort(([,a],[,b]) => b-a)
+                .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+            //only return top 3 ranking
+            Object.keys(result.ranking).forEach((key, idx) => {
+                if(idx > 2) {
+                    delete result.ranking[key]
+                }
+            })
 
             res.send(result)
         } catch (e) {
