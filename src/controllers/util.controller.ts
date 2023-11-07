@@ -292,7 +292,7 @@ export default class UtilController {
 
                     result.heatmap_data.push({
                         event_time: data.interval_alias,
-                        avg: data.avg
+                        avg: Math.round(data.avg * 100) / 100
                     })
                 })
             } else {
