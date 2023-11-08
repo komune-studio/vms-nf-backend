@@ -115,7 +115,7 @@ export default class UtilController {
             output.last_30_days = last30DaysCount._count.id;
 
             // @ts-ignore
-            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic, moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z'))
+            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic, moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z'), 3600)
 
             // @ts-ignore
             countByTimeAndStatus.forEach(data => {
@@ -189,6 +189,13 @@ export default class UtilController {
     static async getCameraDetailSummary(req: Request, res: Response, next: NextFunction) {
         try {
             const {analytic_id, stream_id, time} = req.params;
+            let {interval, start_time, end_time} = req.body;
+
+            if(interval === 'one_minute') {
+                interval = 60;
+            } else {
+                interval = 3600
+            }
 
             const ranking : any = {};
             let startTime = moment()
@@ -238,7 +245,7 @@ export default class UtilController {
                 result = {car: 0, motorcycle: 0, truck: 0, bus: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, interval)
 
                 // @ts-ignore
                 response.forEach(data => {
@@ -260,7 +267,7 @@ export default class UtilController {
                 result = {max: {}, min: {}, avg: 0, total_data: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, interval)
                 // @ts-ignore
                 const avgDurationResponse = await EventDAO.getAvgDuration(stream_id, startTime)
                 // @ts-ignore
@@ -291,18 +298,29 @@ export default class UtilController {
 
                 // @ts-ignore
                 response.forEach(data => {
-                    ranking[data.interval_alias] = data.avg
+                    ranking[data.interval_alias] = {avg: data.avg, total_data: parseInt(data.count)}
 
                     result.heatmap_data.push({
                         event_time: data.interval_alias,
-                        avg: Math.round(data.avg * 100) / 100
+                        avg: Math.round(data.avg * 100) / 100,
                     })
+                })
+
+                result.ranking = Object.entries(ranking)   // @ts-ignore
+                    .sort(([,a],[,b]) => b.avg-a.avg)
+                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+                //only return top 3 ranking
+                Object.keys(result.ranking).forEach((key, idx) => {
+                    if(idx > 2) {
+                        delete result.ranking[key]
+                    }
                 })
             } else {
                 result = {total: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, interval)
 
                 // @ts-ignore
                 response.forEach(data => {
@@ -315,17 +333,6 @@ export default class UtilController {
                     })
                 })
             }
-
-            result.ranking = Object.entries(ranking)   // @ts-ignore
-                .sort(([,a],[,b]) => b-a)
-                .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
-
-            //only return top 3 ranking
-            Object.keys(result.ranking).forEach((key, idx) => {
-                if(idx > 2) {
-                    delete result.ranking[key]
-                }
-            })
 
             res.send(result)
         } catch (e) {
