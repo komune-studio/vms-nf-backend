@@ -115,7 +115,7 @@ export default class UtilController {
             output.last_30_days = last30DaysCount._count.id;
 
             // @ts-ignore
-            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic, moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z'), 3600)
+            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic, moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z'), null, 3600)
 
             // @ts-ignore
             countByTimeAndStatus.forEach(data => {
@@ -191,23 +191,28 @@ export default class UtilController {
             const {analytic_id, stream_id, time} = req.params;
             let {interval, start_time, end_time} = req.body;
 
-            if(interval === 'one_minute') {
-                interval = 60;
+            if(interval && !isNaN(parseInt(interval))) {
+                interval = parseInt(interval);
             } else {
                 interval = 3600
             }
 
             const ranking : any = {};
             let startTime = moment()
+            let endTime = null;
 
             if (time === 'this_week') {
                 startTime = moment().startOf('isoWeeks');
             } else if (time === 'this_month') {
                 startTime = moment().startOf('month');
+            } else if (time === 'custom') {
+                startTime = moment(start_time);
+                endTime = moment(end_time).format('YYYY-MM-DDTHH:mm:59Z');
             }
 
             // @ts-ignore
-            startTime = startTime.format('YYYY-MM-DDT00:00:00Z');
+            startTime = startTime.format(time === 'custom' ? 'YYYY-MM-DDTHH:mm:00Z' : 'YYYY-MM-DDT00:00:00Z');
+
 
             let result: any = {}
 
@@ -245,7 +250,7 @@ export default class UtilController {
                 result = {car: 0, motorcycle: 0, truck: 0, bus: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, interval)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
 
                 // @ts-ignore
                 response.forEach(data => {
@@ -267,13 +272,13 @@ export default class UtilController {
                 result = {max: {}, min: {}, avg: 0, total_data: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, interval)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
                 // @ts-ignore
-                const avgDurationResponse = await EventDAO.getAvgDuration(stream_id, startTime)
+                const avgDurationResponse = await EventDAO.getAvgDuration(stream_id, startTime, endTime)
                 // @ts-ignore
-                const maxDurationResponse = await EventDAO.getMaxDuration(stream_id, startTime)
+                const maxDurationResponse = await EventDAO.getMaxDuration(stream_id, startTime, endTime)
                 // @ts-ignore
-                const minDurationResponse = await EventDAO.getMinDuration(stream_id, startTime)
+                const minDurationResponse = await EventDAO.getMinDuration(stream_id, startTime, endTime)
 
                 // @ts-ignore
                 if(avgDurationResponse.length > 0) {
@@ -320,7 +325,7 @@ export default class UtilController {
                 result = {total: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, interval)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
 
                 // @ts-ignore
                 response.forEach(data => {

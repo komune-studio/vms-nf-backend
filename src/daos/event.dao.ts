@@ -27,32 +27,33 @@ export default class EventDAO {
         return result;
     }
 
-    static async getCountGroupByTimeAndStatus(streams: String[], analytic: String, startTime : String, interval : number) {
+    static async getCountGroupByTimeAndStatus(streams: String[], analytic: String, startTime : String, endTime : String, interval : number) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias ${analytic === 'NFV4-CE' ? ` , avg(cast(detection->'pipeline_data'->>'estimation' as int)) ` : ''} ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = '${analytic}' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} GROUP BY status, interval_alias ORDER BY interval_alias ASC`
+        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias ${analytic === 'NFV4-CE' ? ` , avg(cast(detection->'pipeline_data'->>'estimation' as int)) ` : ''} ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = '${analytic}' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY status, interval_alias ORDER BY interval_alias ASC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getMaxDuration(streamId: String, startTime : String) {
+    static async getMaxDuration(streamId: String, startTime : String, endTime : String) {
         const sql = `SELECT cast(detection->'pipeline_data'->>'duration' as float) as duration, event_time FROM event where cast(detection->'pipeline_data'->>'duration' as float) = (
-select max(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' LIMIT 1
-) LIMIT 1;`
+select max(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1
+) AND type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1;`
+
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getMinDuration(streamId: String, startTime : String) {
+    static async getMinDuration(streamId: String, startTime : String, endTime : string) {
         const sql = `SELECT cast(detection->'pipeline_data'->>'duration' as float) as duration, event_time FROM event where cast(detection->'pipeline_data'->>'duration' as float) = (
-select min(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' LIMIT 1
-) LIMIT 1;`
+select min(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1
+)  AND type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1;`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getAvgDuration(streamId: String, startTime : String) {
-        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}'`
+    static async getAvgDuration(streamId: String, startTime : String, endTime : string) {
+        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
