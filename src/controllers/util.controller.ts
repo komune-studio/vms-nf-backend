@@ -274,7 +274,7 @@ export default class UtilController {
                     result.avg = avgDurationResponse[0].avg;
 
                     // @ts-ignore
-                    result.total_data = avgDurationResponse[0].total_data;
+                    result.total_data = parseInt(avgDurationResponse[0].total_data);
                 }
 
                 // @ts-ignore
