@@ -52,7 +52,7 @@ select min(cast(detection->'pipeline_data'->>'duration' as float)) from event wh
     }
 
     static async getAvgDuration(streamId: String, startTime : String) {
-        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}'`
+        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}'`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

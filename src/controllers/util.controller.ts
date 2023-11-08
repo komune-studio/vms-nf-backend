@@ -257,7 +257,7 @@ export default class UtilController {
                     })
                 })
             } else if (analytic_id === 'NFV4-VD') {
-                result = {max: {}, min: {}, avg: 0, heatmap_data: []}
+                result = {max: {}, min: {}, avg: 0, total_data: 0, heatmap_data: []}
 
                 // @ts-ignore
                 const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime)
@@ -272,6 +272,9 @@ export default class UtilController {
                 if(avgDurationResponse.length > 0) {
                     // @ts-ignore
                     result.avg = avgDurationResponse[0].avg;
+
+                    // @ts-ignore
+                    result.total_data = avgDurationResponse[0].total_data;
                 }
 
                 // @ts-ignore
