@@ -29,6 +29,14 @@ export default class PipelineController {
             // @ts-ignore
             data = data.map(datum => datum.streams)
 
+            for(const stream of data) {
+                // @ts-ignore
+                let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "GET")
+
+                // @ts-ignore
+                stream.stream_stats = result.stream_stats;
+            }
+
             res.send({
                 success: true,
                 streams: data
