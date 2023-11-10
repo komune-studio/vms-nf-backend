@@ -250,6 +250,17 @@ export default class UtilController {
                         count: parseInt(data.count)
                     })
                 })
+
+                result.ranking = Object.entries(ranking)   // @ts-ignore
+                    .sort(([,a],[,b]) => b-a)
+                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+                //only return top 3 ranking
+                Object.keys(result.ranking).forEach((key, idx) => {
+                    if(idx > 2) {
+                        delete result.ranking[key]
+                    }
+                })
             } else if (analytic_id === 'NFV4-VD') {
                 result = {max: {}, min: {}, avg: 0, total_data: 0, heatmap_data: []}
 
@@ -318,6 +329,17 @@ export default class UtilController {
                         event_time: data.interval_alias,
                         count: parseInt(data.count)
                     })
+                })
+
+                result.ranking = Object.entries(ranking)   // @ts-ignore
+                    .sort(([,a],[,b]) => b-a)
+                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+                //only return top 3 ranking
+                Object.keys(result.ranking).forEach((key, idx) => {
+                    if(idx > 2) {
+                        delete result.ranking[key]
+                    }
                 })
             }
 
