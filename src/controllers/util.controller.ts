@@ -11,177 +11,153 @@ import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
-            const admin = await AdminDAO.getById(req.decoded.id);
-            let mapSiteStream = [];
+            // const admin = await AdminDAO.getById(req.decoded.id);
+            // let mapSiteStream = [];
+            //
+            // // @ts-ignore
+            // if (admin.role === 'SUPERADMIN') {
+            //     mapSiteStream = await MapSiteStreamDAO.getAll()
+            // } else {
+            //     // @ts-ignore
+            //     mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+            // }
 
-            // @ts-ignore
-            if (admin.role === 'SUPERADMIN') {
-                mapSiteStream = await MapSiteStreamDAO.getAll()
-            } else {
+            const output = {}
+
+            console.log( req.query)
+
+            const {analytic} = req.query;
+
+
+
+            // const streamEqualsClause = [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}]
+
+            if(!analytic) {
+                const peopleCount = await EventDAO.getCount(
+                    {
+                        AND: [
+                            // ...streamEqualsClause,
+                            // {
+                            //     event_time: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
+                            // },
+                            // {
+                            //     event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                            // },
+                            {
+                                type: {equals: 'NFV4-PC'}
+                            }
+                        ]
+                    })
+
+                const vehicleCount = await EventDAO.getCount(
+                    {
+                        AND: [
+                            // ...streamEqualsClause,
+                            // {
+                            //     event_time: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
+                            // },
+                            // {
+                            //     event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                            // },
+                            {
+                                type: {equals: 'NFV4-VC'}
+                            }
+                        ]
+                    })
+
                 // @ts-ignore
-                mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
-            }
+                const avgVehicleDwelling = await EventDAO.getAvgDuration(null, '2023-01-01T00:00:00+07:00', null)
 
-            // @ts-ignore
+                // @ts-ignore
+                output.people_count = peopleCount._count.id;
+                // @ts-ignore
+                output.vehicle_count = vehicleCount._count.id;
+                // @ts-ignore
+                output.avg_vehicle_dwelling = avgVehicleDwelling[0].avg || 0;
 
+                // @ts-ignore
+                output.avg_vehicle_dwelling = avgVehicleDwelling[0].avg || 0;
 
-            const output = {
-                today: 0,
-                yesterday: 0,
-                last_7_days: 1,
-                last_30_days: 0,
-                daily_record: {},
-                heatmap_data: {},
-                location_data: []
-            }
-            const {analytic, stream} = req.query;
+                // @ts-ignore
+                const peopleAndVehicleCountGroupByTime = await EventDAO.getCountPeopleAndVehicleGroupByTime(['asd'], null, null, null);
 
-            const streamEqualsClause = stream === 'null' ? [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}] : [{stream_id: {equals: stream}}]
+                // @ts-ignore
+                output.people_and_vehicle_summary = {}
 
-            //today's count
-            const todaysCount = await EventDAO.getCount(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            output.today = todaysCount._count.id;
-
-            //yesterday's count
-            const yesterdaysCount = await EventDAO.getCount(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().subtract(1, 'day').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().subtract(1, 'day').format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            output.yesterday = yesterdaysCount._count.id;
-
-            //last 7 day's count
-            const last7DaysCount = await EventDAO.getCount(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().subtract(6, 'day').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            output.last_7_days = last7DaysCount._count.id;
-
-            //last 30 day's count
-            const last30DaysCount = await EventDAO.getCount(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            output.last_30_days = last30DaysCount._count.id;
-
-            // @ts-ignore
-            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic, moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z'), null, 3600)
-
-            // @ts-ignore
-            countByTimeAndStatus.forEach(data => {
-                data.event_time = data.interval_alias
-
-                if (moment(data.event_time).isSameOrAfter(moment().startOf('isoWeeks').format('YYYY-MM-DDT00:00:00Z')) && moment(data.event_time).isSameOrBefore(moment().endOf('isoWeeks').format('YYYY-MM-DDT23:59:59Z'))) {
-                    let key = moment(data.event_time).format('YYYY-MM-DDTHH:01:00Z')
+                // @ts-ignore
+                peopleAndVehicleCountGroupByTime.forEach(data => {
+                    const key = moment(data.interval_alias).format('DD-MM-YYYY');
 
                     // @ts-ignore
-                    if (!output.heatmap_data[key]) {
+                    if(!output.people_and_vehicle_summary[key]) {
                         // @ts-ignore
-                        output.heatmap_data[key] = parseInt(data.count);
-                    } else {
-                        // @ts-ignore
-                        output.heatmap_data[key] += parseInt(data.count);
+                        (output.people_and_vehicle_summary[key]) = {'NFV4-PC': 0, 'NFV4-VC': 0};
                     }
-                }
 
-                data.status = data.status === 'KNOWN' ? 'recognized' : data.status === 'UNKNOWN' ? 'unrecognized' : data.status
+                    // @ts-ignore
+                    (output.people_and_vehicle_summary[key])[data.type] = parseInt(data.count);
+                })
+            } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC') {
                 // @ts-ignore
-                if (!output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]) {
-                    if (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') {
+                let countGroupByTime = await EventDAO.getCountGroupByTimeAndLocation(['asd'], null, null, analytic);
+
+                // @ts-ignore
+                output.summary = {}
+                // @ts-ignore
+                output.summary_location = {}
+
+                // @ts-ignore
+                countGroupByTime.forEach(data => {
+                    const key = moment(data.interval_alias).format('DD-MM-YYYY');
+
+                    // @ts-ignore
+                    if(!output.summary[key]) {
                         // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = {
-                            recognized: 0,
-                            unrecognized: 0
-                        }
-                        // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')][data.status] += parseInt(data.count);
-                    } else if (analytic === 'NFV4-VC') {
-                        // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = {
-                            car: 0,
-                            motorcycle: 0,
-                            truck: 0,
-                            bus: 0
-                        }
-                        // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')][data.status] += parseInt(data.count);
-                    } else {
-                        // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = parseInt(data.count)
+                        output.summary[key] = 0
                     }
-                } else {
-                    if (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR' || analytic === 'NFV4-VC') {
+
+                    // @ts-ignore
+                    (output.summary[key]) += parseInt(data.count);
+
+                    // @ts-ignore
+                    if(!output.summary_location[data.location]) {
                         // @ts-ignore
-                        (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')])[data.status] += parseInt(data.count);
-                    } else {
-                        // @ts-ignore
-                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] += parseInt(data.count);
+                        output.summary_location[data.location] = 0
                     }
-                }
-            })
 
-            if (Object.keys(output.daily_record).length === 0) output.daily_record = {'': 0}
-
-            // @ts-ignore
-            const countByStreamId = await EventDAO.getCountGroupByStreamId(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
-            // @ts-ignore
-            output.location_data = countByStreamId.map(data => ({...data, count: parseInt(data.count)}))
-
+                    // @ts-ignore
+                    (output.summary_location[data.location]) += parseInt(data.count);
+                })
+            }
 
             res.send(output);
         } catch (e) {
             console.log(e)
 
+            return next(e);
+        }
+    }
+
+    static async getRanking(req: Request, res: Response, next: NextFunction) {
+        try {
+            // const admin = await AdminDAO.getById(req.decoded.id);
+            // let mapSiteStream = [];
+            //
+            // // @ts-ignore
+            // if (admin.role === 'SUPERADMIN') {
+            //     mapSiteStream = await MapSiteStreamDAO.getAll()
+            // } else {
+            //     // @ts-ignore
+            //     mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
+            // }
+
+            const {type} = req.params;
+
+            const response = await EventDAO.getRanking(type);
+
+            // @ts-ignore
+            res.send(response.map(data => ({...data, interval_alias: moment(data.interval).format('DD-MM-YYYY'), count: parseInt(data.count)})))
+        } catch (e) {
             return next(e);
         }
     }
