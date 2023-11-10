@@ -84,8 +84,8 @@ select min(cast(detection->'pipeline_data'->>'duration' as float)) from event wh
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getAvgDuration(streamId: String, startTime : String, endTime : string) {
-        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-VD' ${streamId ? ` AND stream_id = '${streamId}' ` : ''} AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}`
+    static async getAvgDuration(streamId: String[], startTime : String, endTime : string) {
+        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-VD' ${streamId ? ` AND stream_id IN (${streamId.map(id => `'${id}'`).join(',')}) ` : ''} AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

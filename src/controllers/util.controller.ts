@@ -15,18 +15,16 @@ export default class UtilController {
 
             const {stream, analytic, start_date, end_date} = req.query;
 
-            // const streamEqualsClause = [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}]
-
-            if(!analytic) {
-
+            if(!analytic || analytic === 'null') {
+                // @ts-ignore
                 const peopleCount = await EventDAO.getCount(
                     {
-                        AND: [ // @ts-ignore
-                            [{stream_id: {in: stream.split(',')}}],
-                            {
-                                event_time: {gte: start_date}
+                        AND: [  // @ts-ignore
+                            {stream_id: {in: stream.split(',')}},
+                            {  // @ts-ignore
+                                event_time: {gte:  start_date}
                             },
-                            {
+                            { // @ts-ignore
                                 event_time: {lte: end_date}
                             },
                             {
@@ -38,12 +36,12 @@ export default class UtilController {
                 const vehicleCount = await EventDAO.getCount(
                     {
                         AND: [  // @ts-ignore
-                            [{stream_id: {in: stream.split(',')}}],
-                            {
-                                event_time: {gte: start_date}
+                            {stream_id: {in: stream.split(',')}},
+                            {  // @ts-ignore
+                                event_time: {gte:  moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z')}
                             },
-                            {
-                                event_time: {lte: end_date}
+                            { // @ts-ignore
+                                event_time: {lte: end_date ?  moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined}
                             },
                             {
                                 type: {equals: 'NFV4-VC'}
@@ -52,7 +50,7 @@ export default class UtilController {
                     })
 
                 // @ts-ignore
-                const avgVehicleDwelling = await EventDAO.getAvgDuration(null, start_date, end_date)
+                const avgVehicleDwelling = await EventDAO.getAvgDuration( stream.split(','), start_date, end_date)
 
                 // @ts-ignore
                 output.people_count = peopleCount._count.id;
@@ -267,7 +265,7 @@ export default class UtilController {
                 // @ts-ignore
                 const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
                 // @ts-ignore
-                const avgDurationResponse = await EventDAO.getAvgDuration(stream_id, startTime, endTime)
+                const avgDurationResponse = await EventDAO.getAvgDuration([stream_id], startTime, endTime)
                 // @ts-ignore
                 const maxDurationResponse = await EventDAO.getMaxDuration(stream_id, startTime, endTime)
                 // @ts-ignore
