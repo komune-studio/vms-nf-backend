@@ -11,38 +11,24 @@ import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
         try {
-            // const admin = await AdminDAO.getById(req.decoded.id);
-            // let mapSiteStream = [];
-            //
-            // // @ts-ignore
-            // if (admin.role === 'SUPERADMIN') {
-            //     mapSiteStream = await MapSiteStreamDAO.getAll()
-            // } else {
-            //     // @ts-ignore
-            //     mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
-            // }
-
             const output = {}
 
-            console.log( req.query)
-
-            const {analytic} = req.query;
-
-
+            const {stream, analytic, start_date, end_date} = req.query;
 
             // const streamEqualsClause = [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}]
 
             if(!analytic) {
+
                 const peopleCount = await EventDAO.getCount(
                     {
-                        AND: [
-                            // ...streamEqualsClause,
-                            // {
-                            //     event_time: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
-                            // },
-                            // {
-                            //     event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                            // },
+                        AND: [ // @ts-ignore
+                            [{stream_id: {in: stream.split(',')}}],
+                            {
+                                event_time: {gte: start_date}
+                            },
+                            {
+                                event_time: {lte: end_date}
+                            },
                             {
                                 type: {equals: 'NFV4-PC'}
                             }
@@ -51,14 +37,14 @@ export default class UtilController {
 
                 const vehicleCount = await EventDAO.getCount(
                     {
-                        AND: [
-                            // ...streamEqualsClause,
-                            // {
-                            //     event_time: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
-                            // },
-                            // {
-                            //     event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                            // },
+                        AND: [  // @ts-ignore
+                            [{stream_id: {in: stream.split(',')}}],
+                            {
+                                event_time: {gte: start_date}
+                            },
+                            {
+                                event_time: {lte: end_date}
+                            },
                             {
                                 type: {equals: 'NFV4-VC'}
                             }
@@ -66,7 +52,7 @@ export default class UtilController {
                     })
 
                 // @ts-ignore
-                const avgVehicleDwelling = await EventDAO.getAvgDuration(null, '2023-01-01T00:00:00+07:00', null)
+                const avgVehicleDwelling = await EventDAO.getAvgDuration(null, start_date, end_date)
 
                 // @ts-ignore
                 output.people_count = peopleCount._count.id;
@@ -79,7 +65,7 @@ export default class UtilController {
                 output.avg_vehicle_dwelling = avgVehicleDwelling[0].avg || 0;
 
                 // @ts-ignore
-                const peopleAndVehicleCountGroupByTime = await EventDAO.getCountPeopleAndVehicleGroupByTime(['asd'], null, null, null);
+                const peopleAndVehicleCountGroupByTime = await EventDAO.getCountPeopleAndVehicleGroupByTime(stream.split(','), start_date, end_date, null);
 
                 // @ts-ignore
                 output.people_and_vehicle_summary = {}
@@ -99,7 +85,7 @@ export default class UtilController {
                 })
             } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC') {
                 // @ts-ignore
-                let countGroupByTime = await EventDAO.getCountGroupByTimeAndLocation(['asd'], null, null, analytic);
+                let countGroupByTime = await EventDAO.getCountGroupByTimeAndLocation(stream.split(','),  start_date, end_date, analytic);
 
                 // @ts-ignore
                 output.summary = {}
@@ -128,6 +114,30 @@ export default class UtilController {
                     // @ts-ignore
                     (output.summary_location[data.location]) += parseInt(data.count);
                 })
+            } else {
+                // @ts-ignore
+                let avgGroupByTime = await EventDAO.getAvgGroupByTime(stream.split(','),  start_date, end_date, analytic);
+                // @ts-ignore
+                let avgGroupByLocation = await EventDAO.getAvgGroupByLocation(stream.split(','),  start_date, end_date);
+
+                // @ts-ignore
+                output.summary = {}
+                // @ts-ignore
+                output.summary_location = avgGroupByLocation.map(data => ({...data, count: parseInt(data.count)}));
+
+                // @ts-ignore
+                avgGroupByTime.forEach(data => {
+                    const key = moment(data.interval_alias).format('DD-MM-YYYY');
+
+                    // @ts-ignore
+                    if(!output.summary[key]) {
+                        // @ts-ignore
+                        output.summary[key] = 0
+                    }
+
+                    // @ts-ignore
+                    (output.summary[key]) += parseInt(data.count);
+                })
             }
 
             res.send(output);
@@ -140,20 +150,11 @@ export default class UtilController {
 
     static async getRanking(req: Request, res: Response, next: NextFunction) {
         try {
-            // const admin = await AdminDAO.getById(req.decoded.id);
-            // let mapSiteStream = [];
-            //
-            // // @ts-ignore
-            // if (admin.role === 'SUPERADMIN') {
-            //     mapSiteStream = await MapSiteStreamDAO.getAll()
-            // } else {
-            //     // @ts-ignore
-            //     mapSiteStream = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
-            // }
+            const {analytic_id} = req.params;
+            const {stream, start_date, end_date} = req.query
 
-            const {type} = req.params;
-
-            const response = await EventDAO.getRanking(type);
+            // @ts-ignore
+            const response = await EventDAO.getRanking(stream.split(','), analytic_id, start_date, end_date);
 
             // @ts-ignore
             res.send(response.map(data => ({...data, interval_alias: moment(data.interval).format('DD-MM-YYYY'), count: parseInt(data.count)})))
@@ -165,11 +166,14 @@ export default class UtilController {
     static async getCameraDetailSummary(req: Request, res: Response, next: NextFunction) {
         try {
             const {analytic_id, stream_id, time} = req.params;
-            let {interval, start_time, end_time} = req.body;
+            let {interval, start_time, end_time} = req.query;
 
+            // @ts-ignore
             if(interval && !isNaN(parseInt(interval))) {
+                // @ts-ignore
                 interval = parseInt(interval);
             } else {
+                // @ts-ignore
                 interval = 3600
             }
 
@@ -182,7 +186,9 @@ export default class UtilController {
             } else if (time === 'this_month') {
                 startTime = moment().startOf('month');
             } else if (time === 'custom') {
+                // @ts-ignore
                 startTime = moment(start_time);
+                // @ts-ignore
                 endTime = moment(end_time).format('YYYY-MM-DDTHH:mm:59Z');
             }
 
