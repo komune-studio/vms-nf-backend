@@ -15,14 +15,14 @@ export default class UtilController {
 
             const {stream, analytic, start_date, end_date} = req.query;
 
-            if(!analytic || analytic === 'null') {
+            if (!analytic || analytic === 'null') {
                 // @ts-ignore
                 const peopleCount = await EventDAO.getCount(
                     {
                         AND: [  // @ts-ignore
                             {stream_id: {in: stream.split(',')}},
                             {  // @ts-ignore
-                                event_time: {gte:  start_date}
+                                event_time: {gte: start_date}
                             },
                             { // @ts-ignore
                                 event_time: {lte: end_date}
@@ -38,10 +38,10 @@ export default class UtilController {
                         AND: [  // @ts-ignore
                             {stream_id: {in: stream.split(',')}},
                             {  // @ts-ignore
-                                event_time: {gte:  moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z')}
+                                event_time: {gte: moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z')}
                             },
                             { // @ts-ignore
-                                event_time: {lte: end_date ?  moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined}
+                                event_time: {lte: end_date ? moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined}
                             },
                             {
                                 type: {equals: 'NFV4-VC'}
@@ -50,7 +50,7 @@ export default class UtilController {
                     })
 
                 // @ts-ignore
-                const avgVehicleDwelling = await EventDAO.getAvgDuration( stream.split(','), start_date, end_date)
+                const avgVehicleDwelling = await EventDAO.getAvgDuration(stream.split(','), start_date, end_date)
 
                 // @ts-ignore
                 output.people_count = peopleCount._count.id;
@@ -73,7 +73,7 @@ export default class UtilController {
                     const key = moment(data.interval_alias).format('DD-MM-YYYY');
 
                     // @ts-ignore
-                    if(!output.people_and_vehicle_summary[key]) {
+                    if (!output.people_and_vehicle_summary[key]) {
                         // @ts-ignore
                         (output.people_and_vehicle_summary[key]) = {'NFV4-PC': 0, 'NFV4-VC': 0};
                     }
@@ -83,19 +83,50 @@ export default class UtilController {
                 })
             } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC') {
                 // @ts-ignore
-                let countGroupByTime = await EventDAO.getCountGroupByTimeAndLocation(stream.split(','),  start_date, end_date, analytic);
+                let countGroupByTime = await EventDAO.getCountGroupByTimeAndLocation(stream.split(','), start_date, end_date, analytic);
+                // @ts-ignore
+                let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
 
                 // @ts-ignore
                 output.summary = {}
                 // @ts-ignore
                 output.summary_location = {}
+                // @ts-ignore
+                output.detailed_summary_location = countGroupByLocation.map(data => ({
+                    ...data,
+                    count: parseInt(data.count)
+                }))
+
+                if (analytic === 'NFV4-VC') {
+                    // @ts-ignore
+                    output.detailed_summary_location = output.detailed_summary_location.map(data => {
+                        // @ts-ignore
+                        return {
+                            // @ts-ignore
+                            ...data, total_vehicles: output.detailed_summary_location.reduce((accumulator, value) => {
+                                if(value.stream_id === data.stream_id && value.location === data.location) {
+                                    return accumulator + value.count;
+                                }
+
+                                return accumulator
+                            }, 0)
+                        }
+                    })
+
+                    // @ts-ignore
+                    output.detailed_summary_location.sort((a, b) =>  b.total_vehicles - a.total_vehicles)
+
+                    // @ts-ignore
+                    console.log(output.detailed_summary_location)
+                }
+
 
                 // @ts-ignore
                 countGroupByTime.forEach(data => {
                     const key = moment(data.interval_alias).format('DD-MM-YYYY');
 
                     // @ts-ignore
-                    if(!output.summary[key]) {
+                    if (!output.summary[key]) {
                         // @ts-ignore
                         output.summary[key] = 0
                     }
@@ -104,7 +135,7 @@ export default class UtilController {
                     (output.summary[key]) += parseInt(data.count);
 
                     // @ts-ignore
-                    if(!output.summary_location[data.location]) {
+                    if (!output.summary_location[data.location]) {
                         // @ts-ignore
                         output.summary_location[data.location] = 0
                     }
@@ -114,27 +145,34 @@ export default class UtilController {
                 })
             } else {
                 // @ts-ignore
-                let avgGroupByTime = await EventDAO.getAvgGroupByTime(stream.split(','),  start_date, end_date, analytic);
+                let avgGroupByTime = await EventDAO.getAvgGroupByTime(stream.split(','), start_date, end_date, analytic);
                 // @ts-ignore
-                let avgGroupByLocation = await EventDAO.getAvgGroupByLocation(stream.split(','),  start_date, end_date);
+                let avgGroupByLocation = await EventDAO.getAvgGroupByLocation(stream.split(','), start_date, end_date);
+                // @ts-ignore
+                let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
 
                 // @ts-ignore
                 output.summary = {}
                 // @ts-ignore
-                output.summary_location = avgGroupByLocation.map(data => ({...data, count: parseInt(data.count)}));
+                output.summary_location = {}
+                // @ts-ignore
+                output.detailed_summary_location = countGroupByLocation.map(data => ({
+                    ...data,
+                    count: parseInt(data.count)
+                }))
+
+                // @ts-ignore
+                avgGroupByLocation.forEach(data => {
+                    // @ts-ignore
+                    (output.summary_location[data.location]) = parseInt(data.count);
+                });
 
                 // @ts-ignore
                 avgGroupByTime.forEach(data => {
                     const key = moment(data.interval_alias).format('DD-MM-YYYY');
 
                     // @ts-ignore
-                    if(!output.summary[key]) {
-                        // @ts-ignore
-                        output.summary[key] = 0
-                    }
-
-                    // @ts-ignore
-                    (output.summary[key]) += parseInt(data.count);
+                    output.summary[key] = data.avg
                 })
             }
 
@@ -155,7 +193,11 @@ export default class UtilController {
             const response = await EventDAO.getRanking(stream.split(','), analytic_id, start_date, end_date);
 
             // @ts-ignore
-            res.send(response.map(data => ({...data, interval_alias: moment(data.interval).format('DD-MM-YYYY'), count: parseInt(data.count)})))
+            res.send(response.map(data => ({
+                ...data,
+                interval_alias: moment(data.interval).format('DD-MM-YYYY'),
+                count: parseInt(data.count)
+            })))
         } catch (e) {
             return next(e);
         }
@@ -167,7 +209,7 @@ export default class UtilController {
             let {interval, start_time, end_time} = req.query;
 
             // @ts-ignore
-            if(interval && !isNaN(parseInt(interval))) {
+            if (interval && !isNaN(parseInt(interval))) {
                 // @ts-ignore
                 interval = parseInt(interval);
             } else {
@@ -175,7 +217,7 @@ export default class UtilController {
                 interval = 3600
             }
 
-            const ranking : any = {};
+            const ranking: any = {};
             let startTime = moment()
             let endTime = null;
 
@@ -234,7 +276,7 @@ export default class UtilController {
 
                 // @ts-ignore
                 response.forEach(data => {
-                    if(!ranking[data.interval_alias]) {
+                    if (!ranking[data.interval_alias]) {
                         ranking[data.interval_alias] = parseInt(data.count)
                     } else {
                         ranking[data.interval_alias] += parseInt(data.count)
@@ -250,12 +292,12 @@ export default class UtilController {
                 })
 
                 result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([,a],[,b]) => b-a)
-                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+                    .sort(([, a], [, b]) => b - a)
+                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
 
                 //only return top 3 ranking
                 Object.keys(result.ranking).forEach((key, idx) => {
-                    if(idx > 2) {
+                    if (idx > 2) {
                         delete result.ranking[key]
                     }
                 })
@@ -272,7 +314,7 @@ export default class UtilController {
                 const minDurationResponse = await EventDAO.getMinDuration(stream_id, startTime, endTime)
 
                 // @ts-ignore
-                if(avgDurationResponse.length > 0) {
+                if (avgDurationResponse.length > 0) {
                     // @ts-ignore
                     result.avg = avgDurationResponse[0].avg;
 
@@ -281,13 +323,13 @@ export default class UtilController {
                 }
 
                 // @ts-ignore
-                if(maxDurationResponse.length > 0) {
+                if (maxDurationResponse.length > 0) {
                     // @ts-ignore
                     result.max = maxDurationResponse[0];
                 }
 
                 // @ts-ignore
-                if(minDurationResponse.length > 0) {
+                if (minDurationResponse.length > 0) {
                     // @ts-ignore
                     result.min = minDurationResponse[0];
                 }
@@ -303,12 +345,12 @@ export default class UtilController {
                 })
 
                 result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([,a],[,b]) => b.avg-a.avg)
-                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+                    .sort(([, a], [, b]) => b.avg - a.avg)
+                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
 
                 //only return top 3 ranking
                 Object.keys(result.ranking).forEach((key, idx) => {
-                    if(idx > 2) {
+                    if (idx > 2) {
                         delete result.ranking[key]
                     }
                 })
@@ -330,12 +372,12 @@ export default class UtilController {
                 })
 
                 result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([,a],[,b]) => b-a)
-                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+                    .sort(([, a], [, b]) => b - a)
+                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
 
                 //only return top 3 ranking
                 Object.keys(result.ranking).forEach((key, idx) => {
-                    if(idx > 2) {
+                    if (idx > 2) {
                         delete result.ranking[key]
                     }
                 })

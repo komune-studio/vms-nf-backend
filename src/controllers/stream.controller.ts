@@ -14,28 +14,44 @@ export default class StreamController {
             const mapSiteStream = await MapSiteStreamDAO.getByStreamIds(streams.map(stream => stream.id))
             const analytics = await PipelineDAO.getByStreamIds(streams.map(stream => stream.id))
 
-            streams.forEach((stream, idx) => {
+
+            // for(const stream of data) {
+            //     // @ts-ignore
+            //     let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "GET")
+            //
+            //     // @ts-ignore
+            //     stream.stream_stats = result.stream_stats;
+            // }
+
+            for(const stream of streams) {
                 // @ts-ignore
-                streams[idx].pipelines = [];
+                let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "GET")
+
+                // @ts-ignore
+                stream.stream_stats = result.stream_stats;
+
+                // @ts-ignore
+                stream.pipelines = [];
 
                 mapSiteStream.forEach(siteStream => {
                     if(stream.id === siteStream.stream_id) {
                         // @ts-ignore
-                        streams[idx].site_id = parseInt(siteStream.site_id);
+                        stream.site_id = parseInt(siteStream.site_id);
                     }
                 })
 
                 analytics.forEach(analytic => {
                     if(stream.id === analytic.stream_id) {
                         // @ts-ignore
-                        streams[idx].pipelines.push(analytic.analytic_id);
+                        stream.pipelines.push(analytic.analytic_id);
                     }
                 })
-            })
+            }
 
             // @ts-ignore
             res.send(streams)
         } catch (err) {
+            console.log(err)
             return next(err);
         }
     }
