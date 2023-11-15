@@ -13,7 +13,11 @@ export default class UtilController {
         try {
             const output = {}
 
-            const {stream, analytic, start_date, end_date} = req.query;
+            let {stream, analytic, start_date, end_date} = req.query;
+
+            if(end_date === 'undefined') {
+                end_date = undefined;
+            }
 
             if (!analytic || analytic === 'null') {
                 // @ts-ignore
@@ -195,7 +199,7 @@ export default class UtilController {
             // @ts-ignore
             res.send(response.map(data => ({
                 ...data,
-                interval_alias: moment(data.interval).format('DD-MM-YYYY'),
+                interval_alias: moment(data.interval_alias).format('DD-MM-YYYY'),
                 count: parseInt(data.count)
             })))
         } catch (e) {
