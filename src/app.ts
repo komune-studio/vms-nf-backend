@@ -78,7 +78,7 @@ app.use(handleErrors);
         if(!isAppNameInitialized) {
             await DashboardCustomizationDAO.insert({
                 key: 'app_name',
-                custom_text: 'Komune Surveillance'
+                custom_text: 'Komune Real Time Road Traffic'
             })
 
             console.log("app_name initialized.");
