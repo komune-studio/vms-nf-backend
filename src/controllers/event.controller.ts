@@ -49,8 +49,27 @@ export default class EventController {
             // @ts-ignore
             let count = await EventDAO.getCountWithPagination(keyword, status, stream, analytic, startDate, endDate);
 
+            let additional_info = {}
+
+            if(analytic === 'NFV4-VC') {
+                additional_info = {car: 0, motorcycle: 0, bus: 0, truck: 0};
+
+                let countGroupByStatus = await EventDAO.getCountGroupByStatus(stream, startDate, endDate)
+
+                countGroupByStatus.forEach(data => {
+                    additional_info[data.status] = parseInt(data.count);
+                })
+            } else if (analytic === 'NFV4-VD') {
+                additional_info = {avg: 0};
+
+                let avg = await EventDAO.getAvg(stream, startDate, endDate)
+
+                additional_info.avg = avg[0].avg;
+            }
+
             // @ts-ignore
             res.send({
+                ...additional_info,
                 total_page:  Math.floor(((parseInt(count[0].count) - 1) / limit) + 1),
                 total_data: parseInt(count[0].count),
                 data: event.map(item => {
