@@ -35,11 +35,8 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getCountGroupByStatus(stream: String, startTime : String, endTime : String) {
-        const sql = `select count(*), status from event where stream_id IN ${stream} AND type = 'NFV4-VC' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY status`
-
-
-        console.log(sql)
+    static async getCountGroupByStatus(analytic : String, stream: String, startTime : String, endTime : String) {
+        const sql = `select count(*), status from event where stream_id IN ${stream} AND type = '${analytic}' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY status`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

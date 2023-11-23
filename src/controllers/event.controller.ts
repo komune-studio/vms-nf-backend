@@ -4,8 +4,97 @@ import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import EventDAO from "../daos/event.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import moment from "moment";
+import StreamDAO from "../daos/stream.dao";
 const json2csv = require('json2csv').parse;
 export default class EventController {
+    static async exportData(req: Request, res: Response, next: NextFunction) {
+        try {
+            // @ts-ignore
+            const fields = ['stream'];
+            const analytics = req.query.analytic.split(',');
+            const streams = req.query.streams.split(',');
+            const {start_date, end_date} = req.query;
+            const allStreams = (await StreamDAO.getAll()).filter(stream => streams.includes(stream.id));
+
+            let data = []
+
+            allStreams.forEach(stream => {
+                data.push({
+                    stream: stream.name,
+                    stream_id: stream.id
+                })
+            })
+
+            if(analytics.includes('NFV4-VC')) {
+                fields.push('car')
+                fields.push('motorcycle')
+                fields.push('truck')
+                fields.push('bus')
+
+                const response = await EventDAO.getCountGroupLocation(streams, start_date, end_date, 'NFV4-VC')
+
+                data.forEach(datum => {
+                    datum['car'] = 0;
+                    datum['motorcycle'] = 0;
+                    datum['truck'] = 0;
+                    datum['bus'] = 0;
+
+                    response.forEach(data => {
+                        if(datum.stream_id === data.stream_id) {
+                            datum[data.status] = parseInt(data.count);
+                        }
+                    })
+                })
+            }
+
+            if(analytics.includes('NFV4-PC')) {
+                fields.push('people')
+
+                const response = await EventDAO.getCountGroupLocation(streams, start_date, end_date, 'NFV4-PC')
+
+                data.forEach(datum => {
+                    datum['people'] = 0;
+
+                    response.forEach(data => {
+                        if(datum.stream_id === data.stream_id) {
+                            datum['people'] = parseInt(data.count);
+                        }
+                    })
+                })
+            }
+
+            if(analytics.includes('NFV4-VD')) {
+                fields.push('average')
+
+                const response = await EventDAO.getCountGroupLocation(streams, start_date, end_date, 'NFV4-VD')
+
+                data.forEach(datum => {
+                    datum['average'] = 0;
+
+                    response.forEach(data => {
+                        if(datum.stream_id === data.stream_id) {
+                            datum['average'] = data.avg;
+                        }
+                    })
+                })
+            }
+
+            data.forEach(datum => {
+                delete datum.stream_id
+            })
+
+            const csv = json2csv(data, fields);
+
+            res.attachment('exported-data.csv');
+
+            return res.send(csv)
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
+
     static async getAll(req: Request, res: Response, next: NextFunction) {
         let {keyword, status, stream, page, limit, analytic, start_date, end_date, download} = req.query;
 
@@ -54,7 +143,7 @@ export default class EventController {
             if(analytic === 'NFV4-VC') {
                 additional_info = {car: 0, motorcycle: 0, bus: 0, truck: 0};
 
-                let countGroupByStatus = await EventDAO.getCountGroupByStatus(stream, startDate, endDate)
+                let countGroupByStatus = await EventDAO.getCountGroupByStatus(analytic, stream, startDate, endDate)
 
                 countGroupByStatus.forEach(data => {
                     additional_info[data.status] = parseInt(data.count);
@@ -138,4 +227,6 @@ export default class EventController {
             return next(e);
         }
     }
+
+
 }
