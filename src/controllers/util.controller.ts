@@ -13,9 +13,17 @@ export default class UtilController {
         try {
             const output = {}
 
-            let {stream, analytic, start_date, end_date} = req.query;
+            let {interval, stream, analytic, start_date, end_date} = req.query;
 
-            console.log(stream)
+
+            // @ts-ignore
+            if (interval && !isNaN(parseInt(interval))) {
+                // @ts-ignore
+                interval = parseInt(interval);
+            } else {
+                // @ts-ignore
+                interval = 86400
+            }
 
             if(end_date === 'undefined') {
                 end_date = undefined;
@@ -69,14 +77,16 @@ export default class UtilController {
                 output.avg_vehicle_dwelling = avgVehicleDwelling[0].avg || 0;
 
                 // @ts-ignore
-                const peopleAndVehicleCountGroupByTime = await EventDAO.getCountPeopleAndVehicleGroupByTime(stream.split(','), start_date, end_date, null);
+                const peopleAndVehicleCountGroupByTime = await EventDAO.getCountPeopleAndVehicleGroupByTime(stream.split(','), start_date, end_date, interval);
+
+                console.log(peopleAndVehicleCountGroupByTime)
 
                 // @ts-ignore
                 output.people_and_vehicle_summary = {}
 
                 // @ts-ignore
                 peopleAndVehicleCountGroupByTime.forEach(data => {
-                    const key = moment(data.interval_alias).format('DD-MM-YYYY');
+                    const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
 
                     // @ts-ignore
                     if (!output.people_and_vehicle_summary[key]) {
@@ -87,9 +97,11 @@ export default class UtilController {
                     // @ts-ignore
                     (output.people_and_vehicle_summary[key])[data.type] = parseInt(data.count);
                 })
+
+                console.log(output)
             } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC') {
                 // @ts-ignore
-                let countGroupByTime = await EventDAO.getCountGroupByTimeAndLocation(stream.split(','), start_date, end_date, analytic);
+                let countGroupByTime = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
                 // @ts-ignore
                 let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
 
@@ -150,16 +162,26 @@ export default class UtilController {
 
                 // @ts-ignore
                 countGroupByTime.forEach(data => {
-                    const key = moment(data.interval_alias).format('DD-MM-YYYY');
+                    const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
 
                     // @ts-ignore
                     if (!output.summary[key]) {
-                        // @ts-ignore
-                        output.summary[key] = 0
+                        if(analytic === 'NFV4-VC') {
+                            // @ts-ignore
+                            output.summary[key] = {car: 0, motorcycle: 0, bus: 0, truck: 0}
+                        } else {
+                            // @ts-ignore
+                            output.summary[key] = 0
+                        }
                     }
 
-                    // @ts-ignore
-                    (output.summary[key]) += parseInt(data.count);
+                    if(analytic === 'NFV4-VC') {
+                        // @ts-ignore
+                        (output.summary[key])[data.status] += parseInt(data.count);
+                    } else {
+                        // @ts-ignore
+                        (output.summary[key]) += parseInt(data.count);
+                    }
 
                     // @ts-ignore
                     if (!output.summary_location[data.location]) {
@@ -172,7 +194,7 @@ export default class UtilController {
                 })
             } else {
                 // @ts-ignore
-                let avgGroupByTime = await EventDAO.getAvgGroupByTime(stream.split(','), start_date, end_date, analytic);
+                let avgGroupByTime = await EventDAO.getAvgGroupByTime(stream.split(','), start_date, end_date, interval);
                 // @ts-ignore
                 let avgGroupByLocation = await EventDAO.getAvgGroupByLocation(stream.split(','), start_date, end_date);
                 // @ts-ignore
@@ -216,7 +238,7 @@ export default class UtilController {
 
                 // @ts-ignore
                 avgGroupByTime.forEach(data => {
-                    const key = moment(data.interval_alias).format('DD-MM-YYYY');
+                    const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
 
                     // @ts-ignore
                     output.summary[key] = data.avg

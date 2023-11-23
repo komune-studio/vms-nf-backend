@@ -13,7 +13,7 @@ export default class EventController {
             const fields = ['stream'];
             const analytics = req.query.analytic.split(',');
             const streams = req.query.streams.split(',');
-            const {start_date, end_date} = req.query;
+            const {start_date, end_date, preview} = req.query;
             const allStreams = (await StreamDAO.getAll()).filter(stream => streams.includes(stream.id));
 
             let data = []
@@ -82,6 +82,8 @@ export default class EventController {
             data.forEach(datum => {
                 delete datum.stream_id
             })
+
+            if(preview === 'true') return res.send(data)
 
             const csv = json2csv(data, fields);
 

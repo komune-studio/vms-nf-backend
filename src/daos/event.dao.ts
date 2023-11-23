@@ -41,10 +41,10 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getCountPeopleAndVehicleGroupByTime(streams: String[], startTime : String, endTime : String) {
+    static async getCountPeopleAndVehicleGroupByTime(streams: String[], startTime : String, endTime : String, interval : number) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*), type, date_trunc('day', event_time AT TIME ZONE 'Asia/Jakarta') as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND (type = 'NFV4-PC' OR type = 'NFV4-VC')  GROUP BY interval_alias, type ORDER BY interval_alias ASC`
+        const sql = `select count(*), type, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND (type = 'NFV4-PC' OR type = 'NFV4-VC')  GROUP BY interval_alias, type ORDER BY interval_alias ASC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -57,10 +57,10 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getCountGroupByTimeAndLocation(streams: String[], startTime : String, endTime : String, analytic : String) {
+    static async getCountGroupByStatusAndTimeAndLocation(streams: String[], startTime : String, endTime : String, analytic : String, interval : number) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*) ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ' '}, stream_id, date_trunc('day', event_time AT TIME ZONE 'Asia/Jakarta') as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND type = '${analytic}'  GROUP BY interval_alias, stream_id ORDER BY interval_alias ASC`
+        const sql = `select count(*) ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ' '}, stream_id, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias, status from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND type = '${analytic}'  GROUP BY interval_alias, stream_id, status ORDER BY interval_alias ASC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -71,10 +71,12 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getAvgGroupByTime(streams: String[], startTime : String, endTime : String) {
+    static async getAvgGroupByTime(streams: String[], startTime : String, endTime : String, interval : number) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*), avg(cast(detection->'pipeline_data'->>'duration' as float)), date_trunc('day', event_time AT TIME ZONE 'Asia/Jakarta') as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = 'NFV4-VD' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY interval_alias ORDER BY interval_alias ASC`
+        const sql = `select count(*), avg(cast(detection->'pipeline_data'->>'duration' as float)), to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = 'NFV4-VD' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY interval_alias ORDER BY interval_alias ASC`
+
+        console.log(sql)
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
