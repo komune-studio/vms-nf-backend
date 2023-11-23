@@ -15,6 +15,8 @@ export default class UtilController {
 
             let {stream, analytic, start_date, end_date} = req.query;
 
+            console.log(stream)
+
             if(end_date === 'undefined') {
                 end_date = undefined;
             }
@@ -91,6 +93,27 @@ export default class UtilController {
                 // @ts-ignore
                 let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
 
+
+                const streams = await StreamDAO.getAll();
+
+                // @ts-ignore
+                countGroupByTime.forEach(data => {
+                    streams.forEach(stream => {
+                        if(data.stream_id === stream.id) {
+                            data.location = stream.name;
+                        }
+                    })
+                })
+
+                // @ts-ignore
+                countGroupByLocation.forEach(data => {
+                    streams.forEach(stream => {
+                        if(data.stream_id === stream.id) {
+                            data.location = stream.name;
+                        }
+                    })
+                })
+
                 // @ts-ignore
                 output.summary = {}
                 // @ts-ignore
@@ -155,6 +178,26 @@ export default class UtilController {
                 // @ts-ignore
                 let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
 
+                const streams = await StreamDAO.getAll()
+
+                // @ts-ignore
+                avgGroupByLocation.forEach(data => {
+                    streams.forEach(stream => {
+                        if(data.stream_id === stream.id) {
+                            data.location = stream.name;
+                        }
+                    })
+                })
+
+                // @ts-ignore
+                countGroupByLocation.forEach(data => {
+                    streams.forEach(stream => {
+                        if(data.stream_id === stream.id) {
+                            data.location = stream.name;
+                        }
+                    })
+                })
+
                 // @ts-ignore
                 output.summary = {}
                 // @ts-ignore
@@ -193,8 +236,19 @@ export default class UtilController {
             const {analytic_id} = req.params;
             const {stream, start_date, end_date} = req.query
 
+            const streams = await StreamDAO.getAll();
+
             // @ts-ignore
             const response = await EventDAO.getRanking(stream.split(','), analytic_id, start_date, end_date);
+
+            // @ts-ignore
+            response.forEach(data => {
+                streams.forEach(stream => {
+                    if(data.stream_id === stream.id) {
+                        data.location = stream.name;
+                    }
+                })
+            })
 
             // @ts-ignore
             res.send(response.map(data => ({
