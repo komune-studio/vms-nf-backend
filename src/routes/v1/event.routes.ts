@@ -6,6 +6,9 @@ export default function eventRoutes(router : Router) {
     router.route('/event')
         .get(authAll, EventController.getAll);
 
+    router.route('/event/export-data')
+        .get(authAll, EventController.exportData);
+
     router.route('/event/:event_id')
         .get(EventController.getByEventId);
 
