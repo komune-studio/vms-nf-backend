@@ -14,16 +14,18 @@ export default class UtilController {
             const output = {}
 
             let {interval, stream, analytic, start_date, end_date} = req.query;
-
+            console.log()
 
             // @ts-ignore
-            if (interval && !isNaN(parseInt(interval))) {
+            if (interval && interval != '0' && !isNaN(parseInt(interval))) {
                 // @ts-ignore
                 interval = parseInt(interval);
             } else {
                 // @ts-ignore
                 interval = 86400
             }
+
+
 
             if(end_date === 'undefined') {
                 end_date = undefined;
