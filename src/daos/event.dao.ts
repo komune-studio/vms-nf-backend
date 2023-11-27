@@ -65,6 +65,14 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
+    static async getCountGroupByTimeAndLocation(streams: String[], startTime : String, endTime : String, analytic : String, interval : number) {
+        if (streams.length === 0) return []
+
+        const sql = `select count(*) ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ' '}, stream_id, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND type = '${analytic}'  GROUP BY interval_alias, stream_id ORDER BY interval_alias ASC`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
     static async getAvg(stream: String, startTime : String, endTime : String) {
         const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)) from event where stream_id IN ${stream} AND type = 'NFV4-VD' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '}`
 

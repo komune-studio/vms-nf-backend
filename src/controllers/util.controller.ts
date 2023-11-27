@@ -255,6 +255,60 @@ export default class UtilController {
         }
     }
 
+    static async compare(req: Request, res: Response, next: NextFunction) {
+        try {
+            let {interval, stream, analytic, start_date, end_date} = req.query;
+
+            // @ts-ignore
+            if (interval && interval != '0' && !isNaN(parseInt(interval))) {
+                // @ts-ignore
+                interval = parseInt(interval);
+            } else {
+                // @ts-ignore
+                interval = 86400
+            }
+
+
+
+            if(end_date === 'undefined') {
+                end_date = undefined;
+            }
+
+            const output = {};
+
+            // @ts-ignore
+            const response = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
+
+            // @ts-ignore
+            response.forEach(data => {
+                const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
+
+                // @ts-ignore
+                if(!output[key]) {
+                    const initialValue = {}
+
+                    // @ts-ignore
+                    stream.split(',').forEach(id => {
+                        // @ts-ignore
+                        initialValue[id] = 0;
+                    })
+
+                    // @ts-ignore
+                    output[key] = initialValue
+                }
+
+                // @ts-ignore
+                (output[key])[data.stream_id] = analytic === 'NFV4-VD' ? data.avg : parseInt(data.count);
+            })
+
+            res.send(output);
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
+
     static async getRanking(req: Request, res: Response, next: NextFunction) {
         try {
             const {analytic_id} = req.params;
