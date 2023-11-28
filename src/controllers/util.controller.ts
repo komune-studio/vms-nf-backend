@@ -281,7 +281,7 @@ export default class UtilController {
 
             // @ts-ignore
             response.forEach(data => {
-                const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
+                const key = moment(data.interval_alias).format('YYYY-MM-DDTHH:mm:ssZ');
 
                 // @ts-ignore
                 if(!output[key]) {
