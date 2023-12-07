@@ -30,8 +30,6 @@ export default class PlaybackController {
             }
             let xmlBody = toXML(body, config)
 
-            res.send(xmlBody)
-
             let responseFromDVR = await requestWithXML(`http://${ip_address}/ISAPI/ContentMgmt/search`, "POST", xmlBody, base64_auth)
 
             // @ts-ignore
