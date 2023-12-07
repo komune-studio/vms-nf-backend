@@ -6,4 +6,7 @@ import PlaybackController from "../../controllers/playback.controller";
 export default function routesPlayback(router : Router) {
     router.route('/playback/rtsp-url')
         .post(PlaybackController.getRTSPUrls)
+
+    router.route('/playback/rtsp-available-days')
+        .post(PlaybackController.getRTSPAvailableDays)
 }
