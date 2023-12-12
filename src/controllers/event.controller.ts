@@ -47,6 +47,24 @@ export default class EventController {
                 })
             }
 
+            if(analytics.includes('NFV4-MPAA')) {
+                fields.push('male')
+                fields.push('female')
+
+                const response = await EventDAO.getCountGroupLocation(streams, start_date, end_date, 'NFV4-MPAA')
+
+                data.forEach(datum => {
+                    datum['male'] = 0;
+                    datum['female'] = 0;
+
+                    response.forEach(data => {
+                        if(datum.stream_id === data.stream_id) {
+                            datum[data.gender.toLowerCase()] = parseInt(data.count);
+                        }
+                    })
+                })
+            }
+
             if(analytics.includes('NFV4-PC')) {
                 fields.push('people')
 

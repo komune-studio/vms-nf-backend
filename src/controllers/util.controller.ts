@@ -101,7 +101,7 @@ export default class UtilController {
                 })
 
                 console.log(output)
-            } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC') {
+            } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC' || analytic === 'NFV4-MPAA') {
                 // @ts-ignore
                 let countGroupByTime = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
                 // @ts-ignore
@@ -161,6 +161,28 @@ export default class UtilController {
                     console.log(output.detailed_summary_location)
                 }
 
+                if (analytic === 'NFV4-MPAA') {
+                    // @ts-ignore
+                    output.detailed_summary_location = output.detailed_summary_location.map(data => {
+                        // @ts-ignore
+                        return {
+                            // @ts-ignore
+                            ...data, total_people: output.detailed_summary_location.reduce((accumulator, value) => {
+                                if(value.stream_id === data.stream_id && value.location === data.location) {
+                                    return accumulator + value.count;
+                                }
+
+                                return accumulator
+                            }, 0)
+                        }
+                    })
+
+                    // @ts-ignore
+                    output.detailed_summary_location.sort((a, b) =>  b.total_people - a.total_people)
+
+                    // @ts-ignore
+                    console.log(output.detailed_summary_location)
+                }
 
                 // @ts-ignore
                 countGroupByTime.forEach(data => {
@@ -171,6 +193,9 @@ export default class UtilController {
                         if(analytic === 'NFV4-VC') {
                             // @ts-ignore
                             output.summary[key] = {car: 0, motorcycle: 0, bus: 0, truck: 0}
+                        } else if(analytic === 'NFV4-MPAA') {
+                            // @ts-ignore
+                            output.summary[key] = {Male: 0, Female: 0}
                         } else {
                             // @ts-ignore
                             output.summary[key] = 0
@@ -180,7 +205,10 @@ export default class UtilController {
                     if(analytic === 'NFV4-VC') {
                         // @ts-ignore
                         (output.summary[key])[data.status] += parseInt(data.count);
-                    } else {
+                    } else if(analytic === 'NFV4-MPAA') {
+                        // @ts-ignore
+                        (output.summary[key])[data.status] += parseInt(data.count);
+                     }else {
                         // @ts-ignore
                         (output.summary[key]) += parseInt(data.count);
                     }
@@ -422,6 +450,39 @@ export default class UtilController {
                     result[data.status] += parseInt(data.count);
                     result.heatmap_data.push({
                         label: data.status,
+                        event_time: data.interval_alias,
+                        count: parseInt(data.count)
+                    })
+                })
+
+                result.ranking = Object.entries(ranking)   // @ts-ignore
+                    .sort(([, a], [, b]) => b - a)
+                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
+
+                //only return top 3 ranking
+                Object.keys(result.ranking).forEach((key, idx) => {
+                    if (idx > 2) {
+                        delete result.ranking[key]
+                    }
+                })
+            } else if (analytic_id === 'NFV4-VC') {
+                result = {Male: 0, Female: 0, heatmap_data: []}
+
+                // @ts-ignore
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
+
+                // @ts-ignore
+                response.forEach(data => {
+                    if (!ranking[data.interval_alias]) {
+                        ranking[data.interval_alias] = parseInt(data.count)
+                    } else {
+                        ranking[data.interval_alias] += parseInt(data.count)
+                    }
+
+
+                    result[data.gender] += parseInt(data.count);
+                    result.heatmap_data.push({
+                        label: data.gender,
                         event_time: data.interval_alias,
                         count: parseInt(data.count)
                     })
