@@ -465,7 +465,7 @@ export default class UtilController {
                         delete result.ranking[key]
                     }
                 })
-            } else if (analytic_id === 'NFV4-VC') {
+            } else if (analytic_id === 'NFV4-MPAA') {
                 result = {Male: 0, Female: 0, heatmap_data: []}
 
                 // @ts-ignore
