@@ -93,7 +93,7 @@ export default class UtilController {
                     // @ts-ignore
                     if (!output.people_and_vehicle_summary[key]) {
                         // @ts-ignore
-                        (output.people_and_vehicle_summary[key]) = {'NFV4-PC': 0, 'NFV4-VC': 0};
+                        (output.people_and_vehicle_summary[key]) = {'NFV4-MPAA': 0, 'NFV4-VC': 0};
                     }
 
                     // @ts-ignore
@@ -207,7 +207,7 @@ export default class UtilController {
                         (output.summary[key])[data.status] += parseInt(data.count);
                     } else if(analytic === 'NFV4-MPAA') {
                         // @ts-ignore
-                        (output.summary[key])[data.status] += parseInt(data.count);
+                        (output.summary[key])[data.gender] += parseInt(data.count);
                      }else {
                         // @ts-ignore
                         (output.summary[key]) += parseInt(data.count);
