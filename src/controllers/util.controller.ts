@@ -44,7 +44,7 @@ export default class UtilController {
                                 event_time: {lte: end_date}
                             },
                             {
-                                type: {equals: 'NFV4-PC'}
+                                type: {equals: 'NFV4-MPAA'}
                             }
                         ]
                     })

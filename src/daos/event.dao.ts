@@ -41,6 +41,12 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
+    static async getCountGroupByGender(stream: String, startTime : String, endTime : String) {
+        const sql = `select count(*), detection->'pipeline_data'->'attributes'->'gender'->>'label' as gender from event where stream_id IN ${stream} AND type = 'NFV4-MPAA' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY gender`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
     static async getCountPeopleAndVehicleGroupByTime(streams: String[], startTime : String, endTime : String, interval : number) {
         if (streams.length === 0) return []
 

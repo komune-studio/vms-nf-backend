@@ -174,6 +174,14 @@ export default class EventController {
                 let avg = await EventDAO.getAvg(stream, startDate, endDate)
 
                 additional_info.avg = avg[0].avg;
+            } else if (analytic === 'NFV4-MPAA') {
+                additional_info = {Male: 0, Female: 0};
+
+                let countGroupByGender = await EventDAO.getCountGroupByGender(stream, startDate, endDate)
+
+                countGroupByGender.forEach(data => {
+                    additional_info[data.gender] = parseInt(data.count);
+                })
             }
 
             // @ts-ignore
