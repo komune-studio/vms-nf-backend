@@ -8,7 +8,8 @@ export default class PipelineDAO {
             where: {stream_id: {in: streamIds}},
             select: {
                 stream_id: true,
-                analytic_id: true
+                analytic_id: true,
+                configs: true
             }
         })
     }
