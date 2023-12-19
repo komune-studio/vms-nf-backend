@@ -50,7 +50,7 @@ export default class EventDAO {
     static async getCountPeopleAndVehicleGroupByTime(streams: String[], startTime : String, endTime : String, interval : number) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*), type, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND (type = 'NFV4-MPAA' OR type = 'NFV4-VC')  GROUP BY interval_alias, type ORDER BY interval_alias ASC`
+        const sql = `select count(*), type, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND (type = 'NFV4-MPAA' OR (type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'counting'))  GROUP BY interval_alias, type ORDER BY interval_alias ASC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -123,7 +123,7 @@ select min(cast(detection->'pipeline_data'->>'duration' as float)) from event wh
     }
 
     static async getAvgDuration(streamId: String[], startTime : String, endTime : string) {
-        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-VD' ${streamId ? ` AND stream_id IN (${streamId.map(id => `'${id}'`).join(',')}) ` : ''} AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}`
+        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'counting' ${streamId ? ` AND stream_id IN (${streamId.map(id => `'${id}'`).join(',')}) ` : ''} AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

@@ -26,8 +26,7 @@ export default class UtilController {
             }
 
 
-
-            if(end_date === 'undefined') {
+            if (end_date === 'undefined') {
                 end_date = undefined;
             }
 
@@ -35,6 +34,10 @@ export default class UtilController {
                 // @ts-ignore
                 const peopleCount = await EventDAO.getCount(
                     {
+                        detection: {
+                            path: ['pipeline_data', 'logic'],
+                            equals: 'counting'
+                        },
                         AND: [  // @ts-ignore
                             {stream_id: {in: stream.split(',')}},
                             {  // @ts-ignore
@@ -53,6 +56,12 @@ export default class UtilController {
                     {
                         AND: [  // @ts-ignore
                             {stream_id: {in: stream.split(',')}},
+                            {
+                                detection: {
+                                    path: ['pipeline_data', 'logic'],
+                                    equals: 'counting'
+                                },
+                            },
                             {  // @ts-ignore
                                 event_time: {gte: moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z')}
                             },
@@ -60,7 +69,9 @@ export default class UtilController {
                                 event_time: {lte: end_date ? moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined}
                             },
                             {
-                                type: {equals: 'NFV4-VC'}
+                                type: {
+                                    equals: 'NFV4-MVA'
+                                }
                             }
                         ]
                     })
@@ -113,7 +124,7 @@ export default class UtilController {
                 // @ts-ignore
                 countGroupByTime.forEach(data => {
                     streams.forEach(stream => {
-                        if(data.stream_id === stream.id) {
+                        if (data.stream_id === stream.id) {
                             data.location = stream.name;
                         }
                     })
@@ -122,7 +133,7 @@ export default class UtilController {
                 // @ts-ignore
                 countGroupByLocation.forEach(data => {
                     streams.forEach(stream => {
-                        if(data.stream_id === stream.id) {
+                        if (data.stream_id === stream.id) {
                             data.location = stream.name;
                         }
                     })
@@ -145,7 +156,7 @@ export default class UtilController {
                         return {
                             // @ts-ignore
                             ...data, total_vehicles: output.detailed_summary_location.reduce((accumulator, value) => {
-                                if(value.stream_id === data.stream_id && value.location === data.location) {
+                                if (value.stream_id === data.stream_id && value.location === data.location) {
                                     return accumulator + value.count;
                                 }
 
@@ -155,7 +166,7 @@ export default class UtilController {
                     })
 
                     // @ts-ignore
-                    output.detailed_summary_location.sort((a, b) =>  b.total_vehicles - a.total_vehicles)
+                    output.detailed_summary_location.sort((a, b) => b.total_vehicles - a.total_vehicles)
 
                     // @ts-ignore
                     console.log(output.detailed_summary_location)
@@ -168,7 +179,7 @@ export default class UtilController {
                         return {
                             // @ts-ignore
                             ...data, total_people: output.detailed_summary_location.reduce((accumulator, value) => {
-                                if(value.stream_id === data.stream_id && value.location === data.location) {
+                                if (value.stream_id === data.stream_id && value.location === data.location) {
                                     return accumulator + value.count;
                                 }
 
@@ -178,7 +189,7 @@ export default class UtilController {
                     })
 
                     // @ts-ignore
-                    output.detailed_summary_location.sort((a, b) =>  b.total_people - a.total_people)
+                    output.detailed_summary_location.sort((a, b) => b.total_people - a.total_people)
 
                     // @ts-ignore
                     console.log(output.detailed_summary_location)
@@ -190,10 +201,10 @@ export default class UtilController {
 
                     // @ts-ignore
                     if (!output.summary[key]) {
-                        if(analytic === 'NFV4-VC') {
+                        if (analytic === 'NFV4-VC') {
                             // @ts-ignore
                             output.summary[key] = {car: 0, motorcycle: 0, bus: 0, truck: 0}
-                        } else if(analytic === 'NFV4-MPAA') {
+                        } else if (analytic === 'NFV4-MPAA') {
                             // @ts-ignore
                             output.summary[key] = {Male: 0, Female: 0}
                         } else {
@@ -202,13 +213,13 @@ export default class UtilController {
                         }
                     }
 
-                    if(analytic === 'NFV4-VC') {
+                    if (analytic === 'NFV4-VC') {
                         // @ts-ignore
                         (output.summary[key])[data.status] += parseInt(data.count);
-                    } else if(analytic === 'NFV4-MPAA') {
+                    } else if (analytic === 'NFV4-MPAA') {
                         // @ts-ignore
                         (output.summary[key])[data.gender] += parseInt(data.count);
-                     }else {
+                    } else {
                         // @ts-ignore
                         (output.summary[key]) += parseInt(data.count);
                     }
@@ -235,7 +246,7 @@ export default class UtilController {
                 // @ts-ignore
                 avgGroupByLocation.forEach(data => {
                     streams.forEach(stream => {
-                        if(data.stream_id === stream.id) {
+                        if (data.stream_id === stream.id) {
                             data.location = stream.name;
                         }
                     })
@@ -244,7 +255,7 @@ export default class UtilController {
                 // @ts-ignore
                 countGroupByLocation.forEach(data => {
                     streams.forEach(stream => {
-                        if(data.stream_id === stream.id) {
+                        if (data.stream_id === stream.id) {
                             data.location = stream.name;
                         }
                     })
@@ -297,8 +308,7 @@ export default class UtilController {
             }
 
 
-
-            if(end_date === 'undefined') {
+            if (end_date === 'undefined') {
                 end_date = undefined;
             }
 
@@ -312,7 +322,7 @@ export default class UtilController {
                 const key = moment(data.interval_alias).format('YYYY-MM-DDTHH:mm:ssZ');
 
                 // @ts-ignore
-                if(!output[key]) {
+                if (!output[key]) {
                     const initialValue = {}
 
                     // @ts-ignore
@@ -350,7 +360,7 @@ export default class UtilController {
             // @ts-ignore
             response.forEach(data => {
                 streams.forEach(stream => {
-                    if(data.stream_id === stream.id) {
+                    if (data.stream_id === stream.id) {
                         data.location = stream.name;
                     }
                 })
