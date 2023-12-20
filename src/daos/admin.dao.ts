@@ -1,12 +1,12 @@
 import PrismaService from "../services/prisma.service";
 
 const prisma = PrismaService.getVisionaire();
-const admins = prisma.admin;
+const admins = prisma.admin_playback;
 
 export default class AdminDAO {
 
     static async createTable() {
-        return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS admin (
+        return prisma.$executeRaw`CREATE TABLE IF NOT EXISTS admin_playback (
             id SERIAL PRIMARY KEY,
             email VARCHAR(32) NOT NULL UNIQUE,
             name VARCHAR(32) NOT NULL,

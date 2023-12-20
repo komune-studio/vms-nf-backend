@@ -2,7 +2,7 @@ import PrismaService from "../services/prisma.service";
 import request from "../utils/api.utils";
 
 const prisma = PrismaService.getVisionaire();
-const admins = prisma.admin;
+const admins = prisma.admin_playback;
 
 export default class FremisnDAO {
     static async createKeyspace(keyspace : string) {
