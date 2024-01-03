@@ -30,13 +30,13 @@ export default class EventDAO {
     static async getCountGroupByTimeAndStatus(streams: String[], analytic: String, startTime : String, endTime : String, interval : number) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias ${analytic === 'NFV4-CE' ? ` , avg(cast(detection->'pipeline_data'->>'estimation' as int)) ` : ''} ${analytic === 'NFV4-MPAA' ? ` , detection->'pipeline_data'->'attributes'->'gender'->>'label' as gender ` : ''} ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = '${analytic}' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY status, interval_alias ${analytic === 'NFV4-MPAA' ? ` , gender ` : ''} ORDER BY interval_alias ASC`
+        const sql = `select count(*), ${analytic === 'NFV4-VC' ? ` result->>'label' as status ` : ' status'}, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias ${analytic === 'NFV4-CE' ? ` , avg(cast(detection->'pipeline_data'->>'estimation' as int)) ` : ''} ${analytic === 'NFV4-MPAA' ? ` , detection->'pipeline_data'->'attributes'->'gender'->>'label' as gender ` : ''} ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND ${analytic === 'NFV4-VC' || analytic === 'NFV4-VD' ? ` type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = '${analytic === 'NFV4-VC' ? 'counting' : 'dwelling'}' ` : ` type = '${analytic}' `}  ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY ${analytic === 'NFV4-VC' ? ` result->>'label' ` : ' status'}, interval_alias ${analytic === 'NFV4-MPAA' ? ` , gender ` : ''} ORDER BY interval_alias ASC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
     static async getCountGroupByStatus(analytic : String, stream: String, startTime : String, endTime : String) {
-        const sql = `select count(*), status from event where stream_id IN ${stream} AND type = '${analytic}' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY status`
+        const sql = `select count(*), ${analytic === 'NFV4-VC' ? ` result->>'label' as status ` : ` status `} from event where stream_id IN ${stream} AND ${analytic === 'NFV4-VC' || analytic === 'NFV4-VD' ? ` type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = '${analytic === 'NFV4-VC' ? 'counting' : 'dwelling'}' ` : ` type = '${analytic}' `}  ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY ${analytic === 'NFV4-VC' ? ` result->>'label' ` : ` status `}`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -58,7 +58,7 @@ export default class EventDAO {
     static async getCountGroupLocation(streams: String[], startTime : String, endTime : String, analytic : String) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*) ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ' '}, stream_id, status, stream_id ${analytic === 'NFV4-MPAA' ? ` , detection->'pipeline_data'->'attributes'->'gender'->>'label' as gender ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND type = '${analytic}'  GROUP BY stream_id, stream_id, status ${analytic === 'NFV4-MPAA' ? `, gender ` : ''} ORDER BY ${analytic === 'NFV4-VD' ? ` avg ` : ' count '} DESC`
+        const sql = `select count(*) ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ' '}, stream_id, ${analytic === 'NFV4-VC' ? ` result->>'label' as status ` : ` status `}, stream_id ${analytic === 'NFV4-MPAA' ? ` , detection->'pipeline_data'->'attributes'->'gender'->>'label' as gender ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND ${analytic === 'NFV4-VC' || analytic === 'NFV4-VD' ? ` type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = '${analytic === 'NFV4-VC' ? 'counting' : 'dwelling'}' ` : ` type = '${analytic}' `} GROUP BY stream_id, stream_id, ${analytic === 'NFV4-VC' ? ` result->>'label' ` : ' status '} ${analytic === 'NFV4-MPAA' ? `, gender ` : ''} ORDER BY ${analytic === 'NFV4-VD' ? ` avg ` : ' count '} DESC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -66,7 +66,7 @@ export default class EventDAO {
     static async getCountGroupByStatusAndTimeAndLocation(streams: String[], startTime : String, endTime : String, analytic : String, interval : number) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*) ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ' '}, stream_id, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias, status ${analytic === 'NFV4-MPAA' ? ` , detection->'pipeline_data'->'attributes'->'gender'->>'label' as gender ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND type = '${analytic}' GROUP BY interval_alias, stream_id, status ${analytic === 'NFV4-MPAA' ? `, gender ` : ''} ORDER BY interval_alias ASC`
+        const sql = `select count(*) ${analytic === 'NFV4-VD' ? ` , avg(cast(detection->'pipeline_data'->>'duration' as float)) ` : ' '}, stream_id, to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias, ${analytic === 'NFV4-VC' ? ` result->>'label' as status ` : ' status '} ${analytic === 'NFV4-MPAA' ? ` , detection->'pipeline_data'->'attributes'->'gender'->>'label' as gender ` : ''} from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND ${analytic === 'NFV4-VC' || analytic === 'NFV4-VD' ? ` type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = '${analytic === 'NFV4-VC' ? 'counting' : 'dwelling'}' ` : ` type = '${analytic}' `}  GROUP BY interval_alias, stream_id, ${analytic === 'NFV4-VC' ? ` result->>'label' ` : ' status '} ${analytic === 'NFV4-MPAA' ? `, gender ` : ''} ORDER BY interval_alias ASC`
 
         console.log(sql)
 
@@ -82,7 +82,7 @@ export default class EventDAO {
     }
 
     static async getAvg(stream: String, startTime : String, endTime : String) {
-        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)) from event where stream_id IN ${stream} AND type = 'NFV4-VD' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '}`
+        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)) from event where stream_id IN ${stream} AND type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'dwelling' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '}`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -90,7 +90,7 @@ export default class EventDAO {
     static async getAvgGroupByTime(streams: String[], startTime : String, endTime : String, interval : number) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*), avg(cast(detection->'pipeline_data'->>'duration' as float)), to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = 'NFV4-VD' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY interval_alias ORDER BY interval_alias ASC`
+        const sql = `select count(*), avg(cast(detection->'pipeline_data'->>'duration' as float)), to_timestamp(floor((extract('epoch' from event_time) / ${interval} )) * ${interval}) as interval_alias from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'dwelling' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY interval_alias ORDER BY interval_alias ASC`
 
         console.log(sql)
 
@@ -100,38 +100,39 @@ export default class EventDAO {
     static async getAvgGroupByLocation(streams: String[], startTime : String, endTime : String) {
         if (streams.length === 0) return []
 
-        const sql = `select count(*), stream_id, avg(cast(detection->'pipeline_data'->>'duration' as float)) from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND type = 'NFV4-VD'  GROUP BY stream_id ORDER BY avg DESC`
+        const sql = `select count(*), stream_id, avg(cast(detection->'pipeline_data'->>'duration' as float)) from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} AND type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'dwelling'  GROUP BY stream_id ORDER BY avg DESC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
     static async getMaxDuration(streamId: String, startTime : String, endTime : String) {
         const sql = `SELECT cast(detection->'pipeline_data'->>'duration' as float) as duration, event_time FROM event where cast(detection->'pipeline_data'->>'duration' as float) = (
-select max(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1
-) AND type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1;`
+select max(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'dwelling' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1
+) AND type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'dwelling' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1;`
 
+        console.log(sql)
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
     static async getMinDuration(streamId: String, startTime : String, endTime : string) {
         const sql = `SELECT cast(detection->'pipeline_data'->>'duration' as float) as duration, event_time FROM event where cast(detection->'pipeline_data'->>'duration' as float) = (
-select min(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1
-)  AND type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1;`
+select min(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'dwelling' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1
+)  AND type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'dwelling' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1;`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
     static async getAvgDuration(streamId: String[], startTime : String, endTime : string) {
-        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'counting' ${streamId ? ` AND stream_id IN (${streamId.map(id => `'${id}'`).join(',')}) ` : ''} AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}`
+        const sql = `select avg(cast(detection->'pipeline_data'->>'duration' as float)), count(*) total_data from event where type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = 'dwelling' ${streamId ? ` AND stream_id IN (${streamId.map(id => `'${id}'`).join(',')}) ` : ''} AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}`
+
+        console.log(sql)
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
     static async getRanking(streams: String[], type : string, startTime : String, endTime : string) {
-
-
-        const sql = `select ${type === 'NFV4-VD' ? " avg(cast(detection->'pipeline_data'->>'duration' as float)), " : " "} count(*), date_trunc('day', event_time AT TIME ZONE 'Asia/Jakarta') as interval_alias,  stream_id from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND type = '${type}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} group by interval_alias, stream_id  order by ${type === 'NFV4-VD' ? ' avg ' : ' count '} DESC  LIMIT 3  `
+        const sql = `select ${type === 'NFV4-VD' ? " avg(cast(detection->'pipeline_data'->>'duration' as float)), " : " "} count(*), date_trunc('day', event_time AT TIME ZONE 'Asia/Jakarta') as interval_alias,  stream_id from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND ${type === 'NFV4-VC' || type === 'NFV4-VD' ? ` type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = '${type === 'NFV4-VC' ? 'counting' : 'dwelling'}' ` : ` type = '${type}' `}  AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} group by interval_alias, stream_id  order by ${type === 'NFV4-VD' ? ' avg ' : ' count '} DESC  LIMIT 3  `
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -144,9 +145,7 @@ select min(cast(detection->'pipeline_data'->>'duration' as float)) from event wh
         // @ts-ignore
         analytic = analytic === 'null' ? null : analytic
 
-        const sql = `SELECT count(id) FROM event WHERE ${status && (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') ? ` status = '${status}' ` : status && analytic === 'NFV4-LPR2' ? ` result->>'result' ${status === 'UNKNOWN' ? ' not ' : ''} ilike '%-%' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id in ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''};`
-
-        console.log(sql)
+        const sql = `SELECT count(id) FROM event WHERE ${status && (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') ? ` status = '${status}' ` : status && analytic === 'NFV4-LPR2' ? ` result->>'result' ${status === 'UNKNOWN' ? ' not ' : ''} ilike '%-%' ` : ' 1 = 1 '} ${analytic === 'NFV4-VC' || analytic === 'NFV4-VD' ? ` AND type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = '${analytic === 'NFV4-VC' ? 'counting' : 'dwelling'}'` : analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id in ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -159,7 +158,7 @@ select min(cast(detection->'pipeline_data'->>'duration' as float)) from event wh
         // @ts-ignore
         analytic = analytic === 'null' ? null : analytic
 
-        const sql = `SELECT id, type, stream_id, detection, ${limit && page ? ` primary_image, secondary_image, ` : ''} result, status, event_time, created_at  FROM event WHERE ${status && (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') ? ` status = '${status}' ` : status && analytic === 'NFV4-LPR2' ? ` result->>'result' ${status === 'UNKNOWN' ? ' not ' : ''} ilike '%-%' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
+        const sql = `SELECT id, type, stream_id, detection, ${limit && page ? ` primary_image, secondary_image, ` : ''} result, status, event_time, created_at  FROM event WHERE ${status && (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') ? ` status = '${status}' ` : status && analytic === 'NFV4-LPR2' ? ` result->>'result' ${status === 'UNKNOWN' ? ' not ' : ''} ilike '%-%' ` : ' 1 = 1 '} ${analytic === 'NFV4-VC' || analytic === 'NFV4-VD' ? ` AND type = 'NFV4-MVA' AND  detection->'pipeline_data'->>'logic' = '${analytic === 'NFV4-VC' ? 'counting' : 'dwelling'}' ` : analytic ? ` AND type = '${analytic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
