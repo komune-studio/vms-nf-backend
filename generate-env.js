@@ -6,7 +6,7 @@ const env = {
     NF_IP: process.env.NF_IP,
     VANILLA_PORT: process.env.VANILLA_PORT,
     VISIONAIRE_PORT: process.env.VISIONAIRE_PORT,
-    NF_VISIONAIRE_API_URL: `http://${process.env.NF_IP}:${process.env.VISIONAIRE_PORT}`,
+    NF_VISIONAIRE_API_URL: `http://${process.env.V4_IP}:${process.env.VISIONAIRE_PORT}`,
     NF_VANILLA_API_URL: `http://${process.env.NF_IP}:${process.env.VANILLA_PORT}/api`,
     NF_FREMISN_API_URL: `http://${process.env.NF_IP}:${process.env.FREMISN_PORT}/v1`,
 }

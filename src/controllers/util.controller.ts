@@ -245,6 +245,7 @@ export default class UtilController {
     static async getApiConfig(req: Request, res: Response, next: NextFunction) {
         res.send({
             NF_IP: process.env.NF_IP,
+            V4_IP: process.env.V4_IP,
             VANILLA_PORT: process.env.VANILLA_PORT,
             VISIONAIRE_PORT: process.env.VISIONAIRE_PORT
         })
