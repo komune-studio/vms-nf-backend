@@ -82,6 +82,7 @@ export default class AuthController {
                 allowedSites = sites.map(obj => obj.id.toString());
                 allowedStreams = await MapSiteStreamDAO.getAll()
             } else {
+                // @ts-ignore
                 allowedSites = admin.site_access.map(obj => obj.toString());
                 allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
             }
@@ -122,6 +123,7 @@ export default class AuthController {
                 allowedSites = sites.map(obj => obj.id.toString());
                 allowedStreams = await MapSiteStreamDAO.getAll()
             } else {
+                // @ts-ignore
                 allowedSites = admin.site_access.map(obj => obj.toString());
                 allowedStreams = await MapSiteStreamDAO.getBySiteIds(admin.site_access)
             }
