@@ -32,6 +32,8 @@ export default class StreamController {
 
                 // @ts-ignore
                 stream.pipelines = [];
+                // @ts-ignore
+                stream.configs = [];
 
                 mapSiteStream.forEach(siteStream => {
                     if(stream.id === siteStream.stream_id) {
@@ -44,6 +46,8 @@ export default class StreamController {
                     if(stream.id === analytic.stream_id) {
                         // @ts-ignore
                         stream.pipelines.push(analytic.analytic_id);
+                        // @ts-ignore
+                        stream.configs.push(analytic.configs);
                     }
                 })
             }
