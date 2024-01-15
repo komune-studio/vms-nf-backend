@@ -336,7 +336,7 @@ export default class UtilController {
                 }
 
                 // @ts-ignore
-                (output[key])[data.stream_id] = analytic === 'NFV4-VD' ? data.avg : parseInt(data.count);
+                (output[key])[data.stream_id] = analytic === 'NFV4-VD' ? {avg_dwelling_time: data.avg, total_dwelling_time: data.sum} : parseInt(data.count);
             })
 
             res.send(output);
