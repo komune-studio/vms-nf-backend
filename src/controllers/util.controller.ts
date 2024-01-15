@@ -118,6 +118,8 @@ export default class UtilController {
                 // @ts-ignore
                 let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
 
+                // @ts-ignore
+                const countGroupByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream.split(','), analytic, start_date, end_date, interval)
 
                 const streams = await StreamDAO.getAll();
 
@@ -140,7 +142,7 @@ export default class UtilController {
                 })
 
                 // @ts-ignore
-                output.summary = {}
+                output.summary = {heatmap_data: []}
                 // @ts-ignore
                 output.summary_location = {}
                 // @ts-ignore
@@ -216,12 +218,41 @@ export default class UtilController {
                     if (analytic === 'NFV4-VC') {
                         // @ts-ignore
                         (output.summary[key])[data.status] += parseInt(data.count);
+
+                        // @ts-ignore
+                        countGroupByTimeAndStatus.forEach(data => {
+                            // @ts-ignore
+                            output.summary.heatmap_data.push({
+                                label: data.status,
+                                event_time: data.interval_alias,
+                                count: parseInt(data.count)
+                            })
+                        })
                     } else if (analytic === 'NFV4-MPAA') {
                         // @ts-ignore
                         (output.summary[key])[data.gender] += parseInt(data.count);
+
+                        // @ts-ignore
+                        countGroupByTimeAndStatus.forEach(data => {
+                            // @ts-ignore
+                            output.summary.heatmap_data.push({
+                                label: data.gender,
+                                event_time: data.interval_alias,
+                                count: parseInt(data.count)
+                            })
+                        })
                     } else {
                         // @ts-ignore
                         (output.summary[key]) += parseInt(data.count);
+
+                        // @ts-ignore
+                        countGroupByTimeAndStatus.forEach(data => {
+                            // @ts-ignore
+                            output.summary.heatmap_data.push({
+                                event_time: data.interval_alias,
+                                avg: Math.round(data.avg * 100) / 100,
+                            })
+                        })
                     }
 
                     // @ts-ignore
