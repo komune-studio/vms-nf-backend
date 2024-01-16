@@ -142,9 +142,13 @@ export default class UtilController {
                 })
 
                 // @ts-ignore
-                output.summary = {heatmap_data: []}
+                output.summary = {}
                 // @ts-ignore
                 output.summary_location = {}
+
+                // @ts-ignore
+                output.heatmap_data = []
+
                 // @ts-ignore
                 output.detailed_summary_location = countGroupByLocation.map(data => ({
                     ...data,
@@ -222,7 +226,7 @@ export default class UtilController {
                         // @ts-ignore
                         countGroupByTimeAndStatus.forEach(data => {
                             // @ts-ignore
-                            output.summary.heatmap_data.push({
+                            output.heatmap_data.push({
                                 label: data.status,
                                 event_time: data.interval_alias,
                                 count: parseInt(data.count)
@@ -235,7 +239,7 @@ export default class UtilController {
                         // @ts-ignore
                         countGroupByTimeAndStatus.forEach(data => {
                             // @ts-ignore
-                            output.summary.heatmap_data.push({
+                            output.heatmap_data.push({
                                 label: data.gender,
                                 event_time: data.interval_alias,
                                 count: parseInt(data.count)
@@ -248,7 +252,7 @@ export default class UtilController {
                         // @ts-ignore
                         countGroupByTimeAndStatus.forEach(data => {
                             // @ts-ignore
-                            output.summary.heatmap_data.push({
+                            output.heatmap_data.push({
                                 event_time: data.interval_alias,
                                 avg: Math.round(data.avg * 100) / 100,
                             })
