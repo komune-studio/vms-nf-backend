@@ -31,14 +31,17 @@ export default class UtilController {
             }
 
             if (!analytic || analytic === 'null') {
+                //${analytic === 'NFV4-MPAA' ? ` AND detection->'pipeline_data'->'attributes'->'gender'->>'label' IS NOT NULL ` : ' '}
                 // @ts-ignore
                 const peopleCount = await EventDAO.getCount(
                     {
-                        detection: {
-                            path: ['pipeline_data', 'logic'],
-                            equals: 'counting'
-                        },
-                        AND: [  // @ts-ignore
+                        AND: [
+                            {
+                                detection: {
+                                    path: ['pipeline_data', 'attributes', 'gender', 'label'],
+                                    not: ''
+                                },
+                            },  // @ts-ignore
                             {stream_id: {in: stream.split(',')}},
                             {  // @ts-ignore
                                 event_time: {gte: start_date}
@@ -51,6 +54,8 @@ export default class UtilController {
                             }
                         ]
                     })
+
+                console.log(peopleCount)
 
                 const vehicleCount = await EventDAO.getCount(
                     {
@@ -104,7 +109,7 @@ export default class UtilController {
                     // @ts-ignore
                     if (!output.people_and_vehicle_summary[key]) {
                         // @ts-ignore
-                        (output.people_and_vehicle_summary[key]) = {'NFV4-MPAA': 0, 'NFV4-VC': 0};
+                        (output.people_and_vehicle_summary[key]) = {'NFV4-MPAA': 0, 'NFV4-MVA': 0};
                     }
 
                     // @ts-ignore
