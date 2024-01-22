@@ -375,8 +375,13 @@ export default class UtilController {
                     output[key] = initialValue
                 }
 
-                // @ts-ignore
-                (output[key])[data.stream_id] = analytic === 'NFV4-VD' ? {avg_dwelling_time: data.avg, total_dwelling_time: data.sum} : parseInt(data.count);
+                if(analytic === 'NFV4-VD') {
+                    // @ts-ignore
+                    (output[key])[data.stream_id] = {avg_dwelling_time: data.avg, total_dwelling_time: data.sum}
+                } else {
+                    // @ts-ignore
+                    (output[key])[data.stream_id] += parseInt(data.count)
+                }
             })
 
             res.send(output);
