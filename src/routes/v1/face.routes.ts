@@ -6,7 +6,7 @@ import upload from "../../utils/multer.utils";
 export default function routesFace(router : Router) {
     router.route('/faces')
         .get(authAll, FaceController.getFace)
-        .post(authAdmin,  upload.single('images'), FaceController.createFace);
+        .post(authAdmin,  upload.any(), FaceController.createFace);
 
     router.route('/face/:id')
         .get(authAll, FaceController.getFaceById)
