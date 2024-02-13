@@ -322,7 +322,7 @@ export default class UtilController {
                     const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
 
                     // @ts-ignore
-                    output.summary[key] = {avg_dwelling_time: data.avg, total_vehicles: data.count}
+                    output.summary[key] = {avg_dwelling_time: data.avg, total_vehicles: parseInt(data.count)}
                 })
             }
 
