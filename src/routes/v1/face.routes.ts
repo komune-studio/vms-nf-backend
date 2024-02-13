@@ -10,6 +10,6 @@ export default function routesFace(router : Router) {
 
     router.route('/face/:id')
         .get(authAll, FaceController.getFaceById)
-        .put(authAdmin,  upload.single('images'), FaceController.updateFace)
+        .put(authAdmin,  upload.any(), FaceController.updateFace)
         .delete(authAdmin, FaceController.deleteFace);
 }

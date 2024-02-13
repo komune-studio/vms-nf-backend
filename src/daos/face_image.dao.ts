@@ -18,4 +18,17 @@ export default class FaceImageDAO {
 
         return result;
     }
+
+    static async getFullSizeById(id: number) {
+        let result = faceImage.findFirst({
+            select: {
+                image: true
+            },
+            where: {
+                id
+            }
+        });
+
+        return result;
+    }
 }

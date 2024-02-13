@@ -78,7 +78,7 @@ export default class FaceController {
 
     static async updateFace(req: Request, res: Response, next: NextFunction) {
         const {id} = req.params;
-        const {file} = req;
+        const files = req.files;
 
         if (!req.body['name']) {
             return next(new BadRequestError("Name is required."));
@@ -89,9 +89,10 @@ export default class FaceController {
             Object.keys(req.body).forEach(key => {
                 body.append(key, req.body[key]);
             });
-            if(file) {
+            // @ts-ignore
+            files.forEach(file => {
                 body.append('images', fs.createReadStream(file.path));
-            }
+            })
 
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'PUT', body);
 
@@ -99,9 +100,10 @@ export default class FaceController {
         } catch (e) {
             return next(e);
         }  finally {
-            if(file) {
+            // @ts-ignore
+            files.forEach(file => {
                 fs.rmSync(file.path);
-            }
+            })
         }
     }
 
