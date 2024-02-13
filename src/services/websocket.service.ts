@@ -5,6 +5,8 @@ import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import RecognizedEventDAO from "../daos/recognized_event.dao";
 import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 import FremisnDAO from "../daos/fremisn.dao";
+import VehicleDAO from "../daos/vehicle.dao";
+import EventDAO from "../daos/event.dao";
 
 const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
 
@@ -68,26 +70,13 @@ export default class WebsocketService {
 
                 let payload : any;
 
-                if(data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
-                    payload = {
-                        timestamp: data.timestamp,
-                        stream_name: data.stream_name,
-                        image: Buffer.from(data.image_jpeg, 'base64')
-                    }
+                if(data.analytic_id === 'NFV4-LPR2') {
+                    const vehicle = await VehicleDAO.getByPlateNumber(data.pipeline_data.plate_number)
 
-                    const response = await FremisnDAO.faceEnrollment(data.pipeline_data.status === 'KNOWN' ? 'recognized' : 'unrecognized', data.image_jpeg)
-                    payload.face_id = BigInt(response.face_id)
-
-                    if(data.pipeline_data.status === 'KNOWN') {
-                        const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
-
-                        if(!face) return;
-
-                        payload.enrollment_id = face.id
-
-                        await RecognizedEventDAO.create(payload)
-                    } else {
-                        await UnrecognizedEventDAO.create(payload)
+                    if(!vehicle) {
+                        EventDAO.updateStatusByEventId('BUKAN PENGHUNI', data.pipeline_data.event_id)
+                    } else if (vehicle.status) {
+                        EventDAO.updateStatusByEventId(vehicle.status, data.pipeline_data.event_id)
                     }
                 }
 

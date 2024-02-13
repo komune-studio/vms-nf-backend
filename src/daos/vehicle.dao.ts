@@ -25,6 +25,13 @@ export default class VehicleDAO {
             }
         })
     }
+    static async getByPlateNumber(plateNumber : string) {
+        return vehicles.findFirst({
+            where: {
+                plate_number: plateNumber
+            }
+        })
+    }
     static async updateVehicle(id : string, vehicle : any) {
         return vehicles.update({
             where: {
