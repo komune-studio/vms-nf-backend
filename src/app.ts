@@ -17,6 +17,7 @@ import UnrecognizedEventDAO from "./daos/unrecognized_event.dao";
 import WebsocketService from "./services/websocket.service";
 import CameraResolutionController from "./controllers/camera_resolution.controller";
 import DashboardCustomizationDAO from "./daos/dashboard_customization.dao";
+import CustomStatusDAO from "./daos/custom_status.dao";
 
 dotenv.config();
 
@@ -72,6 +73,26 @@ app.use(handleErrors);
         console.log('Creating dashboard_customization table')
         await DashboardCustomizationDAO.createTable();
         console.log("dashboard_customization table created successfully.");
+
+        console.log('Creating custom_status table')
+        await CustomStatusDAO.createTable();
+        console.log("custom_status table created successfully.");
+
+        const customStatus = await CustomStatusDAO.getByStatus('BUKAN PENGHUNI')
+
+        if(!customStatus) {
+            await CustomStatusDAO.create({
+                status: 'PENGHUNI',
+                color: '#747474',
+                caption: ''
+            })
+
+            await CustomStatusDAO.create({
+                status: 'BUKAN PENGHUNI',
+                color: '#740000',
+                caption: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer tempus magna nisi, nec facilisis magna pellentesque ut.'
+            })
+        }
 
         const isAppNameInitialized = await DashboardCustomizationDAO.getByKey("app_name")
 

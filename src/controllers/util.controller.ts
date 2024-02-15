@@ -155,6 +155,12 @@ export default class UtilController {
                         }
                         // @ts-ignore
                         output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')][data.status] += parseInt(data.count);
+                    } else if (analytic === 'NFV4-LPR2') {
+                        // @ts-ignore
+                        (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]) = {PENGHUNI: 0, 'BUKAN PENGHUNI': 0}
+
+                        // @ts-ignore
+                        output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')][data.status] = parseInt(data.count);
                     } else {
                         // @ts-ignore
                         output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = parseInt(data.count)
@@ -163,6 +169,9 @@ export default class UtilController {
                     if (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR' || analytic === 'NFV4-VC') {
                         // @ts-ignore
                         (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')])[data.status] += parseInt(data.count);
+                    } else if (analytic === 'NFV4-LPR2') {
+                        // @ts-ignore
+                        (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')])[data.status] = parseInt(data.count);
                     } else {
                         // @ts-ignore
                         output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] += parseInt(data.count);
@@ -177,6 +186,7 @@ export default class UtilController {
             // @ts-ignore
             output.location_data = countByStreamId.map(data => ({...data, count: parseInt(data.count)}))
 
+            console.log(output)
 
             res.send(output);
         } catch (e) {
