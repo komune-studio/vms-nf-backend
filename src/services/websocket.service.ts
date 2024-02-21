@@ -74,9 +74,9 @@ export default class WebsocketService {
                     const vehicle = await VehicleDAO.getByPlateNumber(data.pipeline_data.plate_number)
 
                     if(!vehicle) {
-                        EventDAO.updateStatusByEventId('BUKAN PENGHUNI', data.pipeline_data.event_id)
+                        await EventDAO.updateStatusByEventId('BUKAN PENGHUNI', data.pipeline_data.event_id)
                     } else if (vehicle.status) {
-                        EventDAO.updateStatusByEventId(vehicle.status, data.pipeline_data.event_id)
+                        await EventDAO.updateStatusByEventId(vehicle.status, data.pipeline_data.event_id)
                     }
                 }
 

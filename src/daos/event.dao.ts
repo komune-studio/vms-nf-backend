@@ -185,18 +185,11 @@ from event WHERE type = 'NFV4-LPR2' AND stream_id = '${streamId}' AND event_time
     }
 
     static async updateStatusByEventId(status : string, eventId : string) {
-        let result = event.updateMany({
-            where: {
-                detection: {
-                    path: ['pipeline_data', 'event_id'],
-                    equals: eventId
-                }
-            },
-            data: {
-                status
-            }
-        });
+        const sql = `
+UPDATE event SET status='${status}' 
+WHERE id=(SELECT id FROM event WHERE detection->'pipeline_data'->>'event_id'='${eventId}' ORDER BY id LIMIT 1) 
+`
 
-        return result;
+        return prisma.$queryRaw(Prisma.raw(sql))
     }
 }

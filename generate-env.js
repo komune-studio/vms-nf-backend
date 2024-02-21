@@ -2,7 +2,7 @@ const fs = require('fs');
 
 const env = {
     DATABASE_URL_NFV4_WITH_SCHEMA: `postgresql://postgres:nfvisionaire123@${process.env.NF_IP}:${process.env.DB_PORT}/nfv4`,
-    DATABASE_URL_NFVISIONAIRE_WITH_SCHEMA: `postgresql://postgres:nfvisionaire123@${process.env.NF_IP}:${process.env.DB_PORT}/nfvisionaire`,
+    DATABASE_URL_NFVISIONAIRE_WITH_SCHEMA: `postgresql://postgres:nfvisionaire123@${process.env.NF_IP}:${process.env.DB_PORT}/nfvisionaire?connection_limit=100&pool_timeout=60`,
     NF_IP: process.env.NF_IP,
     VANILLA_PORT: process.env.VANILLA_PORT,
     VISIONAIRE_PORT: process.env.VISIONAIRE_PORT,
