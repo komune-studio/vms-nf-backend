@@ -47,10 +47,20 @@ export default class UtilController {
                             event_time: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
                         },
                         {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                            type: {equals: analytic}
                         },
                         {
-                            type: {equals: analytic}
+                            status: {not: 'car'}
+                        },
+                        {
+                            status: {not: 'motorcycle'}
+                        },
+                        {
+                            status: {not: 'bus'}
+                        }
+                        ,
+                        {
+                            status: {not: 'truck'}
                         }
                     ]
                 })
@@ -70,9 +80,24 @@ export default class UtilController {
                         },
                         {
                             type: {equals: analytic}
+                        },
+                        {
+                            status: {not: 'car'}
+                        },
+                        {
+                            status: {not: 'motorcycle'}
+                        },
+                        {
+                            status: {not: 'bus'}
+                        }
+                        ,
+                        {
+                            status: {not: 'truck'}
                         }
                     ]
                 })
+
+            console.log(output)
 
             output.yesterday = yesterdaysCount._count.id;
 
@@ -85,10 +110,20 @@ export default class UtilController {
                             event_time: {gte: moment().subtract(6, 'day').format('YYYY-MM-DDT00:00:00Z')}
                         },
                         {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                            type: {equals: analytic}
                         },
                         {
-                            type: {equals: analytic}
+                            status: {not: 'car'}
+                        },
+                        {
+                            status: {not: 'motorcycle'}
+                        },
+                        {
+                            status: {not: 'bus'}
+                        }
+                        ,
+                        {
+                            status: {not: 'truck'}
                         }
                     ]
                 })
@@ -104,10 +139,20 @@ export default class UtilController {
                             event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
                         },
                         {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
+                            type: {equals: analytic}
                         },
                         {
-                            type: {equals: analytic}
+                            status: {not: 'car'}
+                        },
+                        {
+                            status: {not: 'motorcycle'}
+                        },
+                        {
+                            status: {not: 'bus'}
+                        }
+                        ,
+                        {
+                            status: {not: 'truck'}
                         }
                     ]
                 })
