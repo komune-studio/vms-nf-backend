@@ -13,8 +13,7 @@ export default class UtilController {
         try {
             const output = {}
 
-            let {interval, stream, analytic, start_date, end_date} = req.query;
-            console.log()
+            let {interval, stream, analytic, start_date, end_date, fetch} = req.query;
 
             // @ts-ignore
             if (interval && interval != '0' && !isNaN(parseInt(interval))) {
@@ -31,92 +30,94 @@ export default class UtilController {
             }
 
             if (!analytic || analytic === 'null') {
-                //${analytic === 'NFV4-MPAA' ? ` AND detection->'pipeline_data'->'attributes'->'gender'->>'label' IS NOT NULL ` : ' '}
-                // @ts-ignore
-                const peopleCount = await EventDAO.getCount(
-                    {
-                        AND: [
-                            {
-                                detection: {
-                                    path: ['pipeline_data', 'attributes', 'gender', 'label'],
-                                    not: ''
+                if (fetch === 'people_count') {
+                    // @ts-ignore
+                    const peopleCount = await EventDAO.getCount(
+                        {
+                            AND: [
+                                {
+                                    detection: {
+                                        path: ['pipeline_data', 'attributes', 'gender', 'label'],
+                                        not: ''
+                                    },
+                                },  // @ts-ignore
+                                {stream_id: {in: stream.split(',')}},
+                                {  // @ts-ignore
+                                    event_time: {gte: start_date}
                                 },
-                            },  // @ts-ignore
-                            {stream_id: {in: stream.split(',')}},
-                            {  // @ts-ignore
-                                event_time: {gte: start_date}
-                            },
-                            { // @ts-ignore
-                                event_time: {lte: end_date}
-                            },
-                            {
-                                type: {equals: 'NFV4-MPAA'}
-                            }
-                        ]
-                    })
-
-                console.log(peopleCount)
-
-                const vehicleCount = await EventDAO.getCount(
-                    {
-                        AND: [  // @ts-ignore
-                            {stream_id: {in: stream.split(',')}},
-                            {
-                                detection: {
-                                    path: ['pipeline_data', 'logic'],
-                                    equals: 'counting'
+                                { // @ts-ignore
+                                    event_time: {lte: end_date}
                                 },
-                            },
-                            {  // @ts-ignore
-                                event_time: {gte: moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z')}
-                            },
-                            { // @ts-ignore
-                                event_time: {lte: end_date ? moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined}
-                            },
-                            {
-                                type: {
-                                    equals: 'NFV4-MVA'
+                                {
+                                    type: {equals: 'NFV4-MPAA'}
                                 }
-                            }
-                        ]
-                    })
-
-                // @ts-ignore
-                const avgVehicleDwelling = await EventDAO.getAvgDuration(stream.split(','), start_date, end_date)
-
-                // @ts-ignore
-                output.people_count = peopleCount._count.id;
-                // @ts-ignore
-                output.vehicle_count = vehicleCount._count.id;
-                // @ts-ignore
-                output.avg_vehicle_dwelling = avgVehicleDwelling[0].avg || 0;
-
-                // @ts-ignore
-                output.avg_vehicle_dwelling = avgVehicleDwelling[0].avg || 0;
-
-                // @ts-ignore
-                const peopleAndVehicleCountGroupByTime = await EventDAO.getCountPeopleAndVehicleGroupByTime(stream.split(','), start_date, end_date, interval);
-
-                console.log(peopleAndVehicleCountGroupByTime)
-
-                // @ts-ignore
-                output.people_and_vehicle_summary = {}
-
-                // @ts-ignore
-                peopleAndVehicleCountGroupByTime.forEach(data => {
-                    const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
+                            ]
+                        })
 
                     // @ts-ignore
-                    if (!output.people_and_vehicle_summary[key]) {
+                    output.people_count = peopleCount._count.id;
+                }
+
+                if(fetch === 'vehicle_count') {
+                    const vehicleCount = await EventDAO.getCount(
+                        {
+                            AND: [  // @ts-ignore
+                                {stream_id: {in: stream.split(',')}},
+                                {
+                                    detection: {
+                                        path: ['pipeline_data', 'logic'],
+                                        equals: 'counting'
+                                    },
+                                },
+                                {  // @ts-ignore
+                                    event_time: {gte: moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z')}
+                                },
+                                { // @ts-ignore
+                                    event_time: {lte: end_date ? moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined}
+                                },
+                                {
+                                    type: {
+                                        equals: 'NFV4-MVA'
+                                    }
+                                }
+                            ]
+                        })
+
+                    // @ts-ignore
+                    output.vehicle_count = vehicleCount._count.id;
+                }
+
+
+                if(fetch === 'avg_vehicle_dwelling') {
+                    // @ts-ignore
+                    const avgVehicleDwelling = await EventDAO.getAvgDuration(stream.split(','), start_date, end_date)
+
+
+                    // @ts-ignore
+                    output.avg_vehicle_dwelling = avgVehicleDwelling[0].avg || 0;
+                }
+
+                if(fetch === 'people_and_vehicle_summary') {
+                    // @ts-ignore
+                    const peopleAndVehicleCountGroupByTime = await EventDAO.getCountPeopleAndVehicleGroupByTime(stream.split(','), start_date, end_date, interval);
+
+                    // @ts-ignore
+                    output.people_and_vehicle_summary = {}
+
+                    // @ts-ignore
+                    peopleAndVehicleCountGroupByTime.forEach(data => {
+                        const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
+
                         // @ts-ignore
-                        (output.people_and_vehicle_summary[key]) = {'NFV4-MPAA': 0, 'NFV4-MVA': 0};
-                    }
+                        if (!output.people_and_vehicle_summary[key]) {
+                            // @ts-ignore
+                            (output.people_and_vehicle_summary[key]) = {'NFV4-MPAA': 0, 'NFV4-MVA': 0};
+                        }
 
-                    // @ts-ignore
-                    (output.people_and_vehicle_summary[key])[data.type] = parseInt(data.count);
-                })
-
-                console.log(output)
+                        // @ts-ignore
+                        (output.people_and_vehicle_summary[key])[data.type] = parseInt(data.count);
+                    })
+                }
             } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC' || analytic === 'NFV4-MPAA') {
                 // @ts-ignore
                 let countGroupByTime = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
@@ -375,7 +376,7 @@ export default class UtilController {
                     output[key] = initialValue
                 }
 
-                if(analytic === 'NFV4-VD') {
+                if (analytic === 'NFV4-VD') {
                     // @ts-ignore
                     (output[key])[data.stream_id] = {avg_dwelling_time: data.avg, total_dwelling_time: data.sum}
                 } else {
