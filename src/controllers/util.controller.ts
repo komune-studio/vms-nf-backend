@@ -119,116 +119,124 @@ export default class UtilController {
                     })
                 }
             } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC' || analytic === 'NFV4-MPAA') {
-                // @ts-ignore
-                let countGroupByTime = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
-                // @ts-ignore
-                let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
-
-                // @ts-ignore
-                const countGroupByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream.split(','), analytic, start_date, end_date, interval)
-
                 const streams = await StreamDAO.getAll();
 
-                // @ts-ignore
-                countGroupByTime.forEach(data => {
-                    streams.forEach(stream => {
-                        if (data.stream_id === stream.id) {
-                            data.location = stream.name;
-                        }
-                    })
-                })
-
-                // @ts-ignore
-                countGroupByLocation.forEach(data => {
-                    streams.forEach(stream => {
-                        if (data.stream_id === stream.id) {
-                            data.location = stream.name;
-                        }
-                    })
-                })
-
-                // @ts-ignore
-                output.summary = {}
-                // @ts-ignore
-                output.summary_location = {}
-
-                // @ts-ignore
-                output.heatmap_data = []
-
-                // @ts-ignore
-                output.detailed_summary_location = countGroupByLocation.map(data => ({
-                    ...data,
-                    count: parseInt(data.count)
-                }))
-
-                if (analytic === 'NFV4-VC') {
+                if(fetch === 'summary') {
                     // @ts-ignore
-                    output.detailed_summary_location = output.detailed_summary_location.map(data => {
+                    let countGroupByTime = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
+
+                    // @ts-ignore
+                    countGroupByTime.forEach(data => {
+                        streams.forEach(stream => {
+                            if (data.stream_id === stream.id) {
+                                data.location = stream.name;
+                            }
+                        })
+                    })
+
+                    // @ts-ignore
+                    output.summary = {}
+                    // @ts-ignore
+                    output.summary_location = {}
+
+
+                    // @ts-ignore
+                    countGroupByTime.forEach(data => {
+                        const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
+
                         // @ts-ignore
-                        return {
-                            // @ts-ignore
-                            ...data, total_vehicles: output.detailed_summary_location.reduce((accumulator, value) => {
-                                if (value.stream_id === data.stream_id && value.location === data.location) {
-                                    return accumulator + value.count;
-                                }
-
-                                return accumulator
-                            }, 0)
+                        if (!output.summary[key]) {
+                            if (analytic === 'NFV4-VC') {
+                                // @ts-ignore
+                                output.summary[key] = {car: 0, motorcycle: 0, bus: 0, truck: 0}
+                            } else if (analytic === 'NFV4-MPAA') {
+                                // @ts-ignore
+                                output.summary[key] = {Male: 0, Female: 0}
+                            } else {
+                                // @ts-ignore
+                                output.summary[key] = 0
+                            }
                         }
+
+                        // @ts-ignore
+                        if (!output.summary_location[data.location]) {
+                            // @ts-ignore
+                            output.summary_location[data.location] = 0
+                        }
+
+                        // @ts-ignore
+                        (output.summary_location[data.location]) += parseInt(data.count);
                     })
-
-                    // @ts-ignore
-                    output.detailed_summary_location.sort((a, b) => b.total_vehicles - a.total_vehicles)
-
-                    // @ts-ignore
-                    console.log(output.detailed_summary_location)
                 }
 
-                if (analytic === 'NFV4-MPAA') {
+                if(fetch === 'detailed_summary_location') {
                     // @ts-ignore
-                    output.detailed_summary_location = output.detailed_summary_location.map(data => {
-                        // @ts-ignore
-                        return {
-                            // @ts-ignore
-                            ...data, total_people: output.detailed_summary_location.reduce((accumulator, value) => {
-                                if (value.stream_id === data.stream_id && value.location === data.location) {
-                                    return accumulator + value.count;
-                                }
+                    let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
 
-                                return accumulator
-                            }, 0)
-                        }
+                    // @ts-ignore
+                    countGroupByLocation.forEach(data => {
+                        streams.forEach(stream => {
+                            if (data.stream_id === stream.id) {
+                                data.location = stream.name;
+                            }
+                        })
                     })
 
                     // @ts-ignore
-                    output.detailed_summary_location.sort((a, b) => b.total_people - a.total_people)
-
-                    // @ts-ignore
-                    console.log(output.detailed_summary_location)
-                }
-
-                // @ts-ignore
-                countGroupByTime.forEach(data => {
-                    const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
-
-                    // @ts-ignore
-                    if (!output.summary[key]) {
-                        if (analytic === 'NFV4-VC') {
-                            // @ts-ignore
-                            output.summary[key] = {car: 0, motorcycle: 0, bus: 0, truck: 0}
-                        } else if (analytic === 'NFV4-MPAA') {
-                            // @ts-ignore
-                            output.summary[key] = {Male: 0, Female: 0}
-                        } else {
-                            // @ts-ignore
-                            output.summary[key] = 0
-                        }
-                    }
+                    output.detailed_summary_location = countGroupByLocation.map(data => ({
+                        ...data,
+                        count: parseInt(data.count)
+                    }))
 
                     if (analytic === 'NFV4-VC') {
                         // @ts-ignore
-                        (output.summary[key])[data.status] += parseInt(data.count);
+                        output.detailed_summary_location = output.detailed_summary_location.map(data => {
+                            // @ts-ignore
+                            return {
+                                // @ts-ignore
+                                ...data, total_vehicles: output.detailed_summary_location.reduce((accumulator, value) => {
+                                    if (value.stream_id === data.stream_id && value.location === data.location) {
+                                        return accumulator + value.count;
+                                    }
 
+                                    return accumulator
+                                }, 0)
+                            }
+                        })
+
+                        // @ts-ignore
+                        output.detailed_summary_location.sort((a, b) => b.total_vehicles - a.total_vehicles)
+                    }
+
+                    if (analytic === 'NFV4-MPAA') {
+                        // @ts-ignore
+                        output.detailed_summary_location = output.detailed_summary_location.map(data => {
+                            // @ts-ignore
+                            return {
+                                // @ts-ignore
+                                ...data, total_people: output.detailed_summary_location.reduce((accumulator, value) => {
+                                    if (value.stream_id === data.stream_id && value.location === data.location) {
+                                        return accumulator + value.count;
+                                    }
+
+                                    return accumulator
+                                }, 0)
+                            }
+                        })
+
+                        // @ts-ignore
+                        output.detailed_summary_location.sort((a, b) => b.total_people - a.total_people)
+                    }
+                }
+
+                if(fetch === 'heatmap_data') {
+                    // @ts-ignore
+                    const countGroupByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream.split(','), analytic, start_date, end_date, interval)
+
+                    // @ts-ignore
+                    output.heatmap_data = []
+
+                    if (analytic === 'NFV4-VC') {
                         // @ts-ignore
                         countGroupByTimeAndStatus.forEach(data => {
                             // @ts-ignore
@@ -240,9 +248,6 @@ export default class UtilController {
                         })
                     } else if (analytic === 'NFV4-MPAA') {
                         // @ts-ignore
-                        (output.summary[key])[data.gender] += parseInt(data.count);
-
-                        // @ts-ignore
                         countGroupByTimeAndStatus.forEach(data => {
                             // @ts-ignore
                             output.heatmap_data.push({
@@ -253,9 +258,6 @@ export default class UtilController {
                         })
                     } else {
                         // @ts-ignore
-                        (output.summary[key]) += parseInt(data.count);
-
-                        // @ts-ignore
                         countGroupByTimeAndStatus.forEach(data => {
                             // @ts-ignore
                             output.heatmap_data.push({
@@ -264,67 +266,68 @@ export default class UtilController {
                             })
                         })
                     }
-
-                    // @ts-ignore
-                    if (!output.summary_location[data.location]) {
-                        // @ts-ignore
-                        output.summary_location[data.location] = 0
-                    }
-
-                    // @ts-ignore
-                    (output.summary_location[data.location]) += parseInt(data.count);
-                })
+                }
             } else {
-                // @ts-ignore
-                let avgGroupByTime = await EventDAO.getAvgGroupByTime(stream.split(','), start_date, end_date, interval);
-                // @ts-ignore
-                let avgGroupByLocation = await EventDAO.getAvgGroupByLocation(stream.split(','), start_date, end_date);
-                // @ts-ignore
-                let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
-
                 const streams = await StreamDAO.getAll()
 
-                // @ts-ignore
-                avgGroupByLocation.forEach(data => {
-                    streams.forEach(stream => {
-                        if (data.stream_id === stream.id) {
-                            data.location = stream.name;
-                        }
-                    })
-                })
-
-                // @ts-ignore
-                countGroupByLocation.forEach(data => {
-                    streams.forEach(stream => {
-                        if (data.stream_id === stream.id) {
-                            data.location = stream.name;
-                        }
-                    })
-                })
-
-                // @ts-ignore
-                output.summary = {}
-                // @ts-ignore
-                output.summary_location = {}
-                // @ts-ignore
-                output.detailed_summary_location = countGroupByLocation.map(data => ({
-                    ...data,
-                    count: parseInt(data.count)
-                }))
-
-                // @ts-ignore
-                avgGroupByLocation.forEach(data => {
+                if(fetch === 'summary') {
                     // @ts-ignore
-                    (output.summary_location[data.location]) = parseInt(data.count);
-                });
-
-                // @ts-ignore
-                avgGroupByTime.forEach(data => {
-                    const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
+                    let avgGroupByTime = await EventDAO.getAvgGroupByTime(stream.split(','), start_date, end_date, interval);
 
                     // @ts-ignore
-                    output.summary[key] = {avg_dwelling_time: data.avg, total_vehicles: parseInt(data.count)}
-                })
+                    output.summary = {}
+
+                    // @ts-ignore
+                    avgGroupByTime.forEach(data => {
+                        const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
+
+                        // @ts-ignore
+                        output.summary[key] = {avg_dwelling_time: data.avg, total_vehicles: parseInt(data.count)}
+                    })
+                }
+
+                if(fetch === 'summary_location') {
+                    // @ts-ignore
+                    let avgGroupByLocation = await EventDAO.getAvgGroupByLocation(stream.split(','), start_date, end_date);
+
+                    // @ts-ignore
+                    avgGroupByLocation.forEach(data => {
+                        streams.forEach(stream => {
+                            if (data.stream_id === stream.id) {
+                                data.location = stream.name;
+                            }
+                        })
+                    })
+
+                    // @ts-ignore
+                    output.summary_location = {}
+
+                    // @ts-ignore
+                    avgGroupByLocation.forEach(data => {
+                        // @ts-ignore
+                        (output.summary_location[data.location]) = parseInt(data.count);
+                    });
+                }
+
+                if(fetch === 'detailed_summary_location') {
+                    // @ts-ignore
+                    let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
+
+                    // @ts-ignore
+                    countGroupByLocation.forEach(data => {
+                        streams.forEach(stream => {
+                            if (data.stream_id === stream.id) {
+                                data.location = stream.name;
+                            }
+                        })
+                    })
+
+                    // @ts-ignore
+                    output.detailed_summary_location = countGroupByLocation.map(data => ({
+                        ...data,
+                        count: parseInt(data.count)
+                    }))
+                }
             }
 
             res.send(output);
