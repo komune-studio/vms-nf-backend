@@ -158,6 +158,17 @@ export default class UtilController {
                             }
                         }
 
+                        if (analytic === 'NFV4-VC') {
+                            // @ts-ignore
+                            (output.summary[key])[data.status] += parseInt(data.count);
+                        } else if (analytic === 'NFV4-MPAA') {
+                            // @ts-ignore
+                            (output.summary[key])[data.gender] += parseInt(data.count);
+                        } else {
+                            // @ts-ignore
+                            (output.summary[key]) += parseInt(data.count);
+                        }
+
                         // @ts-ignore
                         if (!output.summary_location[data.location]) {
                             // @ts-ignore
