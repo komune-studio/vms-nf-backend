@@ -86,8 +86,17 @@ export default class FaceController {
 
         try {
             const body = new FormData();
+
             Object.keys(req.body).forEach(key => {
-                body.append(key, req.body[key]);
+                if(Array.isArray(req.body[key])) {
+                    console.log(req.body[key])
+
+                    for (let i = 0; i < req.body[key].length; i++) {
+                        body.append(`${key}`, req.body[key][i]);
+                    }
+                } else {
+                    body.append(key, req.body[key]);
+                }
             });
             // @ts-ignore
             files.forEach(file => {
@@ -98,11 +107,17 @@ export default class FaceController {
 
             res.send(result);
         } catch (e) {
+            console.log(e)
+
             return next(e);
         }  finally {
             // @ts-ignore
             files.forEach(file => {
-                fs.rmSync(file.path);
+                try {
+                    fs.rmSync(file.path);
+                } catch (e) {
+                    console.log(e)
+                }
             })
         }
     }
