@@ -18,6 +18,7 @@ import WebsocketService from "./services/websocket.service";
 import CameraResolutionController from "./controllers/camera_resolution.controller";
 import DashboardCustomizationDAO from "./daos/dashboard_customization.dao";
 import NotificationDAO from "./daos/notification.dao";
+import NotificationsUsersDAO from "./daos/notification_user.dao";
 
 dotenv.config();
 
@@ -77,6 +78,10 @@ app.use(handleErrors);
         console.log('Creating notification table')
         await NotificationDAO.createTable();
         console.log("notification table created successfully.");
+
+        console.log('Creating notifications_users table')
+        await NotificationsUsersDAO.createTable();
+        console.log("notifications_users table created successfully.");
 
         const isAppNameInitialized = await DashboardCustomizationDAO.getByKey("app_name")
 

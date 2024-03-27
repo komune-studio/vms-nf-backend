@@ -12,6 +12,7 @@ import routesUnrecognizedEvent from "./unrecognized_event.routes";
 import routesCameraResolution from "./camera_resolution.routes";
 import routesDashboardCustomization from "./dashboard_customization.routes";
 import routesNotification from "./notification.routes";
+import routesNotificationUser from "./notification_user.routes";
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ routesUnrecognizedEvent(router);
 routesCameraResolution(router);
 routesDashboardCustomization(router);
 routesNotification(router);
+routesNotificationUser(router);
 
 
 export default router;
