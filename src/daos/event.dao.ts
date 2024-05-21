@@ -131,8 +131,8 @@ select min(cast(detection->'pipeline_data'->>'duration' as float)) from event wh
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
-    static async getRanking(streams: String[], type : string, startTime : String, endTime : string) {
-        const sql = `select ${type === 'NFV4-VD' ? " avg(cast(detection->'pipeline_data'->>'duration' as float)), " : " "} count(*), date_trunc('day', event_time AT TIME ZONE 'Asia/Jakarta') as interval_alias,  stream_id from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND ${type === 'NFV4-VC' || type === 'NFV4-VD' ? ` type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = '${type === 'NFV4-VC' ? 'counting' : 'dwelling'}' ` : ` type = '${type}' `}  AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}  ${type === 'NFV4-MPAA' ? ` AND detection->'pipeline_data'->'attributes'->'gender'->>'label' IS NOT NULL ` : ' '} group by interval_alias, stream_id  order by ${type === 'NFV4-VD' ? ' avg ' : ' count '} DESC  LIMIT 3  `
+    static async getRanking(streams: String[], type : string, startTime : string, endTime : string, interval : string) {
+        const sql = `select ${type === 'NFV4-VD' ? " avg(cast(detection->'pipeline_data'->>'duration' as float)), " : " "} count(*), date_trunc('${interval}', event_time AT TIME ZONE 'Asia/Jakarta') as interval_alias,  stream_id from event where ${` stream_id IN (${streams.map(stream => `'${stream}'`).join(',')}) `} AND ${type === 'NFV4-VC' || type === 'NFV4-VD' ? ` type = 'NFV4-MVA' AND detection->'pipeline_data'->>'logic' = '${type === 'NFV4-VC' ? 'counting' : 'dwelling'}' ` : ` type = '${type}' `}  AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''}  ${type === 'NFV4-MPAA' ? ` AND detection->'pipeline_data'->'attributes'->'gender'->>'label' IS NOT NULL ` : ' '} group by interval_alias, stream_id  order by ${type === 'NFV4-VD' ? ' avg ' : ' count '} DESC  LIMIT 3  `
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

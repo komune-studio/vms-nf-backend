@@ -410,12 +410,14 @@ export default class UtilController {
     static async getRanking(req: Request, res: Response, next: NextFunction) {
         try {
             const {analytic_id} = req.params;
-            const {stream, start_date, end_date} = req.query
+            const {stream, start_date, end_date, interval} = req.query
 
             const streams = await StreamDAO.getAll();
 
             // @ts-ignore
-            const response = await EventDAO.getRanking(stream.split(','), analytic_id, start_date, end_date);
+            const response = await EventDAO.getRanking(stream.split(','), analytic_id, start_date, end_date, interval);
+
+
 
             // @ts-ignore
             response.forEach(data => {
@@ -429,7 +431,7 @@ export default class UtilController {
             // @ts-ignore
             res.send(response.map(data => ({
                 ...data,
-                interval_alias: moment(data.interval_alias).format('DD-MM-YYYY'),
+                // interval_alias: moment(data.interval_alias).format('YYYY-MM-DDTHH:mm:ssZ'),
                 count: parseInt(data.count)
             })))
         } catch (e) {
