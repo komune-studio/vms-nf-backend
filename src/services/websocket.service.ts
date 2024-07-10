@@ -122,14 +122,18 @@ export default class WebsocketService {
                         if (visitData && visitData.approved) {
                             const today = moment().format('YYYY-MM-DD');
                             const lastVisit = moment(visitData.created_at).format('YYYY-MM-DD');
-                            status = today === lastVisit && !visitData.check_out_at ? status : "Unauthorized";
+
+                            /**
+                             * todo: bikin biar kalo member ga jadi unauthorized
+                             */
+                            status = (today === lastVisit && !visitData.check_out_at) || !visitData.employee ? status : "Unauthorized";
 
                             payload.visitation = visitData.id;
                             payload.last_visit_date = visitData.created_at;
                             let stream : any = (await StreamDAO.getStreamsById([data.stream_id]))[0];
 
 
-                            payload.allowed_here = visitData.location_id === stream.custom_data.location_id && today === lastVisit && !visitData.check_out_at;
+                            payload.allowed_here = visitData.location_id === stream.custom_data.location_id && ((today === lastVisit && !visitData.check_out_at) || !visitData.employee);
                             status = visitData.location_id === stream.custom_data.location_id ? status : "Unauthorized";
                         } else {
                             status = "Unauthorized";

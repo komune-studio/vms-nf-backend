@@ -168,7 +168,13 @@ export default class UtilController {
             // @ts-ignore
             visitationCountByTime.forEach(data => {
                 // @ts-ignore
-                output.daily_record_visitor[format(new Date(data.interval_alias), 'dd MMM yyyy')] = parseInt(data.count);
+                if(!output.daily_record_visitor[format(new Date(data.interval_alias), 'dd MMM yyyy')]) {
+                    // @ts-ignore
+                    output.daily_record_visitor[format(new Date(data.interval_alias), 'dd MMM yyyy')] = parseInt(data.count);
+                } else {
+                    // @ts-ignore
+                    output.daily_record_visitor[format(new Date(data.interval_alias), 'dd MMM yyyy')] += parseInt(data.count);
+                }
             })
 
             // @ts-ignore
