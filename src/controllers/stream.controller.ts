@@ -84,7 +84,8 @@ export default class StreamController {
 
             let pipelines = await PipelineDAO.getByStreamIds([id]);
             stream.pipelines = pipelines.map(pipeline => pipeline.analytic_id);
-            stream.configs = pipelines.map(pipeline => pipeline.configs);
+            // @ts-ignore
+            stream.configs = pipelines.map(pipeline => ({analytic_id: pipeline.analytic_id, ...pipeline.configs}));
 
             stream.stats = result.stream_stats;
 

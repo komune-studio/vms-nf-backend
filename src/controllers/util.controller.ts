@@ -442,7 +442,7 @@ export default class UtilController {
     static async getCameraDetailSummary(req: Request, res: Response, next: NextFunction) {
         try {
             const {analytic_id, stream_id, time} = req.params;
-            let {interval, start_time, end_time} = req.query;
+            let {interval, start_time, end_time, line} = req.query;
 
             // @ts-ignore
             if (interval && !isNaN(parseInt(interval))) {
@@ -508,7 +508,7 @@ export default class UtilController {
                 result = {car: 0, motorcycle: 0, truck: 0, bus: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval, line)
 
                 // @ts-ignore
                 response.forEach(data => {
@@ -541,7 +541,7 @@ export default class UtilController {
                 result = {Male: 0, Female: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval, line)
 
                 // @ts-ignore
                 response.forEach(data => {
@@ -574,13 +574,13 @@ export default class UtilController {
                 result = {max: {}, min: {}, avg: 0, total_data: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval, line)
                 // @ts-ignore
-                const avgDurationResponse = await EventDAO.getAvgDuration([stream_id], startTime, endTime)
+                const avgDurationResponse = await EventDAO.getAvgDuration([stream_id], startTime, endTime, line)
                 // @ts-ignore
-                const maxDurationResponse = await EventDAO.getMaxDuration(stream_id, startTime, endTime)
+                const maxDurationResponse = await EventDAO.getMaxDuration(stream_id, startTime, endTime, line)
                 // @ts-ignore
-                const minDurationResponse = await EventDAO.getMinDuration(stream_id, startTime, endTime)
+                const minDurationResponse = await EventDAO.getMinDuration(stream_id, startTime, endTime, line)
 
                 // @ts-ignore
                 if (avgDurationResponse.length > 0) {
@@ -627,7 +627,7 @@ export default class UtilController {
                 result = {total: 0, heatmap_data: []}
 
                 // @ts-ignore
-                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval)
+                const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval, line)
 
                 // @ts-ignore
                 response.forEach(data => {
