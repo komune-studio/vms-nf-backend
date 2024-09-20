@@ -47,6 +47,7 @@ model enrolled_face {
   gender          String?   @db.VarChar(200)
   birth_place     String?   @db.VarChar(200)
   birth_date      DateTime? @db.Date
+  additional_info Json
 }
 
 model face_image {

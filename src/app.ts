@@ -17,6 +17,7 @@ import UnrecognizedEventDAO from "./daos/unrecognized_event.dao";
 import WebsocketService from "./services/websocket.service";
 import CameraResolutionController from "./controllers/camera_resolution.controller";
 import DashboardCustomizationDAO from "./daos/dashboard_customization.dao";
+import EnrolledFaceDAO from "./daos/enrolled_face.dao";
 
 dotenv.config();
 
@@ -56,6 +57,10 @@ app.use(handleErrors);
             await FremisnDAO.createKeyspace('unrecognized');
             console.log('Keyspace created: unrecognized')
         }
+
+        console.log('Adding additional_info field in enrolled_face table')
+        await EnrolledFaceDAO.addAdditionalInfoColumn()
+        console.log("Additional info column has been added to Enrolled Face table.");
 
         console.log('Creating recognized_event table')
         await RecognizedEventDAO.createTable();

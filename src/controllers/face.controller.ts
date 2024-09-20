@@ -31,6 +31,12 @@ export default class FaceController {
 
             // @ts-ignore
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
+
+            if(req.body.additional_info) {
+                // @ts-ignore
+                await EnrolledFaceDAO.updateAdditionalInfo(result.enrollment.id, req.body.additional_info);
+            }
+
             res.send(result);
         } catch (e) {
             return next(e);
@@ -70,6 +76,11 @@ export default class FaceController {
         try {
             let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
 
+            let response = await EnrolledFaceDAO.getAdditionaInfo(result.enrollment.id);
+
+            // @ts-ignore
+            result.enrollment.additional_info = response.additional_info;
+
             res.send(result)
         } catch (e) {
             return next(e);
@@ -104,6 +115,10 @@ export default class FaceController {
             })
 
             let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'PUT', body);
+
+            if(req.body.additional_info) {
+                await EnrolledFaceDAO.updateAdditionalInfo(parseInt(id), req.body.additional_info);
+            }
 
             res.send(result);
         } catch (e) {
