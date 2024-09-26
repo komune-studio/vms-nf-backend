@@ -17,6 +17,19 @@ export default class EnrolledFaceDAO {
         return result;
     }
 
+    static async getByName(name : string) {
+        let result = enrolledFace.findFirst({
+            where: {
+                name,
+                deleted_at: {
+                    equals: null
+                }
+            }
+        });
+
+        return result;
+    }
+
     static async getFaceIdByEnrolledFaceId(id : number) {
         let result = enrolledFace.findFirst({
             select: {

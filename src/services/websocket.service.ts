@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import moment from "moment";
 import {client as WebsocketClient, connection, server as WebsocketServer} from "websocket";
 import * as http from "http";
@@ -5,8 +7,9 @@ import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import RecognizedEventDAO from "../daos/recognized_event.dao";
 import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 import FremisnDAO from "../daos/fremisn.dao";
+import FaceImageDAO from "../daos/face_image.dao";
 
-const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`;
+const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VANILLA_PORT']}/api/event_channel`;
 
 export default class WebsocketService {
     private static instance: WebsocketService;
@@ -66,34 +69,42 @@ export default class WebsocketService {
                 if (message.type !== 'utf8') return;
                 const data = JSON.parse(message.utf8Data);
 
-                let payload : any;
+                // let payload : any;
 
                 if(data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
-                    payload = {
-                        timestamp: data.timestamp,
-                        stream_name: data.stream_name,
-                        image: Buffer.from(data.image_jpeg, 'base64')
-                    }
+                    // payload = {
+                    //     timestamp: data.timestamp,
+                    //     stream_name: data.stream_name,
+                    //     image: Buffer.from(data.image_jpeg, 'base64')
+                    // }
 
-                    const response = await FremisnDAO.faceEnrollment(data.pipeline_data.status === 'KNOWN' ? 'recognized' : 'unrecognized', data.image_jpeg)
-                    payload.face_id = BigInt(response.face_id)
+                    // const response = await FremisnDAO.faceEnrollment(data.pipeline_data.status === 'KNOWN' ? 'recognized' : 'unrecognized', data.image_jpeg)
+                    // payload.face_id = BigInt(response.face_id)
 
-                    if(data.pipeline_data.status === 'KNOWN') {
-                        const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
+                    if(data.label === 'recognized') {
+                        const face = await EnrolledFaceDAO.getByName(data.result.split(" - ")[1]);
 
-                        if(!face) return;
+                        // const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
+                        // const faceImage = await FaceImageDAO.getThumbnailByEnrolledFaceIds([face.id])
+                        //
+                        // console.log(faceImage[0].image_thumbnail.toString('base64'))
+                        //
+                        data.face_status = face.status
+                        // console.log(face)
 
-                        payload.enrollment_id = face.id
+                        // if(!face) return;
+                        //
+                        // payload.enrollment_id = face.id
 
-                        await RecognizedEventDAO.create(payload)
+                        // await RecognizedEventDAO.create(payload)
                     } else {
-                        await UnrecognizedEventDAO.create(payload)
+                        // await UnrecognizedEventDAO.create(payload)
                     }
                 }
 
                 // console.log(payload)
                 console.log(this.connections.length)
-                this.connections.forEach(c => c.sendUTF(JSON.stringify(payload)));
+                this.connections.forEach(c => c.sendUTF(JSON.stringify(data)));
             });
         });
 

@@ -98,7 +98,7 @@ app.use(handleErrors);
         console.log(`Server listening on port ${PORT}!`);
     });
 
-    if(process.env.RECORD_FACE_DETECTION) {
+    // if(process.env.RECORD_FACE_DETECTION) {
         await WebsocketService.initialize(server);
-    }
+    // }
 })();
