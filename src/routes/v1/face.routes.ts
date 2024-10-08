@@ -5,11 +5,16 @@ import upload from "../../utils/multer.utils";
 
 export default function routesFace(router : Router) {
     router.route('/faces')
-        .get(authAll, FaceController.getFace)
+        .get(FaceController.getFace)
         .post(upload.any(), FaceController.createFace);
 
+    router.route('/face/dss/excluded-id')
+        .get(FaceController.getFaceExcludeDssIds)
+
     router.route('/face/:id')
-        .get(authAll, FaceController.getFaceById)
+        .get(FaceController.getFaceById)
         .put(upload.any(), FaceController.updateFace)
-        .delete(authAdmin, FaceController.deleteFace);
+        .delete(FaceController.deleteFace);
+
+
 }

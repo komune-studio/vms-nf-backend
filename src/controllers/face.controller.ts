@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {NextFunction, Request, Response} from "express";
 import request, {requestWithFile} from "../utils/api.utils";
 import FormData from "form-data";
@@ -144,6 +145,19 @@ export default class FaceController {
             let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'DELETE');
             res.send(result);
         } catch (e) {
+            return next(e);
+        }
+    }
+
+    static async getFaceExcludeDssIds(req: Request, res: Response, next: NextFunction) {
+        const {ids} = req.query;
+
+        try {
+           const response = await EnrolledFaceDAO.getFaceExcludeDssIds(ids?.toString())
+
+           res.send({data: response.map(e => parseInt(e.id))});
+        } catch (e) {
+            console.log(e)
             return next(e);
         }
     }

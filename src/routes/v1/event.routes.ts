@@ -4,7 +4,7 @@ import {authAll} from "../../middlewares/auth.middleware";
 
 export default function eventRoutes(router : Router) {
     router.route('/event')
-        .get(authAll, EventController.getAll);
+        .get(EventController.getAll);
 
     router.route('/event/:event_id')
         .get(EventController.getByEventId);
