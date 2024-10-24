@@ -15,9 +15,11 @@ import CameraResolutionDAO from "./daos/camera_resolution.dao";
 
 import UnrecognizedEventDAO from "./daos/unrecognized_event.dao";
 import WebsocketService from "./services/websocket.service";
+import WebsocketUpdateService from "./services/websocket-update.service";
 import CameraResolutionController from "./controllers/camera_resolution.controller";
 import DashboardCustomizationDAO from "./daos/dashboard_customization.dao";
 import EnrolledFaceDAO from "./daos/enrolled_face.dao";
+import EventDAO from "./daos/event.dao";
 
 dotenv.config();
 
@@ -62,6 +64,10 @@ app.use(handleErrors);
         await EnrolledFaceDAO.addAdditionalInfoColumn()
         console.log("Additional info column has been added to Enrolled Face table.");
 
+        console.log('Adding additional fields in event table')
+        await EventDAO.addAdditionalColumn()
+        console.log("Additional fields has been added to Event table.");
+
         console.log('Creating recognized_event table')
         await RecognizedEventDAO.createTable();
         console.log("recognized_event table created successfully.");
@@ -99,6 +105,7 @@ app.use(handleErrors);
     });
 
     // if(process.env.RECORD_FACE_DETECTION) {
-        await WebsocketService.initialize(server);
+        await WebsocketService.initialize(server, `ws://${process.env['NF_IP']}:${process.env['VANILLA_PORT']}/api/event_channel`);
+        await WebsocketUpdateService.initialize(server, `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`);
     // }
 })();

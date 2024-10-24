@@ -88,7 +88,7 @@ select min(cast(detection->'pipeline_data'->>'duration' as float)) from event wh
         // @ts-ignore
         analytic = analytic === 'null' ? null : analytic
 
-        const sql = `SELECT event.id, type, stream_id, detection, ${limit && page ? ` primary_image, secondary_image, ` : ''} result, event.status, event_time, event.created_at, enrolled_face.status as face_status FROM event LEFT JOIN enrolled_face on detection->'pipeline_data'->>'face_id' = cast(face_id as text) WHERE ${status && (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') ? ` event.status = '${status}' ` : status && analytic === 'NFV4-LPR2' ? ` result->>'result' ${status === 'UNKNOWN' ? ' not ' : ''} ilike '%-%' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${logic ? ` AND detection->'pipeline_data'->>'logic' = '${logic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
+        const sql = `SELECT unauthorized, event.id, type, stream_id, detection, ${limit && page ? ` primary_image, secondary_image, ` : ''} result, event.status, event_time, event.created_at, enrolled_face.status as face_status FROM event LEFT JOIN enrolled_face on detection->'pipeline_data'->>'face_id' = cast(face_id as text) WHERE ${status && (analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') ? ` event.status = '${status}' ` : status && analytic === 'NFV4-LPR2' ? ` result->>'result' ${status === 'UNKNOWN' ? ' not ' : ''} ilike '%-%' ` : ' 1 = 1 '} ${analytic ? ` AND type = '${analytic}' ` : ''} ${logic ? ` AND detection->'pipeline_data'->>'logic' = '${logic}' ` : ''} ${startDate ? ` AND event_time >= '${startDate}'` : ''} ${endDate ? ` AND event_time <= '${endDate}'` : ''} ${stream ? ` AND stream_id IN ${stream} ` : ''} ${keyword ? ` AND (result->>'result' ilike '%${keyword}%' OR result->>'label' ilike '%${keyword}%' OR detection->>'stream_name' ilike '%${keyword}%')` : ''} ORDER BY event_time DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
 
         console.log(sql)
 
@@ -184,5 +184,26 @@ from event WHERE type = 'NFV4-LPR2' AND stream_id = '${streamId}' AND event_time
         });
 
         return result;
+    }
+
+    static async addAdditionalColumn() {
+        //enrollment only valid in the same day when they register
+        const sql = `ALTER TABLE event ADD COLUMN IF NOT EXISTS officer_id int, ADD COLUMN IF NOT EXISTS latitude double precision, ADD COLUMN IF NOT EXISTS longitude double precision, ADD COLUMN IF NOT EXISTS unauthorized boolean default false;`;
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async updateUnauthorized(eventTime : string, eventId : string) {
+        const sql = `UPDATE event SET unauthorized = true WHERE event_time = '${eventTime}' AND detection->'pipeline_data'->>'event_id' = '${eventId}'`;
+
+        console.log(sql)
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async updateCoordinateAndOfficerInfo(eventTime : string, eventId : string, latitude : number, longitude : number, officerId : number) {
+        const sql = `UPDATE event SET latitude = ${latitude}, longitude = ${longitude}, officer_id = ${officerId} WHERE event_time = '${eventTime}' AND detection->'pipeline_data'->>'event_id' = '${eventId}'`;
+
+        return prisma.$queryRaw(Prisma.raw(sql))
     }
 }

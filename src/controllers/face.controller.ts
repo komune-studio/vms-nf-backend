@@ -5,6 +5,9 @@ import FormData from "form-data";
 import fs from "fs";
 import {BadRequestError} from "../utils/error.utils";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
+import FremisnDAO from "../daos/fremisn.dao";
+import RecognizedEventDAO from "../daos/recognized_event.dao";
+import FaceImageDAO from "../daos/face_image.dao";
 
 export default class FaceController {
 
@@ -40,6 +43,8 @@ export default class FaceController {
 
             res.send(result);
         } catch (e) {
+            console.log(e)
+
             return next(e);
         } finally {
             // @ts-ignore
@@ -159,6 +164,42 @@ export default class FaceController {
         } catch (e) {
             console.log(e)
             return next(e);
+        }
+    }
+
+    static async faceRecognition(req : Request, res : Response, next : NextFunction) {
+        const { image, limit } = req.body;
+
+        try {
+            const response = await FremisnDAO.faceRecognition('default', image, parseInt(limit));
+
+            const {candidates} = response.result.face_recognition;
+
+            if(candidates.length === 0) return res.send([])
+
+            for(const candidate of candidates) {
+                const enrollment = await EnrolledFaceDAO.getByFaceId(candidate.face_id)
+
+                if(enrollment) {
+                    const faceImage = await FaceImageDAO.getThumbnailByEnrolledFaceIds([parseInt(enrollment.id)])
+
+                    enrollment.image_thumbnail = Buffer(faceImage[0].image_thumbnail).toString('base64')
+
+                    if(candidate.face_id === enrollment.face_id.toString()) {
+                        candidate.enrollment = {...enrollment, face_id: enrollment.face_id.toString()}
+                    }
+                }
+            }
+
+            res.send(candidates)
+        } catch (err) {
+            try {
+                const error = await err.json()
+
+                return res.status(error.code).send(error)
+            } catch (e) {
+                return next(err);
+            }
         }
     }
 }
