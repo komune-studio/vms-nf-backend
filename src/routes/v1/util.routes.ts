@@ -35,7 +35,7 @@ export default function routesAuth(router : Router) {
         .get(authAll, UtilController.getNodeStatus);
 
     router.route('/upload_video')
-        .post(authAll, upload.single('video'), UtilController.uploadVideo);
+        .post(upload.single('video'), UtilController.uploadVideo);
 
     router.route('/recording')
         .get(UtilController.getRecording);
