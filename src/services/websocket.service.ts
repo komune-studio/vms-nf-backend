@@ -100,6 +100,8 @@ export default class WebsocketService {
 
                                 data.unauthorized = !face.additional_info.site_access.includes(siteId)
                             }
+                        } else {
+                            data.unauthorized = true
                         }
 
                         // console.log(face)

@@ -70,27 +70,63 @@ export default class WebsocketService {
 
 
                 if (data.analytic_id === 'NFV4-FR' || data.analytic_id === 'NFV4H-FR') {
-                    const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
+                    if(data.pipeline_data.status === 'KNOWN') {
+                        const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
 
-                    if (face) {
-                        if (face.additional_info.site_access) {
-                            const mapSiteStream = await MapSiteStreamDAO.getByStreamId(data.stream_id)
+                        if (face) {
+                            if (face.additional_info.site_access) {
+                                const mapSiteStream = await MapSiteStreamDAO.getByStreamId(data.stream_id)
 
-                            if (mapSiteStream) {
-                                const siteId = parseInt(mapSiteStream.site_id);
+                                if (mapSiteStream) {
+                                    const siteId = parseInt(mapSiteStream.site_id);
 
-                                if (!face.additional_info.site_access.includes(siteId)) {
-                                    await EventDAO.updateUnauthorized(moment.unix(data.timestamp).format('YYYY-MM-DDTHH:mm:ssZ'), data.pipeline_data.event_id)
+                                    if (!face.additional_info.site_access.includes(siteId)) {
+                                        await EventDAO.updateUnauthorized(moment.unix(data.timestamp).format('YYYY-MM-DDTHH:mm:ssZ'), data.pipeline_data.event_id)
+                                    }
                                 }
+                            } else {
+                                await EventDAO.updateUnauthorized(moment.unix(data.timestamp).format('YYYY-MM-DDTHH:mm:ssZ'), data.pipeline_data.event_id)
                             }
                         }
                     }
 
                     if (process.env.PENUGASAN_API_URL) {
                         try {
-                            console.log(`${process.env.PENUGASAN_API_URL}/license/stream/${data.stream_id}?task_status=IN_PROGRESS`)
-
                             let result = await request(`${process.env.PENUGASAN_API_URL}/license/stream/${data.stream_id}?task_status=IN_PROGRESS`, "GET")
+
+                            if(data.pipeline_data.status === 'KNOWN' && result.length > 0) {
+                                const enrollment = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id)
+
+                                if(enrollment) {
+                                    const faceImage = await FaceImageDAO.getThumbnailByEnrolledFaceIds([parseInt(enrollment.id)])
+
+                                    enrollment.image_thumbnail = Buffer(faceImage[0].image_thumbnail).toString('base64')
+                                    enrollment.face_id = enrollment.face_id.toString()
+
+                                    const bodyWornResult = [
+                                        {
+                                            face_id: data.pipeline_data.face_id,
+                                            variation: data.pipeline_data.variation,
+                                            similarity: data.pipeline_data.similarity,
+                                            enrollment
+                                        }
+                                    ]
+
+                                    await request(`${process.env.PENUGASAN_API_URL}/task/${result[0].licenseTaskUsers[0].task_id}/user/event/body-worn`, "POST", {
+                                        image: data.image_jpeg,
+                                        latitude: result[0].licenseTaskUsers[0].current_latitude,
+                                        longitude: result[0].licenseTaskUsers[0].current_longitude,
+                                        user_id: result[0].licenseTaskUsers[0].user_id,
+                                        description: '',
+                                        face_search_result: {
+                                            input: data.image_jpeg,
+                                            result: bodyWornResult,
+                                            latitude: result[0].licenseTaskUsers[0].current_latitude,
+                                            longitude: result[0].licenseTaskUsers[0].current_longitude,
+                                        }
+                                    })
+                                }
+                            }
 
                             if(result.length > 0 && result[0].licenseTaskUsers.length > 0) {
                                 if(result[0].licenseTaskUsers[0].user_id && result[0].licenseTaskUsers[0].current_latitude && result[0].licenseTaskUsers[0].current_longitude) {

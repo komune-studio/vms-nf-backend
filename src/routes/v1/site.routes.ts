@@ -3,7 +3,7 @@ import SiteController from "../../controllers/site.controller";
 import {authAdmin, authAll, authSuperAdmin} from "../../middlewares/auth.middleware";
 export default function routesSite(router : Router) {
     router.route('/sites')
-        .get(authAll, SiteController.getAll)
+        .get(SiteController.getAll)
 
     router.route('/site')
         .post(authSuperAdmin, SiteController.create)
