@@ -89,7 +89,7 @@ export default class EnrolledFaceDAO {
     }
 
     static async getFaceExcludeDssIds(dssIds : string) {
-        const sql = `select id from enrolled_face where (cast(additional_info->>'dss_id' as integer) NOT IN (${dssIds}) OR cast(additional_info->>'dss_id' as integer) IS NULL) ;`
+        const sql = `select id from enrolled_face where (cast(additional_info->>'dss_id' as integer) NOT IN (${dssIds}) OR cast(additional_info->>'dss_id' as integer) IS NULL) AND deleted_at is null;`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
