@@ -93,5 +93,11 @@ export default class EnrolledFaceDAO {
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async getFaceByDssId(dssId : string) {
+        const sql = `select id from enrolled_face where additional_info->>'dss_id' = '${dssId}' AND deleted_at is null;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }
 

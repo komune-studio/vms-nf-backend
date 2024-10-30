@@ -3,7 +3,7 @@ import {NextFunction, Request, Response} from "express";
 import request, {requestWithFile} from "../utils/api.utils";
 import FormData from "form-data";
 import fs from "fs";
-import {BadRequestError} from "../utils/error.utils";
+import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FremisnDAO from "../daos/fremisn.dao";
 import RecognizedEventDAO from "../daos/recognized_event.dao";
@@ -161,6 +161,24 @@ export default class FaceController {
            const response = await EnrolledFaceDAO.getFaceExcludeDssIds(ids?.toString())
 
            res.send({data: response.map(e => parseInt(e.id))});
+        } catch (e) {
+            console.log(e)
+            return next(e);
+        }
+    }
+
+    static async deleteByDssId(req: Request, res: Response, next: NextFunction) {
+        const {id} = req.params;
+
+        try {
+            const enrollment = await EnrolledFaceDAO.getFaceByDssId(id)
+
+            if(enrollment.length === 0) {
+                return next(new NotFoundError("Enrollment not found.", "id"));
+            }
+
+            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${parseInt(enrollment[0].id)}`, 'DELETE');
+            res.send(result);
         } catch (e) {
             console.log(e)
             return next(e);

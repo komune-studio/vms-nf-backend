@@ -11,6 +11,9 @@ export default function routesFace(router : Router) {
     router.route('/face/dss/excluded-id')
         .get(FaceController.getFaceExcludeDssIds)
 
+    router.route('/face/dss/:id')
+        .delete(FaceController.deleteByDssId)
+
     router.route('/face/recognition')
         .post(FaceController.faceRecognition)
 
