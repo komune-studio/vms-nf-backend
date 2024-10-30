@@ -99,5 +99,35 @@ export default class EnrolledFaceDAO {
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async getFacesByDssIds(dssIds : string) {
+        const sql = `select * from enrolled_face where cast(additional_info->>'dss_id' as integer) IN (${dssIds}) AND deleted_at is null;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async getCountWithPagination(keyword: String, status: String, startDate: String, endDate: String) {
+        // @ts-ignore
+        keyword = keyword === 'null' ? null : keyword
+        // @ts-ignore
+        status = status === 'null' ? null : status
+
+        const sql = `SELECT count(id) FROM enrolled_face WHERE ${!status ? ' 1 = 1 ' : ` deleted_at IS ${status === 'out' ? ' NOT ' : ' '} NULL`} ${keyword ? ` AND name ilike '%${keyword}%' ` : ' '} ${startDate ? ` AND created_at >= '${startDate}'` : ''} ${endDate ? ` AND created_at <= '${endDate}'` : ''};`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async getAllWithPagination(keyword: String, status: String, startDate: String, endDate: String, page: number, limit: number) {
+        // @ts-ignore
+        keyword = keyword === 'null' ? null : keyword
+        // @ts-ignore
+        status = status === 'null' ? null : status
+
+        const sql = `SELECT * FROM enrolled_face WHERE ${!status ? ' 1 = 1 ' : ` deleted_at IS ${status === 'out' ? ' NOT ' : ' '} NULL`} ${keyword ? ` AND name ilike '%${keyword}%' ` : ' '} ${startDate ? ` AND created_at >= '${startDate}'` : ''} ${endDate ? ` AND created_at <= '${endDate}'` : ''} ORDER BY created_at DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
+
+        console.log(sql)
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }
 

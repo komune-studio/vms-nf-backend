@@ -8,6 +8,13 @@ export default function routesFace(router : Router) {
         .get(FaceController.getFace)
         .post(upload.any(), FaceController.createFace);
 
+    router.route('/faces/all')
+        .get(FaceController.getAllFaces)
+
+    router.route('/faces/dss')
+        .get(FaceController.getFacesByDssIds)
+
+
     router.route('/face/dss/excluded-id')
         .get(FaceController.getFaceExcludeDssIds)
 

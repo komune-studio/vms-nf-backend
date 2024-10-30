@@ -7,6 +7,7 @@ export default class FaceImageDAO {
     static async getThumbnailByEnrolledFaceIds(ids: number[]) {
         let result = faceImage.findMany({
             select: {
+                enrolled_face_id: true,
                 image_thumbnail: true
             },
             where: {

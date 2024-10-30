@@ -8,6 +8,9 @@ import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FremisnDAO from "../daos/fremisn.dao";
 import RecognizedEventDAO from "../daos/recognized_event.dao";
 import FaceImageDAO from "../daos/face_image.dao";
+import SiteDAO from "../daos/site.dao";
+import moment from "moment/moment";
+import EventDAO from "../daos/event.dao";
 
 export default class FaceController {
 
@@ -218,6 +221,81 @@ export default class FaceController {
             } catch (e) {
                 return next(err);
             }
+        }
+    }
+
+    static async getFacesByDssIds(req: Request, res: Response, next: NextFunction) {
+        const {ids} = req.query;
+
+        try {
+            let response = await EnrolledFaceDAO.getFacesByDssIds(ids?.toString())
+
+            let sites = await SiteDAO.getAll();
+
+            for(const idx in response) {
+                let siteAccess = [];
+
+                if(response[idx].additional_info.site_access) {
+                    for(const access of response[idx].additional_info.site_access) {
+                        for(const site of sites) {
+                            if(site.id === access) {
+                                console.log(site)
+
+                                siteAccess.push(site)
+                            }
+                        }
+                    }
+                }
+                response[idx].id = parseInt(response[idx].id)
+                response[idx].face_id = response[idx].face_id.toString();
+                response[idx].additional_info.site_access = siteAccess
+            }
+
+            res.send({data: response});
+        } catch (e) {
+            console.log(e)
+            return next(e);
+        }
+    }
+
+    static async getAllFaces(req: Request, res: Response, next: NextFunction) {
+        let {keyword, status, page, limit, start_date, end_date} = req.query;
+
+        console.log(start_date)
+
+
+        try {
+            const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+            const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+
+            // @ts-ignore
+            let data = await EnrolledFaceDAO.getAllWithPagination(keyword, status, startDate, endDate, parseInt(page), parseInt(limit));
+
+            // @ts-ignore
+            let count = await EnrolledFaceDAO.getCountWithPagination(keyword, status, startDate, endDate);
+
+            const faceImages = await FaceImageDAO.getThumbnailByEnrolledFaceIds(data.map(item => parseInt(item.id)))
+
+            for(const idx in data) {
+                for(const image of faceImages) {
+                    if(parseInt(data[idx].id) === parseInt(image.enrolled_face_id)) {
+                        data[idx].id = data[idx].id.toString()
+                        data[idx].face_id = data[idx].face_id.toString()
+
+                        data[idx].image_thumbnail = Buffer.from(image.image_thumbnail).toString('base64')
+                    }
+                }
+            }
+
+            // @ts-ignore
+            res.send({
+                total_page:  Math.floor(((parseInt(count[0].count) - 1) / limit) + 1),
+                total_data: parseInt(count[0].count),
+                data
+            });
+        } catch (e) {
+            console.log(e)
+            return next(e);
         }
     }
 }
