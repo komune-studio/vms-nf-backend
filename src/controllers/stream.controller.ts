@@ -5,6 +5,7 @@ import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 import PipelineDAO from "../daos/pipeline.dao";
 import request from "../utils/api.utils";
 import {NotFoundError} from "../utils/error.utils";
+import moment from "moment";
 
 export default class StreamController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
@@ -43,8 +44,10 @@ export default class StreamController {
     static async create(req: Request, res: Response, next: NextFunction) {
         const {node} = req.params;
 
+        const additionalCustomData = {played_at: moment().format('YYYY-MM-DDTHH:mm:ssZ')}
+
         try {
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}`, "POST", req.body)
+            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}`, "POST", {...req.body, stream_custom_data: {...req.body.stream_custom_data, ...additionalCustomData}})
             res.send(result);
         } catch (e) {
             return next(e);
@@ -74,8 +77,11 @@ export default class StreamController {
 
     static async update(req: Request, res: Response, next: NextFunction) {
         const {node, id} = req.params;
+
+        const additionalCustomData = {played_at: moment().format('YYYY-MM-DDTHH:mm:ssZ')}
+
         try {
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}/${id}`, "PUT", req.body)
+            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}/${id}`, "PUT", {...req.body, stream_custom_data: {...req.body.stream_custom_data, ...additionalCustomData}})
             res.send(result);
         } catch (e) {
             return next(e);

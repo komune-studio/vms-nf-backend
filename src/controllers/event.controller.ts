@@ -19,6 +19,9 @@ export default class EventController {
         }
 
         try {
+            console.log(start_date)
+            console.log(end_date)
+
             const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
             const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
 
