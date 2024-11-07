@@ -94,8 +94,20 @@ export default class EnrolledFaceDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
+    static async getFaceExcludePersonIds(ids : string) {
+        const sql = `select id from enrolled_face where status = 'EMPLOYEE' AND ${ids ? ` (cast(additional_info->>'personId' as integer) NOT IN (${ids}) OR cast(additional_info->>'personId' as integer) IS NULL) AND ` : ''} deleted_at is null;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
     static async getFaceByDssId(dssId : string) {
         const sql = `select id from enrolled_face where additional_info->>'dss_id' = '${dssId}' AND deleted_at is null;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async getByPersonId(personId : string) {
+        const sql = `select id from enrolled_face where additional_info->>'personId' = '${personId}' AND deleted_at is null;`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -123,9 +135,7 @@ export default class EnrolledFaceDAO {
         // @ts-ignore
         status = status === 'null' ? null : status
 
-        const sql = `SELECT * FROM enrolled_face WHERE ${!status ? ' 1 = 1 ' : ` deleted_at IS ${status === 'out' ? ' NOT ' : ' '} NULL`} ${keyword ? ` AND name ilike '%${keyword}%' ` : ' '} ${startDate ? ` AND created_at >= '${startDate}'` : ''} ${endDate ? ` AND created_at <= '${endDate}'` : ''} ORDER BY created_at DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
-
-        console.log(sql)
+        const sql = `SELECT * FROM enrolled_face WHERE ${!status ? ` status != 'EMPLOYEE' ` : status === 'EMPLOYEE' ? ` deleted_at IS NULL AND status = 'EMPLOYEE' `  : ` deleted_at IS ${status === 'out' ? ' NOT ' : ' '} NULL`} ${keyword ? ` AND name ilike '%${keyword}%' ` : ' '} ${startDate ? ` AND created_at >= '${startDate}'` : ''} ${endDate ? ` AND created_at <= '${endDate}'` : ''} ORDER BY created_at DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

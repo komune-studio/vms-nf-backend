@@ -74,7 +74,9 @@ export default class WebsocketService {
                         const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
 
                         if (face) {
-                            if (face.additional_info.site_access) {
+                            if(face.status === 'EMPLOYEE') {
+                                await EventDAO.updateEmployee(moment.unix(data.timestamp).format('YYYY-MM-DDTHH:mm:ssZ'), data.pipeline_data.event_id)
+                            } else if (face.additional_info.site_access) {
                                 const mapSiteStream = await MapSiteStreamDAO.getByStreamId(data.stream_id)
 
                                 if (mapSiteStream) {

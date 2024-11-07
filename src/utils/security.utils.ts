@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-
+const md5 = require('md5');
 enum Algorithm {
     SHA1,
     SHA256,
@@ -36,5 +36,27 @@ export default class SecurityUtils {
     // generate guaranteed unique id
     static generateId() {
         return crypto.randomBytes(32).toString("hex");
+    }
+
+    static generatePublicKey() {
+        let {publicKey } = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 2048,
+            publicKeyEncoding: {
+                type: 'spki',
+                format: 'pem'
+            },
+            privateKeyEncoding: {
+                type: 'pkcs8',
+                format: 'pem'
+            }
+        });
+
+        publicKey = publicKey.replace(/\n/g, "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "")
+
+        return publicKey
+    }
+
+    static generateMd5(str : string | undefined) {
+        return md5(str)
     }
 }

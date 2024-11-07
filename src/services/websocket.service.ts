@@ -92,7 +92,10 @@ export default class WebsocketService {
                         //
                         data.face_status = face.status
 
-                        if (face.additional_info.site_access) {
+                        if(data.face_status === 'EMPLOYEE') {
+                            data.unauthorized = false
+                            data.employee = true
+                        } else if (face.additional_info.site_access) {
                             const mapSiteStream = await MapSiteStreamDAO.getByStreamId(data.stream_id)
 
                             if (mapSiteStream) {
