@@ -20,6 +20,7 @@ import WebsocketUpdateService from "./services/websocket-update.service";
 import DashboardCustomizationDAO from "./daos/dashboard_customization.dao";
 import EnrolledFaceDAO from "./daos/enrolled_face.dao";
 import EventDAO from "./daos/event.dao";
+import StreamDAO from "./daos/stream.dao";
 import crypto from './utils/security.utils';
 import axios from "axios";
 import {Readable} from 'stream'
@@ -180,6 +181,38 @@ const initializeDSSScheduler = async () => {
     });
 }
 
+const deletePipelineFromStoppedMp4 = async () => {
+    try {
+        const allMp4 = await StreamDAO.getAllMp4();
+
+        for (const stream of allMp4) {
+            try {
+                const response = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "GET")
+
+                if(response.stream_stats.state === 'TERMINATING') {
+                    await request(`${process.env.NF_VISIONAIRE_API_URL}/pipeline/${stream.node_num}/${stream.id}/NFV4-FR`, "DELETE");
+
+                    // @ts-ignore
+                    await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "PUT", {stream_name: stream.name, stream_address: stream.address, stream_custom_data: {...stream.custom_data, autoreplay: true}})
+                }
+                console.log(response.stream_stats)
+            } catch (e) {
+                console.log(e)
+            }
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+const initializeDeletePipelineScheduler = async () => {
+    deletePipelineFromStoppedMp4()
+
+    cron.schedule('* * * * *', () => {
+        deletePipelineFromStoppedMp4()
+    });
+}
+
 (async () => {
     await PrismaService.initialize();
 
@@ -244,5 +277,6 @@ const initializeDSSScheduler = async () => {
     await WebsocketService.initialize(server, `ws://${process.env['NF_IP']}:${process.env['VANILLA_PORT']}/api/event_channel`);
     await WebsocketUpdateService.initialize(server, `ws://${process.env['NF_IP']}:${process.env['VISIONAIRE_PORT']}/event_channel`);
     // }
+    initializeDeletePipelineScheduler()
     initializeDSSScheduler()
 })();

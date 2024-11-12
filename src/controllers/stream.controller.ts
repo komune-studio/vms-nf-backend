@@ -6,6 +6,7 @@ import PipelineDAO from "../daos/pipeline.dao";
 import request from "../utils/api.utils";
 import {NotFoundError} from "../utils/error.utils";
 import moment from "moment";
+import fs from "fs";
 
 export default class StreamController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
@@ -90,8 +91,23 @@ export default class StreamController {
     static async delete(req: Request, res: Response, next: NextFunction) {
         const {node, id} = req.params;
         try {
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}/${id}`, "DELETE", req.body)
-            res.send(result);
+            let stream = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}/${id}`, "GET")
+
+            console.log(stream)
+
+            await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}/${id}`, "DELETE", req.body)
+
+            const basePath = '/workspaces/visionaire4/.data/'
+
+            if(stream.stream_address.toLowerCase().includes(basePath)) {
+                try {
+                    fs.rmSync(`/tmp/${stream.stream_address.replace(basePath, '')}`);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            res.send(stream);
         } catch (e) {
             return next(e);
         }

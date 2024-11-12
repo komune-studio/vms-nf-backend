@@ -29,5 +29,6 @@ export default function routesFace(router : Router) {
         .put(upload.any(), FaceController.updateFace)
         .delete(FaceController.deleteFace);
 
-
+    router.route('/face/:face_ids/face_ids')
+        .get(FaceController.getByFaceIds)
 }

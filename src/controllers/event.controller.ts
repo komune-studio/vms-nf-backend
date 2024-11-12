@@ -122,4 +122,21 @@ export default class EventController {
             return next(e);
         }
     }
+
+    static async getCountDistinctFaceId(req: Request, res: Response, next: NextFunction) {
+        const streamId = req.params.stream_id;
+        const  startDate= req.query.start_date;
+        const  endDate= req.query.end_date;
+
+        try {
+            // @ts-ignore
+            let response = await EventDAO.countDistinctFaceId(streamId, startDate, endDate);
+
+            res.send({count: parseInt(response[0].count)});
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
 }

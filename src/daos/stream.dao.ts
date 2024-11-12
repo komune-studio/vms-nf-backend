@@ -18,4 +18,15 @@ export default class StreamDAO {
             orderBy: {name: 'asc'}
         });
     }
+
+    static async getAllMp4() {
+        return streams.findMany({
+            where: {
+                address: {
+                    contains: '/workspaces/visionaire4/.data/',
+                    mode: 'insensitive'
+                }
+            }
+        });
+    }
 }

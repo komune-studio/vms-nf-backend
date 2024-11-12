@@ -208,4 +208,10 @@ from event WHERE type = 'NFV4-LPR2' AND stream_id = '${streamId}' AND event_time
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async countDistinctFaceId(streamId : string, startTime : string, endTime : string) {
+        const sql = `select count(distinct(detection->'pipeline_data'->>'face_id')) from event where type = 'NFV4-FR' AND stream_id = '${streamId}' AND status = 'KNOWN' AND event_time >= '${startTime}' AND event_time <= '${endTime}';`;
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }

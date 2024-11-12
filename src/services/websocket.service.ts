@@ -90,6 +90,7 @@ export default class WebsocketService {
                         //
                         // console.log(faceImage[0].image_thumbnail.toString('base64'))
                         //
+                        data.face_id = face.face_id.toString()
                         data.face_status = face.status
 
                         if(data.face_status === 'EMPLOYEE') {
