@@ -14,4 +14,7 @@ export default function eventRoutes(router : Router) {
 
     router.route('/event/:stream_id/count-distinct/face')
         .get(EventController.getCountDistinctFaceId);
+
+    router.route('/event/:stream_id/summary/face')
+        .get(EventController.getFaceRecognitionSummary);
 }

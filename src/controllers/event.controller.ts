@@ -139,4 +139,28 @@ export default class EventController {
             return next(e);
         }
     }
+
+    static async getFaceRecognitionSummary(req: Request, res: Response, next: NextFunction) {
+        const streamId = req.params.stream_id;
+        const  startDate= req.query.start_date;
+        const  endDate= req.query.end_date;
+
+        try {
+            const result = {KNOWN: 0, UNKNOWN: 0}
+
+            // @ts-ignore
+            let response = await EventDAO.getFaceRecognitionSummary(streamId, startDate, endDate);
+
+            response.forEach(data => {
+                // @ts-ignore
+                result[data.status] = parseInt(data._count.id)
+            })
+
+            res.send(result)
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
 }

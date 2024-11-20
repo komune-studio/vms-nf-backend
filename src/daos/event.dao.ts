@@ -138,14 +138,15 @@ select min(cast(detection->'pipeline_data'->>'duration' as float)) from event wh
         return result;
     }
 
-    static async getFaceRecognitionSummary(streamId : string, startTime : string) {
+    static async getFaceRecognitionSummary(streamId : string, startTime : string, endTime : string | undefined) {
         let result = event.groupBy({
             by: ['status'],
             _count: {id: true},
             where: {
                 stream_id: streamId,
                 event_time: {
-                    gte: startTime
+                    gte: startTime,
+                    lte: endTime
                 },
                 OR: [
                     {type: 'NFV4-FR'},
