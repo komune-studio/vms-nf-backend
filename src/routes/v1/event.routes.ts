@@ -11,4 +11,7 @@ export default function eventRoutes(router : Router) {
 
     router.route('/event/:face_id/track')
         .get(authAll, EventController.getByFaceId);
+
+    router.route('/event/NFV4-FR/grouped')
+        .get(EventController.getFREventGroupByStatusAndTime);
 }

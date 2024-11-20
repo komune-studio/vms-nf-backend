@@ -122,4 +122,37 @@ export default class EventController {
             return next(e);
         }
     }
+
+    static async getFREventGroupByStatusAndTime(req: Request, res: Response, next: NextFunction) {
+        let {start_date, end_date} = req.query;
+
+        const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+        const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+
+        try {
+            // @ts-ignore
+            let event = await EventDAO.getEventGroupByStatusAndTime(startDate, endDate);
+
+            const output = {};
+
+            for(const item of event) {
+                item.interval_alias = moment(item.interval_alias).format('YYYY-MM-DD');
+
+                if(!output[item.interval_alias]) {
+                    output[item.interval_alias] = {
+                        KNOWN: 0,
+                        UNKNOWN: 0
+                    }
+                }
+
+                (output[item.interval_alias])[item.status] = parseInt(item.count)
+            }
+
+            res.send(output)
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
 }

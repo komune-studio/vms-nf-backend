@@ -204,4 +204,10 @@ from event WHERE type = 'NFV4-LPR2' AND stream_id = '${streamId}' AND event_time
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
+
+    static async getEventGroupByStatusAndTime(startTime : string, endTime : string) {
+        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / 86400 )) * 86400) as interval_alias  from event where type = 'NFV4-FR' AND event_time >= '${startTime}' AND event_time <= '${endTime}' group by status, interval_alias order by interval_alias ASC`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
 }
