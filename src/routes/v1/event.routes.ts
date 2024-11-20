@@ -15,6 +15,12 @@ export default function eventRoutes(router : Router) {
     router.route('/event/:stream_id/count-distinct/face')
         .get(EventController.getCountDistinctFaceId);
 
+    router.route('/event/:stream_id/distinct/face')
+        .get(EventController.getDistinctDetectedFace);
+
+    router.route('/event/NFV4-FR/grouped')
+        .get(EventController.getFREventGroupByStatusAndTime);
+
     router.route('/event/:stream_id/summary/face')
         .get(EventController.getFaceRecognitionSummary);
 }

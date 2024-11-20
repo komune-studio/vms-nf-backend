@@ -4,6 +4,7 @@ import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import EventDAO from "../daos/event.dao";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import moment from "moment";
+import FaceImageDAO from "../daos/face_image.dao";
 const json2csv = require('json2csv').parse;
 export default class EventController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
@@ -133,6 +134,69 @@ export default class EventController {
             let response = await EventDAO.countDistinctFaceId(streamId, startDate, endDate);
 
             res.send({count: parseInt(response[0].count)});
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
+
+    static async getDistinctDetectedFace(req: Request, res: Response, next: NextFunction) {
+        const streamId = req.params.stream_id;
+        const  startDate= req.query.start_date;
+        const  endDate= req.query.end_date;
+
+        try {
+            // @ts-ignore
+            let response = await EventDAO.getDistinctDetectedFace(streamId, startDate, endDate);
+
+            let faceImages = await FaceImageDAO.getThumbnailByEnrolledFaceIds(response.map(item => item.id));
+
+            for(const idx in response) {
+                for(const faceImage of faceImages) {
+                    console.log(response[idx])
+                    console.log(faceImage);
+
+                    if(response[idx].id === faceImage.enrolled_face_id) {
+                        response[idx].face_image = Buffer.from(faceImage.image_thumbnail).toString('base64')
+                    }
+                }
+            }
+
+            res.send({data: response.map(item => ({...item, id: parseInt(item.id)}))});
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
+
+    static async getFREventGroupByStatusAndTime(req: Request, res: Response, next: NextFunction) {
+        let {start_date, end_date} = req.query;
+
+        const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+        const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+
+        try {
+            // @ts-ignore
+            let event = await EventDAO.getEventGroupByStatusAndTime(startDate, endDate);
+
+            const output = {};
+
+            for(const item of event) {
+                item.interval_alias = moment(item.interval_alias).format('YYYY-MM-DD');
+
+                if(!output[item.interval_alias]) {
+                    output[item.interval_alias] = {
+                        KNOWN: 0,
+                        UNKNOWN: 0
+                    }
+                }
+
+                (output[item.interval_alias])[item.status] = parseInt(item.count)
+            }
+
+            res.send(output)
         } catch (e) {
             console.log(e)
 
