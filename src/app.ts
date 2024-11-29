@@ -130,7 +130,10 @@ const syncDSSData = async () => {
 
                                 body.append('name', baseInfo.firstName + ' ' + baseInfo.lastName);
                                 body.append('status', 'EMPLOYEE')
-                                console.log(filename)
+
+                                // if(baseInfo.gender !== '0') {
+                                //     body.append('gender', baseInfo.gender === '1' ? 'male' : 'female')
+                                // }
 
                                 body.append('images',  fs.createReadStream(filename))
 
@@ -176,7 +179,7 @@ const syncDSSData = async () => {
 const initializeDSSScheduler = async () => {
     syncDSSData()
 
-    cron.schedule('0 0 * * *', () => {
+    cron.schedule('0 * * * *', () => {
         syncDSSData()
     });
 }
