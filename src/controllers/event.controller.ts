@@ -171,6 +171,35 @@ export default class EventController {
         }
     }
 
+    static async getCountDistinctDetectedFace(req: Request, res: Response, next: NextFunction) {
+        const  startDate= req.query.start_date;
+        const  endDate= req.query.end_date;
+
+        try {
+            // @ts-ignore
+            let response = await EventDAO.getCountDistinctDetectedFace(startDate, endDate);
+
+            let faceImages = await FaceImageDAO.getThumbnailByEnrolledFaceIds(response.map(item => item.id));
+
+            for(const idx in response) {
+                for(const faceImage of faceImages) {
+                    console.log(response[idx])
+                    console.log(faceImage);
+
+                    if(response[idx].id === faceImage.enrolled_face_id) {
+                        response[idx].face_image = Buffer.from(faceImage.image_thumbnail).toString('base64')
+                    }
+                }
+            }
+
+            res.send({data: response.map(item => ({...item, count: parseInt(item.count), id: parseInt(item.id)}))});
+        } catch (e) {
+            console.log(e)
+
+            return next(e);
+        }
+    }
+
     static async getFREventGroupByStatusAndTime(req: Request, res: Response, next: NextFunction) {
         let {start_date, end_date} = req.query;
 

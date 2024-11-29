@@ -191,13 +191,13 @@ export default class UtilController {
             const {analytic_id, stream_id, time} = req.params;
             let {interval, start_time, end_time} = req.body;
 
-            if(interval && !isNaN(parseInt(interval))) {
+            if (interval && !isNaN(parseInt(interval))) {
                 interval = parseInt(interval);
             } else {
                 interval = 3600
             }
 
-            const ranking : any = {};
+            const ranking: any = {};
             let startTime = moment()
             let endTime = null;
 
@@ -254,7 +254,7 @@ export default class UtilController {
 
                 // @ts-ignore
                 response.forEach(data => {
-                    if(!ranking[data.interval_alias]) {
+                    if (!ranking[data.interval_alias]) {
                         ranking[data.interval_alias] = parseInt(data.count)
                     } else {
                         ranking[data.interval_alias] += parseInt(data.count)
@@ -281,7 +281,7 @@ export default class UtilController {
                 const minDurationResponse = await EventDAO.getMinDuration(stream_id, startTime, endTime)
 
                 // @ts-ignore
-                if(avgDurationResponse.length > 0) {
+                if (avgDurationResponse.length > 0) {
                     // @ts-ignore
                     result.avg = avgDurationResponse[0].avg;
 
@@ -290,13 +290,13 @@ export default class UtilController {
                 }
 
                 // @ts-ignore
-                if(maxDurationResponse.length > 0) {
+                if (maxDurationResponse.length > 0) {
                     // @ts-ignore
                     result.max = maxDurationResponse[0];
                 }
 
                 // @ts-ignore
-                if(minDurationResponse.length > 0) {
+                if (minDurationResponse.length > 0) {
                     // @ts-ignore
                     result.min = minDurationResponse[0];
                 }
@@ -312,12 +312,12 @@ export default class UtilController {
                 })
 
                 result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([,a],[,b]) => b.avg-a.avg)
-                    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+                    .sort(([, a], [, b]) => b.avg - a.avg)
+                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
 
                 //only return top 3 ranking
                 Object.keys(result.ranking).forEach((key, idx) => {
-                    if(idx > 2) {
+                    if (idx > 2) {
                         delete result.ranking[key]
                     }
                 })
@@ -443,6 +443,51 @@ export default class UtilController {
             })))
         } catch (e) {
             console.log(e)
+            return next(e);
+        }
+    }
+
+    static async getFRSummary(req: Request, res: Response, next: NextFunction) {
+        try {
+            let {start_time, end_time} = req.query;
+
+            console.log(req.query)
+
+            const output = {
+                daily_record: {},
+            }
+
+            // @ts-ignore
+            const countByTimeAndStatus = await EventDAO.getFRCountGroupByTimeAndStatus(start_time, end_time)
+
+            console.log(countByTimeAndStatus)
+
+            // @ts-ignore
+            countByTimeAndStatus.forEach(data => {
+                data.event_time = data.interval_alias
+
+                data.status = data.status === 'KNOWN' ? 'recognized' : data.status === 'UNKNOWN' ? 'unrecognized' : data.status
+                // @ts-ignore
+                if (!output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')]) {
+                    // @ts-ignore
+                    output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')] = {
+                        recognized: 0,
+                        unrecognized: 0
+                    }
+                    // @ts-ignore
+                    output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')][data.status] += parseInt(data.count);
+                } else {
+                    // @ts-ignore
+                    (output.daily_record[format(new Date(data.event_time), 'dd MMM yyyy')])[data.status] += parseInt(data.count);
+                }
+            })
+
+            if (Object.keys(output.daily_record).length === 0) output.daily_record = {'': 0}
+
+            res.send(output);
+        } catch (e) {
+            console.log(e)
+
             return next(e);
         }
     }

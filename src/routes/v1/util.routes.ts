@@ -19,6 +19,9 @@ export default function routesAuth(router : Router) {
     router.route('/dashboard-summary')
         .get(authAll, UtilController.getDashboardSummary);
 
+    router.route('/event/fr-summary')
+        .get(UtilController.getFRSummary);
+
     router.route('/camera-detail-summary/:stream_id/:analytic_id/:time')
         .get(authAll, UtilController.getCameraDetailSummary);
 

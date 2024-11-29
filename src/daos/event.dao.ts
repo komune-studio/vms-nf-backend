@@ -35,6 +35,15 @@ export default class EventDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
+
+    static async getFRCountGroupByTimeAndStatus(startTime : String, endTime : String) {
+        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / 86400 )) * 86400) as interval_alias  from event where type = 'NFV4-FR' ${startTime ? ` AND event_time >= '${startTime}' ` : ' '} ${endTime ? ` AND event_time <= '${endTime}' ` : ' '} GROUP BY status, interval_alias ORDER BY interval_alias ASC`
+
+        console.log(sql)
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
     static async getMaxDuration(streamId: String, startTime : String, endTime : String) {
         const sql = `SELECT cast(detection->'pipeline_data'->>'duration' as float) as duration, event_time FROM event where cast(detection->'pipeline_data'->>'duration' as float) = (
 select max(cast(detection->'pipeline_data'->>'duration' as float)) from event where type = 'NFV4-VD' AND stream_id = '${streamId}' AND event_time >= '${startTime}' ${endTime ? ` AND event_time <= '${endTime}'` : ''} LIMIT 1
@@ -222,8 +231,14 @@ from event WHERE type = 'NFV4-LPR2' AND stream_id = '${streamId}' AND event_time
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
+    static async getCountDistinctDetectedFace(startTime : string, endTime : string) {
+        const sql = `SELECT count(*), detection->'pipeline_data'->>'face_id' as face_id, enrolled_face.id, name from event LEFT JOIN enrolled_face on detection->'pipeline_data'->>'face_id' = cast(face_id as text) WHERE event.status = 'KNOWN' AND event_time >= '${startTime}' AND event_time <= '${endTime}' group by detection->'pipeline_data'->>'face_id', enrolled_face.id order by count DESC LIMIT 5;`;
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
     static async getEventGroupByStatusAndTime(startTime : string, endTime : string) {
-        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / 86400 )) * 86400) as interval_alias  from event where type = 'NFV4-FR' AND event_time >= '${startTime}' AND event_time <= '${endTime}' group by status, interval_alias order by interval_alias ASC`
+        const sql = `select count(*), status, to_timestamp(floor((extract('epoch' from event_time) / 3600 )) * 3600) as interval_alias  from event where type = 'NFV4-FR' AND event_time >= '${startTime}' AND event_time <= '${endTime}' group by status, interval_alias order by interval_alias ASC`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
