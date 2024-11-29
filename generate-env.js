@@ -15,6 +15,8 @@ if(!process.env.SECRET_KEY) {
     env.SECRET_KEY = `"aHsJ09wtn0286735384h.jHF42hynwMntgY"`
 }
 
+env.DSS_HOST=`http://${process.env.DSS_IP}:${process.env.DSS_PORT}`
+
 let fileContent = '';
 
 Object.keys(env).forEach(key => {
