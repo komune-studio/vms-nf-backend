@@ -137,7 +137,7 @@ export default class EnrolledFaceDAO {
         // @ts-ignore
         status = status === 'null' ? null : status
 
-        const sql = `SELECT count(id) FROM enrolled_face WHERE ${!status ? ' 1 = 1 ' : ` deleted_at IS ${status === 'out' ? ' NOT ' : ' '} NULL`} ${keyword ? ` AND name ilike '%${keyword}%' ` : ' '} ${startDate ? ` AND created_at >= '${startDate}'` : ''} ${endDate ? ` AND created_at <= '${endDate}'` : ''};`
+        const sql = `SELECT count(id) FROM enrolled_face WHERE ${!status ? ` status != 'EMPLOYEE' ` : status === 'EMPLOYEE' ? ` deleted_at IS NULL AND status = 'EMPLOYEE' `  : ` deleted_at IS ${status === 'out' ? ' NOT ' : ' '} NULL AND status != 'EMPLOYEE' `} ${keyword ? ` AND name ilike '%${keyword}%' ` : ' '} ${startDate ? ` AND created_at >= '${startDate}'` : ''} ${endDate ? ` AND created_at <= '${endDate}'` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
@@ -148,7 +148,7 @@ export default class EnrolledFaceDAO {
         // @ts-ignore
         status = status === 'null' ? null : status
 
-        const sql = `SELECT * FROM enrolled_face WHERE ${!status ? ` status != 'EMPLOYEE' ` : status === 'EMPLOYEE' ? ` deleted_at IS NULL AND status = 'EMPLOYEE' `  : ` deleted_at IS ${status === 'out' ? ' NOT ' : ' '} NULL`} ${keyword ? ` AND name ilike '%${keyword}%' ` : ' '} ${startDate ? ` AND created_at >= '${startDate}'` : ''} ${endDate ? ` AND created_at <= '${endDate}'` : ''} ORDER BY created_at DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
+        const sql = `SELECT * FROM enrolled_face WHERE ${!status ? ` status != 'EMPLOYEE' ` : status === 'EMPLOYEE' ? ` deleted_at IS NULL AND status = 'EMPLOYEE' `  : ` deleted_at IS ${status === 'out' ? ' NOT ' : ' '} NULL AND status != 'EMPLOYEE' `} ${keyword ? ` AND name ilike '%${keyword}%' ` : ' '} ${startDate ? ` AND created_at >= '${startDate}'` : ''} ${endDate ? ` AND created_at <= '${endDate}'` : ''} ORDER BY created_at DESC ${limit ? ` LIMIT ${limit} ` : ''} ${limit && page ? ` OFFSET ${limit * (page - 1)} ` : ''};`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
