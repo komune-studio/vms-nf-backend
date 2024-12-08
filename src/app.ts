@@ -162,6 +162,7 @@ const syncDSSData = async () => {
             }
         }
 
+        /*
         const deletedIds: any = await EnrolledFaceDAO.getFaceExcludePersonIds(personIds.join(','))
 
         for (const item of deletedIds) {
@@ -175,6 +176,7 @@ const syncDSSData = async () => {
                 console.log(e)
             }
         }
+         */
     } catch (e) {
         console.log(e)
     }
