@@ -202,7 +202,7 @@ const deletePipelineFromStoppedMp4 = async () => {
                     // @ts-ignore
                     await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "PUT", {
                         stream_name: stream.name,
-                        stream_address: stream.address,
+                        stream_address: stream.address, // @ts-ignore
                         stream_custom_data: {...stream.custom_data, autoreplay: true}
                     })
                 }
