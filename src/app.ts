@@ -111,8 +111,8 @@ const syncDSSData = async () => {
 
             const enrollment = await EnrolledFaceDAO.getByPersonId(baseInfo.personId)
 
-            if(Array.isArray(enrollment)) {
-                if(enrollment.length > 0) {
+            if (Array.isArray(enrollment)) {
+                if (enrollment.length > 0) {
                     console.log('skipping enroll with personId: ' + baseInfo.personId)
                 } else {
                     console.log('trying to enroll with personId: ' + baseInfo.personId)
@@ -135,7 +135,7 @@ const syncDSSData = async () => {
                                 //     body.append('gender', baseInfo.gender === '1' ? 'male' : 'female')
                                 // }
 
-                                body.append('images',  fs.createReadStream(filename))
+                                body.append('images', fs.createReadStream(filename))
 
                                 let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
 
@@ -150,7 +150,11 @@ const syncDSSData = async () => {
                                 console.log('error when trying to enroll with personId: ' + baseInfo.personId)
                                 console.log(e)
                             } finally {
-                                fs.rmSync(filename)
+                                try {
+                                    fs.rmSync(filename)
+                                } catch (e) {
+                                    console.log(e)
+                                }
                             }
                         });
                     });
@@ -158,9 +162,9 @@ const syncDSSData = async () => {
             }
         }
 
-        const deletedIds : any = await EnrolledFaceDAO.getFaceExcludePersonIds(personIds.join(','))
+        const deletedIds: any = await EnrolledFaceDAO.getFaceExcludePersonIds(personIds.join(','))
 
-        for(const item of deletedIds) {
+        for (const item of deletedIds) {
             console.log('trying to delete with id: ' + item.id.toString())
 
             try {
@@ -192,11 +196,15 @@ const deletePipelineFromStoppedMp4 = async () => {
             try {
                 const response = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "GET")
 
-                if(response.stream_stats.state === 'TERMINATING') {
+                if (response.stream_stats.state === 'TERMINATING') {
                     await request(`${process.env.NF_VISIONAIRE_API_URL}/pipeline/${stream.node_num}/${stream.id}/NFV4-FR`, "DELETE");
 
                     // @ts-ignore
-                    await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "PUT", {stream_name: stream.name, stream_address: stream.address, stream_custom_data: {...stream.custom_data, autoreplay: true}})
+                    await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "PUT", {
+                        stream_name: stream.name,
+                        stream_address: stream.address,
+                        stream_custom_data: {...stream.custom_data, autoreplay: true}
+                    })
                 }
                 console.log(response.stream_stats)
             } catch (e) {
