@@ -202,13 +202,13 @@ from event WHERE type = 'NFV4-LPR2' AND stream_id = '${streamId}' AND event_time
     }
 
     static async updateUnauthorized(eventTime : string, eventId : string) {
-        const sql = `UPDATE event SET unauthorized = true WHERE event_time = '${eventTime}' AND detection->'pipeline_data'->>'event_id' = '${eventId}'`;
+        const sql = `UPDATE event SET unauthorized = true WHERE event_time >= '${eventTime}' AND detection->'pipeline_data'->>'event_id' = '${eventId}' AND status = 'KNOWN'`;
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
     static async updateEmployee(eventTime : string, eventId : string) {
-        const sql = `UPDATE event SET employee = true WHERE event_time = '${eventTime}' AND detection->'pipeline_data'->>'event_id' = '${eventId}'`;
+        const sql = `UPDATE event SET employee = true WHERE event_time >= '${eventTime}' AND detection->'pipeline_data'->>'event_id' = '${eventId}' AND status = 'KNOWN'`;
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

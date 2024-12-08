@@ -75,7 +75,7 @@ export default class WebsocketService {
 
                         if (face) {
                             if(face.status === 'EMPLOYEE') {
-                                await EventDAO.updateEmployee(moment.unix(data.timestamp).format('YYYY-MM-DDTHH:mm:ssZ'), data.pipeline_data.event_id)
+                                await EventDAO.updateEmployee(moment.unix(data.timestamp).format('YYYY-MM-DDT00:00:00Z'), data.pipeline_data.event_id)
                             } else if (face.additional_info.site_access) {
                                 const mapSiteStream = await MapSiteStreamDAO.getByStreamId(data.stream_id)
 
@@ -83,11 +83,11 @@ export default class WebsocketService {
                                     const siteId = parseInt(mapSiteStream.site_id);
 
                                     if (!face.additional_info.site_access.includes(siteId)) {
-                                        await EventDAO.updateUnauthorized(moment.unix(data.timestamp).format('YYYY-MM-DDTHH:mm:ssZ'), data.pipeline_data.event_id)
+                                        await EventDAO.updateUnauthorized(moment.unix(data.timestamp).format('YYYY-MM-DDT00:00:00Z'), data.pipeline_data.event_id)
                                     }
                                 }
                             } else {
-                                await EventDAO.updateUnauthorized(moment.unix(data.timestamp).format('YYYY-MM-DDTHH:mm:ssZ'), data.pipeline_data.event_id)
+                                await EventDAO.updateUnauthorized(moment.unix(data.timestamp).format('YYYY-MM-DDT00:00:00Z'), data.pipeline_data.event_id)
                             }
                         }
                     }
