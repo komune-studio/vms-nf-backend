@@ -98,7 +98,7 @@ const syncDSSData = async () => {
             }
         })
 
-        const personIds : any[] = [];
+        const personIds: any[] = [];
 
         for (const item of response.data.data.pageData) {
             const filename = moment().unix() + ".jpg";
@@ -107,7 +107,7 @@ const syncDSSData = async () => {
 
             const {baseInfo} = item
 
-            if(baseInfo.facePicture.includes('http')) {
+            if (baseInfo.facePicture.includes('http')) {
                 const enrollment = await EnrolledFaceDAO.getByPersonId(baseInfo.personId)
 
                 if (Array.isArray(enrollment)) {
@@ -162,6 +162,7 @@ const syncDSSData = async () => {
             }
         }
 
+        /*
         const deletedIds: any = await EnrolledFaceDAO.getFaceExcludePersonIds(personIds.join(','))
 
         for (const item of deletedIds) {
@@ -175,6 +176,7 @@ const syncDSSData = async () => {
                 console.log(e)
             }
         }
+         */
     } catch (e) {
         console.log(e)
     }
