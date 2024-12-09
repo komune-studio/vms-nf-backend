@@ -107,57 +107,57 @@ const syncDSSData = async () => {
 
             const {baseInfo} = item
 
-            personIds.push(baseInfo.personId)
+            if(baseInfo.facePicture.includes('http')) {
+                const enrollment = await EnrolledFaceDAO.getByPersonId(baseInfo.personId)
 
-            const enrollment = await EnrolledFaceDAO.getByPersonId(baseInfo.personId)
+                if (Array.isArray(enrollment)) {
+                    if (enrollment.length > 0 && baseInfo.facePicture) {
+                        console.log('skipping enroll with personId: ' + baseInfo.personId)
+                    } else {
+                        console.log('trying to enroll with personId: ' + baseInfo.personId)
 
-            if (Array.isArray(enrollment)) {
-                if (enrollment.length > 0) {
-                    console.log('skipping enroll with personId: ' + baseInfo.personId)
-                } else {
-                    console.log('trying to enroll with personId: ' + baseInfo.personId)
+                        get(`${baseInfo.facePicture}?token=${credential}`, function (response) {
+                            response.pipe(file);
 
-                    get(`${baseInfo.facePicture}?token=${credential}`, function (response) {
-                        response.pipe(file);
+                            // after download completed close filestream
+                            file.on("finish", async () => {
+                                file.close();
+                                console.log("Download Completed");
 
-                        // after download completed close filestream
-                        file.on("finish", async () => {
-                            file.close();
-                            console.log("Download Completed");
-
-                            try {
-                                const body = new FormData();
-
-                                body.append('name', baseInfo.firstName + ' ' + baseInfo.lastName);
-                                body.append('status', 'EMPLOYEE')
-
-                                // if(baseInfo.gender !== '0') {
-                                //     body.append('gender', baseInfo.gender === '1' ? 'male' : 'female')
-                                // }
-
-                                body.append('images', fs.createReadStream(filename))
-
-                                let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
-
-                                console.log(result)
-                                // @ts-ignore
-                                await EnrolledFaceDAO.updateAdditionalInfo(result.enrollment.id, JSON.stringify({
-                                    personId: baseInfo.personId
-                                }));
-
-                                console.log('data enrolled with personId: ' + baseInfo.personId)
-                            } catch (e) {
-                                console.log('error when trying to enroll with personId: ' + baseInfo.personId)
-                                console.log(e)
-                            } finally {
                                 try {
-                                    fs.rmSync(filename)
+                                    const body = new FormData();
+
+                                    body.append('name', baseInfo.firstName + ' ' + baseInfo.lastName);
+                                    body.append('status', 'EMPLOYEE')
+
+                                    // if(baseInfo.gender !== '0') {
+                                    //     body.append('gender', baseInfo.gender === '1' ? 'male' : 'female')
+                                    // }
+
+                                    body.append('images', fs.createReadStream(filename))
+
+                                    let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
+
+                                    console.log(result)
+                                    // @ts-ignore
+                                    await EnrolledFaceDAO.updateAdditionalInfo(result.enrollment.id, JSON.stringify({
+                                        personId: baseInfo.personId
+                                    }));
+
+                                    console.log('data enrolled with personId: ' + baseInfo.personId)
                                 } catch (e) {
+                                    console.log('error when trying to enroll with personId: ' + baseInfo.personId)
                                     console.log(e)
+                                } finally {
+                                    try {
+                                        fs.rmSync(filename)
+                                    } catch (e) {
+                                        console.log(e)
+                                    }
                                 }
-                            }
+                            });
                         });
-                    });
+                    }
                 }
             }
         }
