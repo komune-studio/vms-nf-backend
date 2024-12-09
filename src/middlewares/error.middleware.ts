@@ -21,8 +21,16 @@ export default async function handleErrors(error : Error, req : Req, res : Res, 
         response = new InternalServerError(error.message);
 
     // console.log(error);
-    return res.status(response.statusCode).send({
-        error: response.errorCode,
-        message: response.message
-    });
+    try {
+        return res.status(response.statusCode).send({
+            error: response.errorCode,
+            message: response.message
+        });
+    } catch (e) {
+        return res.status(500).send({
+            error: response.errorCode,
+            message: response.message
+        });
+    }
+
 }
