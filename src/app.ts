@@ -28,13 +28,14 @@ import fs from 'fs'
 import FormData from "form-data";
 import request, {requestWithFile} from "./utils/api.utils";
 import moment from "moment";
-
+import { writeFile } from 'node:fs/promises'
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 dotenv.config();
 
 const app = express();
 const cron = require('node-cron');
+const { finished } = require('stream/promises');
 
 const PORT = process.env.SERVER_PORT || 3000;
 
@@ -98,16 +99,13 @@ const syncDSSData = async () => {
             }
         })
 
-        const personIds: any[] = [];
+        const personIds: string[] = [];
 
         for (const item of response.data.data.pageData) {
-            const filename = moment().unix() + ".jpg";
-
-            const file = fs.createWriteStream(filename);
-
             const {baseInfo} = item
 
             if (baseInfo.facePicture.includes('http')) {
+                personIds.push(baseInfo.personId)
                 const enrollment = await EnrolledFaceDAO.getByPersonId(baseInfo.personId)
 
                 if (Array.isArray(enrollment)) {
@@ -115,54 +113,60 @@ const syncDSSData = async () => {
                         console.log('skipping enroll with personId: ' + baseInfo.personId)
                     } else {
                         console.log('trying to enroll with personId: ' + baseInfo.personId)
+                        const filename = moment().unix() + ".jpg";
 
-                        get(`${baseInfo.facePicture}?token=${credential}`, function (response) {
-                            response.pipe(file);
+                        try {
+                            const response = await fetch(`${baseInfo.facePicture}?token=${credential}`)
+                            // @ts-ignore
+                            const stream = Readable.fromWeb(response.body)
+                            await writeFile(filename, stream)
 
-                            // after download completed close filestream
-                            file.on("finish", async () => {
-                                file.close();
-                                console.log("Download Completed");
+                            try {
+                                const body = new FormData();
 
+                                body.append('name', baseInfo.firstName + ' ' + baseInfo.lastName);
+                                body.append('status', 'EMPLOYEE')
+
+                                // if(baseInfo.gender !== '0') {
+                                //     body.append('gender', baseInfo.gender === '1' ? 'male' : 'female')
+                                // }
+
+                                body.append('images', fs.createReadStream(filename))
+
+                                let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
+
+                                console.log(result)
+                                // @ts-ignore
+                                await EnrolledFaceDAO.updateAdditionalInfo(result.enrollment.id, JSON.stringify({
+                                    personId: baseInfo.personId
+                                }));
+
+                                console.log('data enrolled with personId: ' + baseInfo.personId)
+                            } catch (e) {
+                                console.log('error when trying to enroll with personId: ' + baseInfo.personId)
+                                console.log(e)
+                            } finally {
                                 try {
-                                    const body = new FormData();
-
-                                    body.append('name', baseInfo.firstName + ' ' + baseInfo.lastName);
-                                    body.append('status', 'EMPLOYEE')
-
-                                    // if(baseInfo.gender !== '0') {
-                                    //     body.append('gender', baseInfo.gender === '1' ? 'male' : 'female')
-                                    // }
-
-                                    body.append('images', fs.createReadStream(filename))
-
-                                    let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
-
-                                    console.log(result)
-                                    // @ts-ignore
-                                    await EnrolledFaceDAO.updateAdditionalInfo(result.enrollment.id, JSON.stringify({
-                                        personId: baseInfo.personId
-                                    }));
-
-                                    console.log('data enrolled with personId: ' + baseInfo.personId)
+                                    fs.rmSync(filename)
                                 } catch (e) {
-                                    console.log('error when trying to enroll with personId: ' + baseInfo.personId)
                                     console.log(e)
-                                } finally {
-                                    try {
-                                        fs.rmSync(filename)
-                                    } catch (e) {
-                                        console.log(e)
-                                    }
                                 }
-                            });
-                        });
+                            }
+                        } catch (e) {
+                            console.log(e)
+                        } finally {
+                            try {
+                                fs.rmSync(filename)
+                            } catch (e) {
+                                console.log(e)
+                            }
+                        }
                     }
                 }
             }
         }
 
-        /*
+
         const deletedIds: any = await EnrolledFaceDAO.getFaceExcludePersonIds(personIds.join(','))
 
         for (const item of deletedIds) {
@@ -176,7 +180,7 @@ const syncDSSData = async () => {
                 console.log(e)
             }
         }
-         */
+
     } catch (e) {
         console.log(e)
     }
