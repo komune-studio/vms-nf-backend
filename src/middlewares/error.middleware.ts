@@ -8,7 +8,7 @@ export default async function handleErrors(error : Error, req : Req, res : Res, 
         const jsonErr = await error.json();
 
         if(jsonErr.code && jsonErr.message) {
-            return res.status(jsonErr.code).send({
+            return res.status(400).send({
                 error: jsonErr.code,
                 message: jsonErr.message
             });
@@ -28,7 +28,7 @@ export default async function handleErrors(error : Error, req : Req, res : Res, 
         });
     } catch (e) {
         return res.status(500).send({
-            error: "INTERNAL_SERVER_ERROR",
+            error: response.errorCode,
             message: response.message
         });
     }
