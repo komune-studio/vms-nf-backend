@@ -28,7 +28,7 @@ export default async function handleErrors(error : Error, req : Req, res : Res, 
         });
     } catch (e) {
         return res.status(500).send({
-            error: response.errorCode,
+            error: "INTERNAL_SERVER_ERROR",
             message: response.message
         });
     }
