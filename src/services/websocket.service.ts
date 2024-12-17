@@ -9,6 +9,7 @@ import RecognizedEventDAO from "../daos/recognized_event.dao";
 import UnrecognizedEventDAO from "../daos/unrecognized_event.dao";
 import FremisnDAO from "../daos/fremisn.dao";
 import FaceImageDAO from "../daos/face_image.dao";
+import request from "../utils/api.utils";
 
 // const requestUrl = `ws://${process.env['NF_IP']}:${process.env['VANILLA_PORT']}/api/event_channel`;
 
@@ -84,6 +85,13 @@ export default class WebsocketService {
 
                     if (data.label === 'recognized') {
                         const face = await EnrolledFaceDAO.getByName(data.result.split(" - ")[1]);
+
+                        const result = await request(`${process.env.PENUGASAN_API_URL}/license/stream/${data.stream_id}?task_status=IN_PROGRESS`, "GET")
+
+                        if(result.length > 0) {
+                            data.task_name = result[0].licenseTaskUsers[0].task.name
+                            data.user_name = result[0].licenseTaskUsers[0].user.name
+                        }
 
                         // const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
                         // const faceImage = await FaceImageDAO.getThumbnailByEnrolledFaceIds([face.id])
