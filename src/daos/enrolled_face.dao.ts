@@ -126,7 +126,7 @@ export default class EnrolledFaceDAO {
     }
 
     static async getFacesByDssIds(dssIds : string) {
-        const sql = `select * from enrolled_face where cast(additional_info->>'dss_id' as integer) IN (${dssIds}) AND deleted_at is null;`
+        const sql = `select * from enrolled_face where cast(additional_info->>'dss_id' as integer) IN (${dssIds});`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }
