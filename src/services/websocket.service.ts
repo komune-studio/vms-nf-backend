@@ -86,12 +86,15 @@ export default class WebsocketService {
                     if (data.label === 'recognized') {
                         const face = await EnrolledFaceDAO.getByName(data.result.split(" - ")[1]);
 
-                        const result = await request(`${process.env.PENUGASAN_API_URL}/license/stream/${data.stream_id}?task_status=IN_PROGRESS`, "GET")
+                        if(process.env.PENUGASAN_API_URL) {
+                            const result = await request(`${process.env.PENUGASAN_API_URL}/license/stream/${data.stream_id}?task_status=IN_PROGRESS`, "GET")
 
-                        if(result.length > 0) {
-                            data.task_name = result[0].licenseTaskUsers[0].task.name
-                            data.user_name = result[0].licenseTaskUsers[0].user.name
+                            if(result.length > 0) {
+                                data.task_name = result[0].licenseTaskUsers[0].task.name
+                                data.user_name = result[0].licenseTaskUsers[0].user.name
+                            }
                         }
+
 
                         // const face = await EnrolledFaceDAO.getByFaceId(data.pipeline_data.face_id);
                         // const faceImage = await FaceImageDAO.getThumbnailByEnrolledFaceIds([face.id])
