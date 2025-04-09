@@ -31,6 +31,9 @@ export default class StreamController {
                 stream.stream_stats = result.stream_stats;
 
                 // @ts-ignore
+                stream.seats = result.seats;
+
+                // @ts-ignore
                 stream.pipelines = [];
                 // @ts-ignore
                 stream.configs = [];
@@ -88,6 +91,7 @@ export default class StreamController {
             stream.configs = pipelines.map(pipeline => ({analytic_id: pipeline.analytic_id, ...pipeline.configs}));
 
             stream.stats = result.stream_stats;
+            stream.seats = result.seats;
 
             res.send(stream);
         } catch (e) {
