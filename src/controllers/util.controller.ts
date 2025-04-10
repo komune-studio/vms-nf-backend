@@ -372,8 +372,12 @@ export default class UtilController {
             // @ts-ignore
             const response = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
 
+
+            const dwellingAvgs : any = {}
+
             // @ts-ignore
-            response.forEach(data => {
+
+            for(const data of response) {
                 const key = moment(data.interval_alias).format('YYYY-MM-DDTHH:mm:ssZ');
 
                 // @ts-ignore
@@ -391,13 +395,22 @@ export default class UtilController {
                 }
 
                 if (analytic === 'NFV4-VD') {
+                    if(!dwellingAvgs[data.stream_id]) {
+                        // @ts-ignore
+                        const avgDuration = await EventDAO.getAvgDuration(stream.split(','), start_date, end_date)
+
+                        // @ts-ignore
+                        dwellingAvgs[data.stream_id] = avgDuration[0].avg;
+                    }
+
                     // @ts-ignore
-                    (output[key])[data.stream_id] = {avg_dwelling_time: data.avg, total_dwelling_time: data.sum}
+                    (output[key])[data.stream_id] = {avg_dwelling_time: data.avg, total_dwelling_time: data.sum, overall_avg: dwellingAvgs[data.stream_id]}
+
                 } else {
                     // @ts-ignore
                     (output[key])[data.stream_id] += parseInt(data.count)
                 }
-            })
+            }
 
             res.send(output);
         } catch (e) {
@@ -577,6 +590,7 @@ export default class UtilController {
                 const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval, line)
                 // @ts-ignore
                 const avgDurationResponse = await EventDAO.getAvgDuration([stream_id], startTime, endTime, line)
+
                 // @ts-ignore
                 const maxDurationResponse = await EventDAO.getMaxDuration(stream_id, startTime, endTime, line)
                 // @ts-ignore
