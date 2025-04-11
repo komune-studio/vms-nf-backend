@@ -375,8 +375,9 @@ export default class UtilController {
 
             const dwellingAvgs : any = {}
 
-            // @ts-ignore
+            const totalAvgStream : any = {}
 
+            // @ts-ignore
             for(const data of response) {
                 const key = moment(data.interval_alias).format('YYYY-MM-DDTHH:mm:ssZ');
 
@@ -403,6 +404,21 @@ export default class UtilController {
                         dwellingAvgs[data.stream_id] = avgDuration[0].avg;
                     }
 
+                    // // @ts-ignore
+                    // console.log('=====')
+                    // // @ts-ignore
+                    // console.log('stream_id: ', data.stream_id)
+                    // // @ts-ignore
+                    // console.log('sum dwelling time: ', data.sum)
+                    // console.log('=====');
+
+                    // @ts-ignore
+                    if(!totalAvgStream[data.stream_id]) {
+                        totalAvgStream[data.stream_id] = data.sum
+                    } else {
+                        totalAvgStream[data.stream_id] += data.sum
+                    }
+
                     // @ts-ignore
                     (output[key])[data.stream_id] = {avg_dwelling_time: data.avg, total_dwelling_time: data.sum, overall_avg: dwellingAvgs[data.stream_id]}
 
@@ -411,6 +427,13 @@ export default class UtilController {
                     (output[key])[data.stream_id] += parseInt(data.count)
                 }
             }
+           for(const date of Object.keys(output)) {
+               // @ts-ignore
+               for(const streamId of Object.keys(output[date])) {
+                   // @ts-ignore
+                   (output[date])[streamId].overall_total = totalAvgStream[streamId]
+               }
+           }
 
             res.send(output);
         } catch (e) {
