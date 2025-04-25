@@ -427,13 +427,15 @@ export default class UtilController {
                     (output[key])[data.stream_id] += parseInt(data.count)
                 }
             }
-           for(const date of Object.keys(output)) {
-               // @ts-ignore
-               for(const streamId of Object.keys(output[date])) {
-                   // @ts-ignore
-                   (output[date])[streamId].overall_total = totalAvgStream[streamId]
-               }
-           }
+            if (analytic === 'NFV4-VD') {
+                for (const date of Object.keys(output)) {
+                    // @ts-ignore
+                    for (const streamId of Object.keys(output[date])) {
+                        // @ts-ignore
+                        (output[date])[streamId].overall_total = totalAvgStream[streamId]
+                    }
+                }
+            }
 
             res.send(output);
         } catch (e) {
@@ -495,6 +497,9 @@ export default class UtilController {
 
             if (time === 'this_week') {
                 startTime = moment().startOf('isoWeeks');
+                endTime = moment().subtract(2, 'days').endOf('isoWeeks').format('YYYY-MM-DDT23:59:59Z');
+
+                console.log(endTime)
             } else if (time === 'this_month') {
                 startTime = moment().startOf('month');
             } else if (time === 'custom') {
