@@ -131,6 +131,12 @@ export default class EnrolledFaceDAO {
         return prisma.$queryRaw(Prisma.raw(sql))
     }
 
+    static async getFacesByPlate(plateNo : string) {
+        const sql = `select ef.*, fi.id face_image_id from enrolled_face ef left join face_image fi on ef.id = fi.enrolled_face_id  where additional_info->>'plate_number' = '${plateNo}' AND ef.deleted_at is null AND fi.deleted_at is null;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
     static async getCountWithPagination(keyword: String, status: String, startDate: String, endDate: String) {
         // @ts-ignore
         keyword = keyword === 'null' ? null : keyword

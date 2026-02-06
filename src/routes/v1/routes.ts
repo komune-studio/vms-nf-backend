@@ -13,6 +13,7 @@ import routesCameraResolution from "./camera_resolution.routes";
 import routesDashboardCustomization from "./dashboard_customization.routes";
 import routesFaceImage from "./face_image.routes";
 import routesFaceMe from "./faceme.routes";
+import routesLpr from "./lpr.routes";
 
 const router = express.Router();
 
@@ -30,6 +31,7 @@ routesCameraResolution(router);
 routesDashboardCustomization(router);
 routesFaceImage(router);
 routesFaceMe(router);
+routesLpr(router);
 
 
 export default router;

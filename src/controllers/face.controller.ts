@@ -60,20 +60,61 @@ export default class FaceController {
 
     static async getFace(req: Request, res: Response, next: NextFunction) {
         try {
-            // @ts-ignore
-            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment?${new URLSearchParams(req.query)}`, 'GET');
+            const { search, page = 1, limit = 10 } = req.query;
+            const pageNum = parseInt(page as string);
+            const limitNum = parseInt(limit as string);
 
-            for(const enrollment of result.results.enrollments) {
-                const response = await EnrolledFaceDAO.getFaceIdByEnrolledFaceId(enrollment.id);
+            // 1. Ambil data dalam jumlah besar dari third-party
+            // Gunakan limit besar sesuai kebutuhan agar semua record terambil
+            const apiUrl = `${process.env.NF_VANILLA_API_URL}/enrollment?limit=999999`;
+            let result = await request(apiUrl, 'GET');
 
-                if(response) {
-                    enrollment.face_id = response.face_id.toString()
-                }
+            let enrollments = result.results.enrollments;
+
+            // 2. Enrichment & Filtering
+            // Kita gunakan Promise.all agar fetch data ke DAO lebih cepat (parallel)
+            const enrichedEnrollments = await Promise.all(
+                enrollments.map(async (enrollment: any) => {
+                    const [faceData, extraInfo]: [any, any] = await Promise.all([
+                        EnrolledFaceDAO.getFaceIdByEnrolledFaceId(enrollment.id),
+                        EnrolledFaceDAO.getAdditionaInfo(enrollment.id)
+                    ] as any[]);
+
+                    return {
+                        ...enrollment,
+                        face_id: faceData ? faceData.face_id.toString() : null,
+                        additional_info: extraInfo ? extraInfo.additional_info : null
+                    };
+                })
+            );
+
+            // 3. Filter berdasarkan Plate Number (Case Insensitive)
+            let filteredData = enrichedEnrollments;
+            if (search) {
+                const keyword = (search as string).toLowerCase();
+                filteredData = enrichedEnrollments.filter(item => {
+                    const plate = item.additional_info?.plate_number?.toLowerCase() || "";
+                    const name = item.name?.toLowerCase() || ""; // Opsional: tetap filter by name juga
+                    return plate.includes(keyword) || name.includes(keyword);
+                });
             }
 
-            console.log(result.results.enrollments)
+            // 4. Manual Pagination Logic
+            const totalData = filteredData.length;
+            const startIndex = (pageNum - 1) * limitNum;
+            const endIndex = startIndex + limitNum;
+            const paginatedData = filteredData.slice(startIndex, endIndex);
 
-            res.send(result);
+            // 5. Kirim response dengan metadata pagination
+            res.send({
+                total: totalData,
+                page: pageNum,
+                limit: limitNum,
+                results: {
+                    enrollments: paginatedData
+                }
+            });
+
         } catch (e) {
             return next(e);
         }
@@ -260,9 +301,6 @@ export default class FaceController {
 
     static async getAllFaces(req: Request, res: Response, next: NextFunction) {
         let {keyword, status, page, limit, start_date, end_date} = req.query;
-
-        console.log(start_date)
-
 
         try {
             const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
