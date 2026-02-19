@@ -132,7 +132,13 @@ export default class EnrolledFaceDAO {
     }
 
     static async getFacesByPlate(plateNo : string) {
-        const sql = `select ef.*, fi.id face_image_id from enrolled_face ef left join face_image fi on ef.id = fi.enrolled_face_id  where additional_info->>'plate_number' = '${plateNo}' AND ef.deleted_at is null AND fi.deleted_at is null;`
+        const sql = `select ef.*, encode(image_thumbnail, 'base64') as image_thumbnail from enrolled_face ef left join face_image fi on ef.id = fi.enrolled_face_id  where additional_info->>'plate_number' = '${plateNo}' AND ef.deleted_at is null AND fi.deleted_at is null;`
+
+        return prisma.$queryRaw(Prisma.raw(sql))
+    }
+
+    static async getFacesByPlateSimilar(plateNo : string) {
+        const sql = `select ef.*, encode(image_thumbnail, 'base64') as image_thumbnail from enrolled_face ef left join face_image fi on ef.id = fi.enrolled_face_id  where additional_info->>'plate_number' != '${plateNo}' AND additional_info->>'plate_number' ILIKE '%${plateNo}%' AND ef.deleted_at is null AND fi.deleted_at is null;`
 
         return prisma.$queryRaw(Prisma.raw(sql))
     }

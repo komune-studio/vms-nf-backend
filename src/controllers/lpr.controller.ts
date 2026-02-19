@@ -58,13 +58,19 @@ export default class LprController {
 
                 let enrollment = null
 
-                if(faces.length > 0) enrollment = {...faces[0], id: faces[0].id.toString(), face_id: faces[0].face_id.toString(), face_image_id: faces[0].face_image_id.toString()};
+                if(faces.length > 0) enrollment = {...faces[0], id: faces[0].id.toString(), face_id: faces[0].face_id.toString()};
 
                 result.enrollment = enrollment;
                 result.label = response.job.result.result[0].license_plate_recognition[0].label
                 result.confidence = response.job.result.result[0].license_plate_recognition[0].confidence
+                result.similar_plate = await EnrolledFaceDAO.getFacesByPlateSimilar(response.job.result.result[0].license_plate_recognition[0].label)
 
+                for(const idx in result.similar_plate) {
+                    result.similar_plate[idx] = {...result.similar_plate[idx], id: result.similar_plate[idx].id.toString(), face_id: result.similar_plate[idx].face_id.toString()}
+                }
             }
+
+
 
             res.send({result})
         } catch (err) {
