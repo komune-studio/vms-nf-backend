@@ -1,7 +1,7 @@
 import PrismaService from "../services/prisma.service"
 import {Prisma} from "../prisma/nfvisionaire";
 
-const prisma = PrismaService.getVisionaire();
+const prisma = PrismaService.getFace();
 const enrolledFace = prisma.enrolled_face;
 
 export default class EnrolledFaceDAO {

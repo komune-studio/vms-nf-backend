@@ -1,6 +1,6 @@
 import PrismaService from "../services/prisma.service"
 
-const prisma = PrismaService.getVisionaire();
+const prisma = PrismaService.getFace();
 const faceImage = prisma.face_image;
 
 export default class FaceImageDAO {

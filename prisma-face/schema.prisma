@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/face"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_FACE_URL")  // bisa pakai env var berbeda atau sama
+}
+
+model enrolled_face {
+  id              BigInt       @id @default(autoincrement())
+  face_id         BigInt?
+  name            String?      @db.VarChar(200)
+  deleted_at      DateTime?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @default(now()) @updatedAt
+  identity_number String?      @db.VarChar(200)
+  status          String?      @db.VarChar(200)
+  gender          String?      @db.VarChar(200)
+  birth_place     String?      @db.VarChar(200)
+  birth_date      DateTime?    @db.Date
+  additional_info Json?        @default("{}")
+
+  face_images     face_image[]
+}
+
+model face_image {
+  id               BigInt        @id @default(autoincrement())
+  enrolled_face_id BigInt?
+  variation        String?
+  image            Bytes?
+  created_at       DateTime      @default(now())
+  deleted_at       DateTime?
+  image_thumbnail  Bytes?
+
+  enrolled_face    enrolled_face? @relation(fields: [enrolled_face_id], references: [id])
+}

@@ -5,7 +5,9 @@
   "main": "src/app.ts",
   "scripts": {
     "start": "nodemon src/app.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prisma:face:push": "prisma db push --schema=./prisma-face/schema.prisma",
+    "prisma:face:generate": "prisma generate --schema=./prisma-face/schema.prisma"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +20,7 @@
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.7",
     "@types/node-fetch": "^2.6.2",
+    "@types/sharp": "^0.31.1",
     "@types/websocket": "^1.0.5",
     "nodemon": "^2.0.20",
     "prisma": "^4.10.1",
@@ -41,6 +44,7 @@
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.3",
     "node-fetch": "^2.6.9",
+    "sharp": "^0.34.5",
     "websocket": "^1.0.34"
   }
 }
