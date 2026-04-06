@@ -1,9 +1,9 @@
 // @ts-nocheck
-import {NextFunction, Request, Response} from "express";
-import request, {requestWithFile} from "../utils/api.utils";
+import { NextFunction, Request, Response } from "express";
+import request, { requestWithFile } from "../utils/api.utils";
 import FormData from "form-data";
 import fs from "fs";
-import {BadRequestError, NotFoundError} from "../utils/error.utils";
+import { BadRequestError, NotFoundError } from "../utils/error.utils";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FremisnDAO from "../daos/fremisn.dao";
 import RecognizedEventDAO from "../daos/recognized_event.dao";
@@ -61,8 +61,13 @@ export default class FaceController {
                     }
                 );
 
-                const frResult = await frResponse.json();
+      
 
+                const frResult = await frResponse.json();
+                if(frResult?.code === 400){
+                       return next(new BadRequestError(frResult?.description));
+                }
+                console.log('try to create', frResult)
                 if (!frResponse.ok) {
                     // Map face recognition error to 422
                     return next({
@@ -510,12 +515,12 @@ export default class FaceController {
     }
 
     static async getFaceExcludeDssIds(req: Request, res: Response, next: NextFunction) {
-        const {ids} = req.query;
+        const { ids } = req.query;
 
         try {
-           const response = await EnrolledFaceDAO.getFaceExcludeDssIds(ids?.toString())
+            const response = await EnrolledFaceDAO.getFaceExcludeDssIds(ids?.toString())
 
-           res.send({data: response.map(e => parseInt(e.id))});
+            res.send({ data: response.map(e => parseInt(e.id)) });
         } catch (e) {
             console.log(e)
             return next(e);
@@ -523,12 +528,12 @@ export default class FaceController {
     }
 
     static async deleteByDssId(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const { id } = req.params;
 
         try {
             const enrollment = await EnrolledFaceDAO.getFaceByDssId(id)
 
-            if(enrollment.length === 0) {
+            if (enrollment.length === 0) {
                 return next(new NotFoundError("Enrollment not found.", "id"));
             }
 
@@ -540,26 +545,26 @@ export default class FaceController {
         }
     }
 
-    static async faceRecognition(req : Request, res : Response, next : NextFunction) {
+    static async faceRecognition(req: Request, res: Response, next: NextFunction) {
         const { image, limit } = req.body;
 
         try {
             const response = await FremisnDAO.faceRecognition('default', image, parseInt(limit));
+            
+            const { candidates } = response.result.face_recognition;
+            console.log('isi candidates', candidates)
+            if (candidates.length === 0) return res.send([])
 
-            const {candidates} = response.result.face_recognition;
-
-            if(candidates.length === 0) return res.send([])
-
-            for(const candidate of candidates) {
+            for (const candidate of candidates) {
                 const enrollment = await EnrolledFaceDAO.getByFaceId(candidate.face_id)
 
-                if(enrollment) {
+                if (enrollment) {
                     const faceImage = await FaceImageDAO.getThumbnailByEnrolledFaceIds([parseInt(enrollment.id)])
 
                     enrollment.image_thumbnail = Buffer(faceImage[0].image_thumbnail).toString('base64')
 
-                    if(candidate.face_id === enrollment.face_id.toString()) {
-                        candidate.enrollment = {...enrollment, face_id: enrollment.face_id.toString()}
+                    if (candidate.face_id === enrollment.face_id.toString()) {
+                        candidate.enrollment = { ...enrollment, id: enrollment.id.toString(), face_id: enrollment.face_id.toString() }
                     }
                 }
             }
@@ -577,20 +582,20 @@ export default class FaceController {
     }
 
     static async getFacesByDssIds(req: Request, res: Response, next: NextFunction) {
-        const {ids} = req.query;
+        const { ids } = req.query;
 
         try {
             let response = await EnrolledFaceDAO.getFacesByDssIds(ids?.toString())
 
             let sites = await SiteDAO.getAll();
 
-            for(const idx in response) {
+            for (const idx in response) {
                 let siteAccess = [];
 
-                if(response[idx].additional_info.site_access) {
-                    for(const access of response[idx].additional_info.site_access) {
-                        for(const site of sites) {
-                            if(site.id === access) {
+                if (response[idx].additional_info.site_access) {
+                    for (const access of response[idx].additional_info.site_access) {
+                        for (const site of sites) {
+                            if (site.id === access) {
                                 console.log(site)
 
                                 siteAccess.push(site)
@@ -603,7 +608,7 @@ export default class FaceController {
                 response[idx].additional_info.site_access = siteAccess
             }
 
-            res.send({data: response});
+            res.send({ data: response });
         } catch (e) {
             console.log(e)
             return next(e);
@@ -611,7 +616,7 @@ export default class FaceController {
     }
 
     static async getAllFaces(req: Request, res: Response, next: NextFunction) {
-        let {keyword, status, page, limit, start_date, end_date} = req.query;
+        let { keyword, status, page, limit, start_date, end_date } = req.query;
 
         try {
             const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
@@ -625,9 +630,9 @@ export default class FaceController {
 
             const faceImages = await FaceImageDAO.getThumbnailByEnrolledFaceIds(data.map(item => parseInt(item.id)))
 
-            for(const idx in data) {
-                for(const image of faceImages) {
-                    if(parseInt(data[idx].id) === parseInt(image.enrolled_face_id)) {
+            for (const idx in data) {
+                for (const image of faceImages) {
+                    if (parseInt(data[idx].id) === parseInt(image.enrolled_face_id)) {
                         data[idx].id = data[idx].id.toString()
                         data[idx].face_id = data[idx].face_id.toString()
 
@@ -638,7 +643,7 @@ export default class FaceController {
 
             // @ts-ignore
             res.send({
-                total_page:  Math.floor(((parseInt(count[0].count) - 1) / limit) + 1),
+                total_page: Math.floor(((parseInt(count[0].count) - 1) / limit) + 1),
                 total_data: parseInt(count[0].count),
                 data
             });
@@ -650,7 +655,7 @@ export default class FaceController {
 
     static async getByFaceIds(req: Request, res: Response, next: NextFunction) {
         try {
-            let {face_ids} = req.params;
+            let { face_ids } = req.params;
 
             // @ts-ignore
             let result = await EnrolledFaceDAO.getByFaceIds(JSON.parse(face_ids).map(id => BigInt(id)))
@@ -663,16 +668,16 @@ export default class FaceController {
 
                 faceImages.forEach(data => {
                     // @ts-ignore
-                    if(data.enrolled_face_id === BigInt(row.id)) {
-                        const imageThumbnail = data.image_thumbnail ? {image_thumbnail: Buffer.from(data.image_thumbnail).toString('base64')} : {}
+                    if (data.enrolled_face_id === BigInt(row.id)) {
+                        const imageThumbnail = data.image_thumbnail ? { image_thumbnail: Buffer.from(data.image_thumbnail).toString('base64') } : {}
 
                         // @ts-ignore
-                        result[idx].faces.push({...data, id: data.id.toString(), enrolled_face_id: data.enrolled_face_id.toString(), ...imageThumbnail})
+                        result[idx].faces.push({ ...data, id: data.id.toString(), enrolled_face_id: data.enrolled_face_id.toString(), ...imageThumbnail })
                     }
                 })
             })
 
-            res.send(result.map(data => ({...data, face_id: data.face_id.toString()})))
+            res.send(result.map(data => ({ ...data, face_id: data.face_id.toString() })))
         } catch (e) {
             console.log(e)
             return next(e);

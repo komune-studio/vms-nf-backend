@@ -5,13 +5,17 @@ export default async function handleErrors(error : Error, req : Req, res : Res, 
     let response : HTTPError;
 
     if (error instanceof Response) {
-        const jsonErr = await error.json();
+        try {
+            const jsonErr = await error.json();
 
-        if(jsonErr.code && jsonErr.message) {
-            return res.status(400).send({
-                error: jsonErr.code,
-                message: jsonErr.message
-            });
+            if (jsonErr.code && jsonErr.message) {
+                return res.status(400).send({
+                    error: jsonErr.code,
+                    message: jsonErr.message
+                });
+            }
+        } catch (_) {
+            // Body already consumed; fall through to generic error handling
         }
     }
 
