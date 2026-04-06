@@ -7,7 +7,11 @@ export default class FaceImageController {
 
         try {
             let result = await FaceImageDAO.getFullSizeById(parseInt(id))
-            res.send({image: result ? Buffer.from(result.image).toString('base64') : null});
+            res.send({
+                image: result?.image
+                    ? Buffer.from(result.image).toString('base64')
+                    : null
+            });
         } catch (e) {
             return next(e);
         }

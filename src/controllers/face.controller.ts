@@ -236,17 +236,58 @@ export default class FaceController {
     }
 
     static async getFaceById(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const { id } = req.params;
+        const prisma = PrismaService.getFace();
 
         try {
-            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
+            const enrollment = await prisma.enrolled_face.findFirst({
+                where: { id: BigInt(id), deleted_at: null },
+                include: {
+                    face_images: {
+                        where: { deleted_at: null },
+                        select: {
+                            id: true,
+                            enrolled_face_id: true,
+                            variation: true,
+                            created_at: true,
+                            image_thumbnail: true,
+                        },
+                    },
+                },
+            });
 
-            let response = await EnrolledFaceDAO.getAdditionaInfo(result.enrollment.id);
+            if (!enrollment) {
+                return next(new NotFoundError("Enrolled face not found.", "id"));
+            }
 
-            // @ts-ignore
-            result.enrollment.additional_info = response.additional_info;
+            res.send({
+                enrollment: {
+                    id: Number(enrollment.id),
+                    name: enrollment.name,
+                    identity_number: enrollment.identity_number,
+                    gender: enrollment.gender,
+                    birth_place: enrollment.birth_place,
+                    birth_date: enrollment.birth_date?.toISOString() ?? '0001-01-01',
+                    status: enrollment.status,
+                    created_at: enrollment.created_at.toISOString(),
+                    updated_at: enrollment.updated_at.toISOString(),
+                    deleted_at: enrollment.deleted_at,
+                    face_id: enrollment.face_id?.toString() ?? null,
+                    additional_info: enrollment.additional_info,
+                    faces: enrollment.face_images.map(fi => ({
+                        id: Number(fi.id),
+                        enrolled_face_id: Number(fi.enrolled_face_id),
+                        variation: fi.variation,
+                        created_at: fi.created_at.toISOString(),
+                        image_thumbnail: fi.image_thumbnail
+                            ? Buffer.from(fi.image_thumbnail).toString('base64')
+                            : null,
+                    })),
+                },
+                message: 'successfully get enrolled person',
+                ok: true,
+            });
 
-            res.send(result)
         } catch (e) {
             return next(e);
         }
