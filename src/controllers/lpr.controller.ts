@@ -54,8 +54,6 @@ export default class LprController {
 
             if(response.job?.result?.result[0]?.license_plate_recognition?.length > 0) {
                 const faces = await EnrolledFaceDAO.getFacesByPlate(response.job.result.result[0].license_plate_recognition[0].label);
-                console.log(faces)
-
                 let enrollment = null
 
                 if(faces.length > 0) enrollment = {...faces[0], id: faces[0].id.toString(), face_id: faces[0].face_id.toString()};
@@ -74,6 +72,7 @@ export default class LprController {
 
             res.send({result})
         } catch (err) {
+            console.log('isi errornya', err)
             try {
                 const error = await err.json()
 
