@@ -61,13 +61,8 @@ export default class FaceController {
                     }
                 );
 
-      
-
                 const frResult = await frResponse.json();
-                if(frResult?.code === 400){
-                       return next(new BadRequestError(frResult?.description));
-                }
-                console.log('try to create', frResult)
+
                 if (!frResponse.ok) {
                     // Map face recognition error to 422
                     return next({
@@ -549,10 +544,11 @@ export default class FaceController {
         const { image, limit } = req.body;
 
         try {
+
             const response = await FremisnDAO.faceRecognition('default', image, parseInt(limit));
-            
+            console.log('isi image', response)
             const { candidates } = response.result.face_recognition;
-            console.log('isi candidates', candidates)
+
             if (candidates.length === 0) return res.send([])
 
             for (const candidate of candidates) {
@@ -571,6 +567,7 @@ export default class FaceController {
 
             res.send(candidates)
         } catch (err) {
+            console.log('isi errornya', err)
             try {
                 const error = await err.json()
 
