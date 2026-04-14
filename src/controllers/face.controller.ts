@@ -546,7 +546,7 @@ export default class FaceController {
         try {
 
             const response = await FremisnDAO.faceRecognition('default', image, parseInt(limit));
-            console.log('isi image', response)
+
             const { candidates } = response.result.face_recognition;
 
             if (candidates.length === 0) return res.send([])
