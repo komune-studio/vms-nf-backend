@@ -548,10 +548,11 @@ export default class FaceController {
 
             const response = await FremisnDAO.faceRecognition(keyspace, image, parseInt(limit));
 
-            const { candidates } = response.result.face_recognition;
+            const allCandidates = response?.result?.face_recognition?.candidates ?? [];
+
+            const candidates = allCandidates.filter(c => c.similarity > 0.10);
 
             if (candidates.length === 0) return res.send([])
-
             for (const candidate of candidates) {
                 const enrollment = await EnrolledFaceDAO.getByFaceId(candidate.face_id)
 
