@@ -14,6 +14,7 @@ import EventDAO from "../daos/event.dao";
 import sharp from 'sharp';
 import PrismaService from "../services/prisma.service";
 const prisma = PrismaService.getFace();
+const keyspace = process.env.NF_KEYSPACE
 
 export default class FaceController {
 
@@ -56,7 +57,7 @@ export default class FaceController {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             image: base64Image,
-                            keyspace: 'default',
+                            keyspace,
                         }),
                     }
                 );
@@ -329,7 +330,7 @@ export default class FaceController {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        keyspace: 'default',
+                        keyspace,
                         face_ids: [existingFace.face_id.toString()],
                     }),
                 });
@@ -354,7 +355,7 @@ export default class FaceController {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 image: base64Image,
-                                keyspace: 'default',
+                                keyspace,
                             }),
                         }
                     );
@@ -477,7 +478,7 @@ export default class FaceController {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    keyspace: 'default',
+                    keyspace,
                     face_ids: [existingFace.face_id.toString()],
                 }),
             });
@@ -545,7 +546,7 @@ export default class FaceController {
 
         try {
 
-            const response = await FremisnDAO.faceRecognition('default', image, parseInt(limit));
+            const response = await FremisnDAO.faceRecognition(keyspace, image, parseInt(limit));
 
             const { candidates } = response.result.face_recognition;
 
