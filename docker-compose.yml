@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vms-nf-backend
+    ports:
+      - "3031:3031"
+    env_file:
+      - .env
+    restart: unless-stopped
+    network_mode: "host"
