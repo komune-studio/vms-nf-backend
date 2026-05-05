@@ -12,44 +12,6 @@ export default class LprController {
         try {
             const response = await LprDAO.licensePlateRecognition(image);
 
-            // const response = {
-            //     "job": {
-            //         "id": "20221020043031051e70403920ef4166736e95205fdc6c8f2b6f6dd4b5d7bc4efd78606ef5ab20bca",
-            //         "result": {
-            //             "analytic_type": "LICENSE_PLATE_RECOGNITION",
-            //             "result": [
-            //                 {
-            //                     "license_plate_recognition": [
-            //                         {
-            //                             "bounding_box": {
-            //                                 "height": 0.07172417640686035,
-            //                                 "left": 0.21474507451057434,
-            //                                 "top": 0.6687697172164917,
-            //                                 "width": 0.10315108299255371
-            //                             },
-            //                             "confidence": 0.8935918807983398,
-            //                             "label": "D1336TD"
-            //                         },
-            //                         {
-            //                             "bounding_box": {
-            //                                 "height": 0.06129580736160278,
-            //                                 "left": 0.6659622192382813,
-            //                                 "top": 0.5559597015380859,
-            //                                 "width": 0.0974544882774353
-            //                             },
-            //                             "confidence": 0.9186372756958008,
-            //                             "label": "2828XM"
-            //                         }
-            //                     ]
-            //                 }
-            //             ],
-            //             "status": "success"
-            //         }
-            //     },
-            //     "message": "License Plate Recognition Success",
-            //     "ok": true
-            // }
-
             const result = {}
 
             if(response.job?.result?.result[0]?.license_plate_recognition?.length > 0) {
