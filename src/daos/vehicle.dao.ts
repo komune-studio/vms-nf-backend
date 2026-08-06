@@ -54,9 +54,11 @@ export default class VehicleDAO {
     }
 
     static async getLatestDetection(plate_nums : string[]) {
+        if(plate_nums.length === 0) return []
+
         plate_nums = plate_nums.map(plate => `'${plate}'`)
 
-        const sql = `select distinct on (detection->'pipeline_data'->>'plate_number') detection->'pipeline_data'->>'plate_number' plate_number, detection->>'stream_name' as stream_name, event_time from event where (type = 'NFV4-LPR' OR type = 'NFV4-LPR2') AND detection->'pipeline_data'->>'plate_number' in (${plate_nums.join(", ")}) ORDER BY detection->'pipeline_data'->>'plate_number', event_time DESC ;`
+        const sql = `select distinct on (e.pipeline_data->>'plate_number') e.pipeline_data->>'plate_number' plate_number, s.name as stream_name, e.created_at as event_time from events e LEFT JOIN streams s ON s.id = e.stream_id where (e.analytic_id = 'NFV4-LPR' OR e.analytic_id = 'NFV4-LPR2') AND e.pipeline_data->>'plate_number' in (${plate_nums.join(", ")}) ORDER BY e.pipeline_data->>'plate_number', e.created_at DESC ;`
 
         console.log(sql)
 

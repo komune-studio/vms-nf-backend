@@ -40,7 +40,8 @@ export default class UtilController {
                 location_data: []
             }
             const {analytic, stream, start_date, end_date, start_time, end_time, gender, age} = req.query;
-            const streamEqualsClause = stream === 'null' ? [{stream_id: {in: mapSiteStream.map(siteStream => siteStream.stream_id)}}] : [{stream_id: {equals: stream}}]
+            const streamIds: string[] = stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream as string]
+            const analyticId = analytic as string
 
             if(analytic === 'NFV4-FR' || analytic === 'NFV4H-FR') {
                 const todaysCount = await VisitationDAO.getCount(
@@ -88,80 +89,32 @@ export default class UtilController {
             }
 
             //today's count
-            const todaysCount = await EventDAO.getCount(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            output.today = todaysCount._count.id;
+            output.today = await EventDAO.getCount(
+                streamIds,
+                analyticId,
+                moment().format('YYYY-MM-DDT00:00:00Z'),
+                moment().format('YYYY-MM-DDT23:59:59Z'))
 
             //yesterday's count
-            const yesterdaysCount = await EventDAO.getCount(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().subtract(1, 'day').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().subtract(1, 'day').format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            output.yesterday = yesterdaysCount._count.id;
+            output.yesterday = await EventDAO.getCount(
+                streamIds,
+                analyticId,
+                moment().subtract(1, 'day').format('YYYY-MM-DDT00:00:00Z'),
+                moment().subtract(1, 'day').format('YYYY-MM-DDT23:59:59Z'))
 
             //last 7 day's count
-            const last7DaysCount = await EventDAO.getCount(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().subtract(6, 'day').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            output.last_7_days = last7DaysCount._count.id;
+            output.last_7_days = await EventDAO.getCount(
+                streamIds,
+                analyticId,
+                moment().subtract(6, 'day').format('YYYY-MM-DDT00:00:00Z'),
+                moment().format('YYYY-MM-DDT23:59:59Z'))
 
             //last 30 day's count
-            const last30DaysCount = await EventDAO.getCount(
-                {
-                    AND: [
-                        ...streamEqualsClause,
-                        {
-                            event_time: {gte: moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z')}
-                        },
-                        {
-                            event_time: {lte: new Date(moment().format('YYYY-MM-DDT23:59:59Z'))}
-                        },
-                        {
-                            type: {equals: analytic}
-                        }
-                    ]
-                })
-
-            output.last_30_days = last30DaysCount._count.id;
+            output.last_30_days = await EventDAO.getCount(
+                streamIds,
+                analyticId,
+                moment().subtract(29, 'day').format('YYYY-MM-DDT00:00:00Z'),
+                moment().format('YYYY-MM-DDT23:59:59Z'))
 
 
             const visitationCountByTime = await VisitationDAO.getCountGroupByTime();
@@ -183,7 +136,7 @@ export default class UtilController {
             }
 
             // @ts-ignore
-            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
+            const countByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(streamIds, analytic)
 
             // @ts-ignore
             countByTimeAndStatus.forEach(data => {
@@ -248,7 +201,7 @@ export default class UtilController {
             if (Object.keys(output.daily_record).length === 0) output.daily_record = {'': 0}
 
             // @ts-ignore
-            const countByStreamId = await EventDAO.getCountGroupByStreamId(stream === 'null' ? mapSiteStream.map(siteStream => siteStream.stream_id) : [stream], analytic)
+            const countByStreamId = await EventDAO.getCountGroupByStreamId(streamIds, analytic)
             // @ts-ignore
             output.location_data = countByStreamId.map(data => ({...data, count: parseInt(data.count)}))
 

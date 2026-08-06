@@ -6,6 +6,37 @@ const prisma = PrismaService.getVisionaire();
 const enrolledFace = prisma.enrolled_face;
 
 export default class EnrolledFaceDAO {
+    static async create(data : any) {
+        return enrolledFace.create({data});
+    }
+
+    static async getById(id : number) {
+        return enrolledFace.findFirst({
+            where: {
+                id,
+                deleted_at: {equals: null}
+            }
+        });
+    }
+
+    static async update(id : number, data : any) {
+        return enrolledFace.update({
+            where: {
+                id
+            },
+            data
+        });
+    }
+
+    static async softDelete(id : number) {
+        return enrolledFace.update({
+            where: {
+                id
+            },
+            data: {deleted_at: new Date()}
+        });
+    }
+
     static async getByFaceIds(ids : number[]) {
         let result = enrolledFace.findMany({
             orderBy: {

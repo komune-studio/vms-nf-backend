@@ -1,14 +1,14 @@
 import {NextFunction, Request, Response} from "express";
-import FormData from "form-data";
 import fs from "fs";
 import moment from "moment";
 import VisitationDAO from "../daos/visitation.dao";
-import request, {requestWithFile} from "../utils/api.utils";
+import request from "../utils/api.utils";
 import {BadRequestError, ConflictError, NotFoundError} from "../utils/error.utils";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
 import FaceImageDAO from "../daos/face_image.dao";
 import SiteDAO from "../daos/site.dao";
 import AdminDAO from "../daos/admin.dao";
+import EnrollmentService, {enrollmentFields} from "../services/enrollment.service";
 const json2csv = require('json2csv').parse;
 
 export default class FaceController {
@@ -34,22 +34,22 @@ export default class FaceController {
         }
 
         try {
-            const body = new FormData();
-            Object.keys(req.body).forEach(key => {
-                body.append(key, req.body[key]);
+            const enrolledFace = await EnrollmentService.enroll({
+                image: fs.readFileSync(file.path),
+                name: req.body['name'],
+                identity_number: req.body['identity_number'],
+                status: req.body['status'] || 'VISITOR',
+                gender: req.body['gender'],
+                birth_place: req.body['birth_place'],
+                birth_date: req.body['birth_date'],
+                additional_info: req.body['additional_info']
             });
-            body.append('images', fs.createReadStream(file.path));
 
-
-            let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
-
-
-            if(result.ok) {
-                // @ts-ignore
-                await EnrolledFaceDAO.updateAdditionalInfo(result.enrollment.id, req.body.additional_info);
-            }
-
-            res.send(result);
+            res.send({
+                message: "successfully enrolled person",
+                ok: true,
+                enrollment: {...enrolledFace, face_id: enrolledFace.face_id.toString()}
+            });
         } catch (e) {
             console.log(e)
             return next(e);
@@ -228,27 +228,35 @@ export default class FaceController {
     }
 
     static async getFaceById(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
 
         try {
-            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
+            const enrolledFace = await EnrolledFaceDAO.getById(id);
 
-            if(result.ok) {
-                let response = await EnrolledFaceDAO.getAdditionaInfo(result.enrollment.id);
-
-                // @ts-ignore
-                result.enrollment.additional_info = response.additional_info;
+            if (!enrolledFace) {
+                return next(new NotFoundError("Face not found"));
             }
 
-            res.send(result);
+            res.send({
+                message: "successfully get enrolled person",
+                ok: true,
+                enrollment: await EnrollmentService.serialize(enrolledFace)
+            });
         } catch (e) {
             return next(e);
         }
     }
 
     static async updateFace(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const id = parseInt(req.params.id);
         const {file} = req;
+
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
 
         if (!req.body['identity_number']) {
             return next(new BadRequestError("Identity number is required."));
@@ -260,25 +268,29 @@ export default class FaceController {
 
         const enrollment = await EnrolledFaceDAO.getByIdentityNumber(req.body['identity_number'])
 
-        // @ts-ignore
-        if(enrollment && parseInt(id) !== enrollment.id) {
+        if(enrollment && id !== enrollment.id) {
             return next(new ConflictError(`Face with identity number: ${req.body['identity_number']} has been registered.`));
         }
 
         try {
-            const body = new FormData();
-            Object.keys(req.body).forEach(key => {
-                body.append(key, req.body[key]);
-            });
-            if(file) {
-                body.append('images', fs.createReadStream(file.path));
+            const enrolledFace = await EnrolledFaceDAO.getById(id);
+
+            if (!enrolledFace) {
+                return next(new NotFoundError("Face not found"));
             }
 
-            await EnrolledFaceDAO.updateAdditionalInfo(parseInt(id), req.body.additional_info);
+            await EnrolledFaceDAO.update(id, enrollmentFields(req.body));
 
-            let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'PUT', body);
+            if(file) {
+                await EnrollmentService.replaceFace(enrolledFace, fs.readFileSync(file.path));
+            }
 
-            res.send(result);
+            res.send({
+                message: "successfully updated enrollment",
+                ok: true,
+                // @ts-ignore
+                enrollment: await EnrollmentService.serialize(await EnrolledFaceDAO.getById(id))
+            });
         } catch (e) {
             return next(e);
         }  finally {
@@ -289,11 +301,21 @@ export default class FaceController {
     }
 
     static async deleteFace(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
 
         try {
-            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'DELETE');
-            res.send(result);
+            const enrolledFace = await EnrolledFaceDAO.getById(id);
+
+            if (!enrolledFace) {
+                return next(new NotFoundError("Face not found"));
+            }
+
+            await EnrollmentService.remove(enrolledFace);
+
+            res.send({message: "successfully deleted enrollment", ok: true});
         } catch (e) {
             return next(e);
         }
@@ -362,23 +384,9 @@ export default class FaceController {
 
             await EnrolledFaceDAO.recover(enrolledFace.id)
 
-            const faceImages = await FaceImageDAO.getByEnrolledFaceId(enrolledFace.id);
-
-            const body = new FormData();
-
-            for(const data of faceImages) {
-                body.append('deleted_variations', data.variation);
-            }
-
-            body.append('images', fs.createReadStream(file.path));
-            body.append('identity_number', enrolledFace.identity_number);
-            body.append('name', enrolledFace.name);
-            body.append('status', enrolledFace.status);
-            if(enrolledFace.gender) body.append('gender', enrolledFace.gender);
-            if(enrolledFace.birth_place) body.append('birth_place', enrolledFace.birth_place);
-            body.append('birth_date', moment(enrolledFace.birth_date).format('YYYY-MM-DD'));
-
-            await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment/${enrolledFace.id}`, 'PUT', body);
+            // Drops the old variations from FremisN and stores the new photo — the person's
+            // details on enrolled_face stay as they are.
+            await EnrollmentService.replaceFace(enrolledFace, fs.readFileSync(file.path));
 
             res.send({success: true});
         } catch (e) {
@@ -427,6 +435,31 @@ export default class FaceController {
             const response = await request(`${process.env.NF_FREMISN_API_URL}/face/match`, 'POST', req.body);
 
             res.send(response);
+        } catch (e) {
+            console.log(e)
+            return next(e);
+        }
+    }
+
+    static async getFaceImageById(req: Request, res: Response, next: NextFunction) {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
+
+        try {
+            const faceImage = await FaceImageDAO.getById(id);
+
+            if (!faceImage) {
+                return next(new NotFoundError("Face image not found"));
+            }
+
+            if (!faceImage.image_thumbnail) {
+                return next(new NotFoundError("Face image thumbnail not found"));
+            }
+
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.send(faceImage.image_thumbnail);
         } catch (e) {
             console.log(e)
             return next(e);

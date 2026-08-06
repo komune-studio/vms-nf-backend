@@ -1,10 +1,9 @@
 import {NextFunction, Request, Response} from "express";
-import FormData from "form-data";
 import fs from "fs";
 import EnrolledFaceDAO from "../daos/enrolled_face.dao";
-import request, {requestWithFile} from "../utils/api.utils";
 import {BadRequestError, NotFoundError} from "../utils/error.utils";
 import FaceImageDAO from "../daos/face_image.dao";
+import EnrollmentService, {enrollmentFields} from "../services/enrollment.service";
 
 export default class BlacklistController {
     static async createWhitelisted(req: Request, res: Response, next: NextFunction) {
@@ -14,15 +13,22 @@ export default class BlacklistController {
         }
 
         try {
-            const body = new FormData();
-            Object.keys(req.body).forEach(key => {
-                if (key !== "status")
-                    body.append(key, req.body[key]);
+            const enrolledFace = await EnrollmentService.enroll({
+                image: fs.readFileSync(file.path),
+                name: req.body['name'],
+                identity_number: req.body['identity_number'],
+                status: "WHITELIST",
+                gender: req.body['gender'],
+                birth_place: req.body['birth_place'],
+                birth_date: req.body['birth_date'],
+                additional_info: req.body['additional_info']
             });
-            body.append('status', "WHITELIST");
-            body.append('images', fs.createReadStream(file.path));
-            let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'POST', body);
-            res.send(result);
+
+            res.send({
+                message: "successfully enrolled person",
+                ok: true,
+                enrollment: {...enrolledFace, face_id: enrolledFace.face_id.toString()}
+            });
         } catch (e) {
             return next(e);
         } finally {
@@ -56,7 +62,6 @@ export default class BlacklistController {
             })
             // console.log(result1)
 
-            // let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'GET');
 
             // result = result.results.enrollments.filter((item: any) => item.status === "BLACKLIST");
             res.send(result.map(data => ({...data, face_id: data.face_id.toString()})));
@@ -66,48 +71,69 @@ export default class BlacklistController {
     }
 
     static async getWhitelistedById(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
 
         try {
-            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
+            const enrolledFace = await EnrolledFaceDAO.getById(id);
 
-            if (result.enrollment.status !== "WHITELIST") {
+            if (!enrolledFace || enrolledFace.status !== "WHITELIST") {
                 return next(new NotFoundError("Face not found"));
             }
-            res.send(result);
+
+            res.send({
+                message: "successfully get enrolled person",
+                ok: true,
+                enrollment: await EnrollmentService.serialize(enrolledFace)
+            });
         } catch (e) {
             return next(e);
         }
     }
 
     static async updateWhitelisted(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
 
         try {
-            const body = new FormData();
-            Object.keys(req.body).forEach(key => {
-                if (key !== "status")
-                    body.append(key, req.body[key]);
+            const enrolledFace = await EnrolledFaceDAO.getById(id);
+
+            if (!enrolledFace || enrolledFace.status !== "WHITELIST") {
+                return next(new NotFoundError("Face not found"));
+            }
+
+            const updated = await EnrolledFaceDAO.update(id, enrollmentFields(req.body, "WHITELIST"));
+
+            res.send({
+                message: "successfully updated enrollment",
+                ok: true,
+                enrollment: await EnrollmentService.serialize(updated)
             });
-            body.append('status', "WHITELIST");
-            let result = await requestWithFile(`${process.env.NF_VANILLA_API_URL}/enrollment`, 'PUT', body);
-            res.send(result);
         } catch (e) {
             return next(e);
         }
     }
 
     static async deletWhitelisted(req: Request, res: Response, next: NextFunction) {
-        const {id} = req.params;
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return next(new BadRequestError("Invalid ID."));
+        }
 
         try {
-            let face = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'GET');
-            if (face.enrollment.status !== "WHITELIST") {
+            const enrolledFace = await EnrolledFaceDAO.getById(id);
+
+            if (!enrolledFace || enrolledFace.status !== "WHITELIST") {
                 return next(new NotFoundError("Face not found"));
             }
 
-            let result = await request(`${process.env.NF_VANILLA_API_URL}/enrollment/${id}`, 'DELETE');
-            res.send(result);
+            await EnrollmentService.remove(enrolledFace);
+
+            res.send({message: "successfully deleted enrollment", ok: true});
         } catch (e) {
             return next(e);
         }

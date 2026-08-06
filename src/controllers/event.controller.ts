@@ -39,12 +39,15 @@ export default class EventController {
                 total_page:  Math.floor(((parseInt(count[0].count) - 1) / limit) + 1),
                 total_data: parseInt(count[0].count),
                 data: event.map(item => {
+                    // `events` only carries a single `jpeg`, so both image fields resolve to it.
+                    const image = item.jpeg ? Buffer.from(item.jpeg).toString('base64') : "";
+
                     // @ts-ignore
                     return {
                         ...item,
                         id: parseInt(item.id),
-                        primary_image: Buffer.from(item.primary_image).toString('base64'),
-                        secondary_image: Buffer.from(item.secondary_image).toString('base64'),
+                        primary_image: image,
+                        secondary_image: image,
                         visitor_status: visitData.find(visit => visit.event_id === item.detection?.pipeline_data?.event_id)?.status
                     }
                 })
@@ -74,10 +77,12 @@ export default class EventController {
             res.send({
                 enrollment: {...enrollment, face_id: enrollment.face_id.toString(), face_image_id: parseInt(faceImages[0].id)},
                 events: events.map(item => {
+                    const image = item.jpeg ? Buffer.from(item.jpeg).toString('base64') : "";
+
                     return {
                         ...item,
-                        primary_image: Buffer.from(item.primary_image).toString('base64'),
-                        secondary_image: Buffer.from(item.secondary_image).toString('base64')
+                        primary_image: image,
+                        secondary_image: image
                     }
                 })
             });

@@ -33,4 +33,7 @@ export default function routesFace(router : Router) {
 
     router.route('/face/:booking_no/booking_number')
         .get(FaceController.getByBookingNo)
+
+    router.route('/face/image/:id')
+        .get(FaceController.getFaceImageById)
 }

@@ -22,19 +22,6 @@ model admin {
   active      Boolean?  @default(true)
 }
 
-model event {
-  id              Int       @id @default(autoincrement())
-  type            String
-  stream_id       String
-  detection       Json
-  primary_image   Bytes?
-  secondary_image Bytes?
-  result          Json?
-  status          String?
-  event_time      DateTime? @default(now())
-  created_at      DateTime? @default(now())
-}
-
 model enrolled_face {
   id              Int          @id @default(autoincrement())
   face_id         BigInt       @db.BigInt
@@ -195,4 +182,16 @@ model streams {
   latitude    Float?      @default(0)
   custom_data Json        @default("{}")
   pipelines   pipelines[]
+}
+
+model events {
+  id             BigInt?  @default(dbgenerated("generate_uid()"))
+  created_at     DateTime @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamp(6)
+  stream_id      String
+  analytic_id    String
+  stream_address String
+  jpeg           Bytes?
+  pipeline_data  Json     @default("{}")
+
+  @@ignore
 }
