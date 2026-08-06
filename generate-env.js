@@ -10,7 +10,8 @@ const env = {
     NF_VANILLA_API_URL: `http://${process.env.NF_IP}:${process.env.VANILLA_PORT}/api`,
     NF_FREMISN_API_URL: `http://${process.env.NF_IP}:${process.env.FREMISN_PORT}/v1`,
     NF_LPR_API_URL: `http://${process.env.NF_IP}:${process.env.LPR_PORT}`,
-    NF_KEYSPACE: process.env.NF_KEYSPACE
+    NF_KEYSPACE: process.env.NF_KEYSPACE,
+    DATABASE_FACE_URL: `postgresql://postgres:nfvisionaire123@${process.env.NF_IP}:${process.env.DB_PORT}/face`
 }
 
 if(!process.env.SECRET_KEY) {
