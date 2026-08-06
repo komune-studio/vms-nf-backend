@@ -174,3 +174,25 @@ model booking {
    check_out          Boolean?    @default(false)
    created_at      DateTime    @default(now()) @db.Timestamptz(6)
 }
+
+model pipelines {
+  stream_id   String
+  analytic_id String
+  created_at  DateTime @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamp(6)
+  configs     Json     @default("{}")
+  streams     streams  @relation(fields: [stream_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([stream_id, analytic_id])
+}
+
+model streams {
+  id          String      @id
+  created_at  DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamp(6)
+  address     String
+  name        String
+  node_num    Int?
+  longitude   Float?      @default(0)
+  latitude    Float?      @default(0)
+  custom_data Json        @default("{}")
+  pipelines   pipelines[]
+}

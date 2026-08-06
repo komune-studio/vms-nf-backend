@@ -1,6 +1,6 @@
 import PrismaService from "../services/prisma.service";
 
-const streams = PrismaService.getNFV4().streams;
+const streams = PrismaService.getVisionaire().streams;
 
 export default class StreamDAO {
     static async getStreamsById(ids : Array<string>) {

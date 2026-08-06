@@ -9,7 +9,7 @@ import {NotFoundError} from "../utils/error.utils";
 export default class StreamController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const streams = await StreamDAO.getAll();
+            const streams = await StreamDAO.getAll()
 
             const mapSiteStream = await MapSiteStreamDAO.getByStreamIds(streams.map(stream => stream.id))
             const analytics = await PipelineDAO.getByStreamIds(streams.map(stream => stream.id))
@@ -32,6 +32,8 @@ export default class StreamController {
                     }
                 })
             })
+
+            console.log(streams)
 
             // @ts-ignore
             res.send(streams)

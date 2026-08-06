@@ -1,6 +1,6 @@
 import PrismaService from "../services/prisma.service";
 
-const pipelines = PrismaService.getNFV4().pipelines;
+const pipelines = PrismaService.getVisionaire().pipelines;
 
 export default class PipelineDAO {
     static async getByStreamIds(streamIds: string[]) {
