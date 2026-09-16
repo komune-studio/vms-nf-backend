@@ -29,62 +29,29 @@ export default class UtilController {
                 end_date = undefined;
             }
 
+        
+
             if (!analytic || analytic === 'null') {
                 if (fetch === 'people_count') {
                     // @ts-ignore
-                    const peopleCount = await EventDAO.getCount(
-                        {
-                            AND: [
-                                {
-                                    detection: {
-                                        path: ['pipeline_data', 'attributes', 'gender', 'label'],
-                                        not: ''
-                                    },
-                                },  // @ts-ignore
-                                {stream_id: {in: stream.split(',')}},
-                                {  // @ts-ignore
-                                    event_time: {gte: start_date}
-                                },
-                                { // @ts-ignore
-                                    event_time: {lte: end_date}
-                                },
-                                {
-                                    type: {equals: 'NFV4-MPAA'}
-                                }
-                            ]
-                        })
+                    const peopleCount = await EventDAO.getPeopleCount(stream.split(','), start_date, end_date)
 
                     // @ts-ignore
-                    output.people_count = peopleCount._count.id;
+                    output.people_count = peopleCount;
                 }
 
                 if(fetch === 'vehicle_count') {
-                    const vehicleCount = await EventDAO.getCount(
-                        {
-                            AND: [  // @ts-ignore
-                                {stream_id: {in: stream.split(',')}},
-                                {
-                                    detection: {
-                                        path: ['pipeline_data', 'logic'],
-                                        equals: 'counting'
-                                    },
-                                },
-                                {  // @ts-ignore
-                                    event_time: {gte: moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z')}
-                                },
-                                { // @ts-ignore
-                                    event_time: {lte: end_date ? moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined}
-                                },
-                                {
-                                    type: {
-                                        equals: 'NFV4-MVA'
-                                    }
-                                }
-                            ]
-                        })
+                    const vehicleCount = await EventDAO.getVehicleCount(
+                        // @ts-ignore
+                        stream.split(','),
+                        // @ts-ignore
+                        moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z'),
+                        // @ts-ignore
+                        end_date ? moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined
+                    )
 
                     // @ts-ignore
-                    output.vehicle_count = vehicleCount._count.id;
+                    output.vehicle_count = vehicleCount;
                 }
 
 
@@ -373,7 +340,15 @@ export default class UtilController {
             const response = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
 
 
-            const dwellingAvgs : any = {}
+            // Argumennya tidak bergantung pada baris mana pun, jadi nilainya sama
+            // untuk semua stream. Dulu dipanggil di dalam loop dengan penjaga
+            // `!dwellingAvgs[stream_id]`; begitu hasilnya 0 atau null penjaga itu
+            // tidak pernah terpenuhi sehingga query full-scan yang sama diulang
+            // untuk SETIAP baris hasil.
+            const overallAvgDwelling = analytic === 'NFV4-VD' && response.length
+                // @ts-ignore
+                ? (await EventDAO.getAvgDuration(stream.split(','), start_date, end_date))[0]?.avg
+                : undefined
 
             const totalAvgStream : any = {}
 
@@ -396,22 +371,6 @@ export default class UtilController {
                 }
 
                 if (analytic === 'NFV4-VD') {
-                    if(!dwellingAvgs[data.stream_id]) {
-                        // @ts-ignore
-                        const avgDuration = await EventDAO.getAvgDuration(stream.split(','), start_date, end_date)
-
-                        // @ts-ignore
-                        dwellingAvgs[data.stream_id] = avgDuration[0].avg;
-                    }
-
-                    // // @ts-ignore
-                    // console.log('=====')
-                    // // @ts-ignore
-                    // console.log('stream_id: ', data.stream_id)
-                    // // @ts-ignore
-                    // console.log('sum dwelling time: ', data.sum)
-                    // console.log('=====');
-
                     // @ts-ignore
                     if(!totalAvgStream[data.stream_id]) {
                         totalAvgStream[data.stream_id] = data.sum
@@ -420,7 +379,7 @@ export default class UtilController {
                     }
 
                     // @ts-ignore
-                    (output[key])[data.stream_id] = {avg_dwelling_time: data.avg, total_dwelling_time: data.sum, overall_avg: dwellingAvgs[data.stream_id]}
+                    (output[key])[data.stream_id] = {avg_dwelling_time: data.avg, total_dwelling_time: data.sum, overall_avg: overallAvgDwelling}
 
                 } else {
                     // @ts-ignore
@@ -478,8 +437,11 @@ export default class UtilController {
     }
 
     static async getCameraDetailSummary(req: Request, res: Response, next: NextFunction) {
+
+          
         try {
             const {analytic_id, stream_id, time} = req.params;
+
             let {interval, start_time, end_time, line} = req.query;
 
             // @ts-ignore
@@ -517,13 +479,13 @@ export default class UtilController {
 
             if (analytic_id === 'NFV4-FR' || analytic_id === 'NFV4H-FR') {
                 result = {KNOWN: 0, UNKNOWN: 0}
-
+                
                 // @ts-ignore
                 const response = await EventDAO.getFaceRecognitionSummary(stream_id, startTime)
 
                 response.forEach(data => {
                     // @ts-ignore
-                    result[data.status] = parseInt(data._count.id)
+                    result[data.status] = data.count
                 })
             } else if (analytic_id === 'NFV4-LPR2') {
                 result = {KNOWN: 0, UNKNOWN: 0}
@@ -546,8 +508,12 @@ export default class UtilController {
                     }
                 }
             } else if (analytic_id === 'NFV4-VC') {
+               
                 result = {car: 0, motorcycle: 0, truck: 0, bus: 0, heatmap_data: []}
-
+                
+                console.log('params', {
+                    stream_id : [stream_id], analytic_id : analytic_id, startTime : startTime, endTime : endTime, interval : interval, line : line
+                })
                 // @ts-ignore
                 const response = await EventDAO.getCountGroupByTimeAndStatus([stream_id], analytic_id, startTime, endTime, interval, line)
 
@@ -568,16 +534,12 @@ export default class UtilController {
                     })
                 })
 
-                result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([, a], [, b]) => b - a)
-                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
-
                 //only return top 3 ranking
-                Object.keys(result.ranking).forEach((key, idx) => {
-                    if (idx > 2) {
-                        delete result.ranking[key]
-                    }
-                })
+                result.ranking = Object.fromEntries(
+                    Object.entries(ranking)   // @ts-ignore
+                        .sort(([, a], [, b]) => b - a)
+                        .slice(0, 3)
+                );
             } else if (analytic_id === 'NFV4-MPAA') {
                 result = {Male: 0, Female: 0, heatmap_data: []}
 
@@ -601,16 +563,12 @@ export default class UtilController {
                     })
                 })
 
-                result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([, a], [, b]) => b - a)
-                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
-
                 //only return top 3 ranking
-                Object.keys(result.ranking).forEach((key, idx) => {
-                    if (idx > 2) {
-                        delete result.ranking[key]
-                    }
-                })
+                result.ranking = Object.fromEntries(
+                    Object.entries(ranking)   // @ts-ignore
+                        .sort(([, a], [, b]) => b - a)
+                        .slice(0, 3)
+                );
             } else if (analytic_id === 'NFV4-VD') {
                 result = {max: {}, min: {}, avg: 0, total_data: 0, heatmap_data: []}
 
@@ -655,16 +613,12 @@ export default class UtilController {
                     })
                 })
 
-                result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([, a], [, b]) => b.avg - a.avg)
-                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
-
                 //only return top 3 ranking
-                Object.keys(result.ranking).forEach((key, idx) => {
-                    if (idx > 2) {
-                        delete result.ranking[key]
-                    }
-                })
+                result.ranking = Object.fromEntries(
+                    Object.entries(ranking)   // @ts-ignore
+                        .sort(([, a], [, b]) => b.avg - a.avg)
+                        .slice(0, 3)
+                );
             } else {
                 result = {total: 0, heatmap_data: []}
 
@@ -682,16 +636,12 @@ export default class UtilController {
                     })
                 })
 
-                result.ranking = Object.entries(ranking)   // @ts-ignore
-                    .sort(([, a], [, b]) => b - a)
-                    .reduce((r, [k, v]) => ({...r, [k]: v}), {});
-
                 //only return top 3 ranking
-                Object.keys(result.ranking).forEach((key, idx) => {
-                    if (idx > 2) {
-                        delete result.ranking[key]
-                    }
-                })
+                result.ranking = Object.fromEntries(
+                    Object.entries(ranking)   // @ts-ignore
+                        .sort(([, a], [, b]) => b - a)
+                        .slice(0, 3)
+                );
             }
 
             res.send(result)

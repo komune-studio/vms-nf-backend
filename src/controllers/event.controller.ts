@@ -131,13 +131,13 @@ export default class EventController {
             const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
             const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
 
-            if(stream) {
-                stream = "'" + stream.split(',').join("', '") + "'"
-                stream = `(${stream})`
-            }
+            // DAO menerima daftar stream sebagai array dan mengirimnya sebagai
+            // bind parameter, jadi tidak perlu lagi dirangkai jadi literal SQL.
+            // @ts-ignore
+            const streams: string[] = stream ? stream.split(',') : [];
 
             // @ts-ignore
-            let event = await EventDAO.getAllWithPagination(keyword, status, stream, analytic, startDate, endDate, download ? null : parseInt(page), download ? null : parseInt(limit));
+            let event = await EventDAO.getAllWithPagination(keyword, status, streams, analytic, startDate, endDate, download ? null : parseInt(page), download ? null : parseInt(limit));
 
             if(download) {
                 const fields = ['Result', 'Timestamp', 'Location'];
@@ -156,14 +156,14 @@ export default class EventController {
             }
 
             // @ts-ignore
-            let count = await EventDAO.getCountWithPagination(keyword, status, stream, analytic, startDate, endDate);
+            let count = await EventDAO.getCountWithPagination(keyword, status, streams, analytic, startDate, endDate);
 
             let additional_info = {}
 
             if(analytic === 'NFV4-VC') {
                 additional_info = {car: 0, motorcycle: 0, bus: 0, truck: 0};
 
-                let countGroupByStatus = await EventDAO.getCountGroupByStatus(analytic, stream, startDate, endDate)
+                let countGroupByStatus = await EventDAO.getCountGroupByStatus(analytic, streams, startDate, endDate)
 
                 countGroupByStatus.forEach(data => {
                     additional_info[data.status] = parseInt(data.count);
@@ -171,13 +171,13 @@ export default class EventController {
             } else if (analytic === 'NFV4-VD') {
                 additional_info = {avg: 0};
 
-                let avg = await EventDAO.getAvg(stream, startDate, endDate)
+                let avg = await EventDAO.getAvg(streams, startDate, endDate)
 
                 additional_info.avg = avg[0].avg;
             } else if (analytic === 'NFV4-MPAA') {
                 additional_info = {Male: 0, Female: 0};
 
-                let countGroupByGender = await EventDAO.getCountGroupByGender(stream, startDate, endDate)
+                let countGroupByGender = await EventDAO.getCountGroupByGender(streams, startDate, endDate)
 
                 countGroupByGender.forEach(data => {
                     additional_info[data.gender] = parseInt(data.count);
