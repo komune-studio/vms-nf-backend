@@ -676,33 +676,82 @@ export default class EventDAO {
         return result;
     }
 
+    /**
+     * `event_id` berformat `<unix-epoch>-<acak>`, dan prefix epoch-nya PERSIS
+     * sama dengan `event_time` — diverifikasi pada 416.602 baris: 0 pelanggaran,
+     * selisih minimum dan maksimum sama-sama nol.
+     *
+     * Tanpa memanfaatkan itu, mencari satu baris berarti memindai seluruh isi
+     * setiap partisi. Terukur: 5,3 detik bila barisnya ada di partisi terbaru,
+     * 8,6 detik bila event_id-nya tidak ada sama sekali. Dengan menurunkan
+     * `event_time` dari prefix, query bisa memakai index `(event_time, status)`
+     * sekaligus memangkas partisi — turun ke 0,2 ms.
+     *
+     * Batas atas `created_at` diberi margin 1 hari, jauh di atas lag ingest yang
+     * terukur (5 milidetik sampai 4,2 detik), supaya tetap benar seandainya
+     * ingest sempat tertinggal jauh. Kalau format event_id tidak dikenali,
+     * predikat turunan ini dilewati dan query kembali memindai penuh: lambat,
+     * tapi tetap mengembalikan hasil yang benar.
+     */
     static async getByEventId(eventId: string) {
-        let result = event.findFirst({
-            where: {
-                detection: {
-                    path: ['pipeline_data', 'event_id'],
-                    equals: eventId
-                }
-            }
-        });
+        const conditions: Prisma.Sql[] = [
+            Prisma.sql`e.detection->'pipeline_data'->>'event_id' = ${eventId}`
+        ]
 
-        return result;
+        const epoch = /^(\d{9,11})-/.exec(eventId ?? '')?.[1]
+
+        if (epoch) {
+            const at = new Date(Number(epoch) * 1000)
+
+            conditions.push(
+                Prisma.sql`e.event_time = ${at}`,
+                Prisma.sql`e.created_at >= ${at}`,
+                Prisma.sql`e.created_at < ${at} + interval '1 day'`
+            )
+        }
+
+        const [row] = await prisma.$queryRaw<any[]>`
+            SELECT e.id, e.type, e.stream_id, e.detection, e.primary_image, e.secondary_image,
+                   e.result, e.status, e.event_time, e.created_at
+            FROM event e
+            WHERE ${where(conditions)}
+            LIMIT 1
+        `
+
+        if (!row) return null
+
+        // id bertipe bigint di DB; findFirst dulu mengembalikannya sebagai number
+        // (schema Prisma menyebutnya Int), dan controller mengirim baris ini apa
+        // adanya lewat res.send — JSON.stringify menolak BigInt.
+        return { ...row, id: Number(row.id) }
     }
 
+    /**
+     * Dulu memakai `event.groupBy({ _count: { id: true } })`, yang menghasilkan
+     * `SELECT COUNT(id), status ... GROUP BY status OFFSET 0` — sama seperti
+     * `countWhere`, `COUNT(id)` plus `OFFSET` menghalangi agregasi didorong ke
+     * parallel worker, dan lewat query builder tidak ada cara menyisipkan
+     * predikat `created_at` untuk partition pruning.
+     *
+     * Bentuk kembaliannya juga berubah, dan ini memperbaiki bug: groupBy
+     * menghasilkan `{ status, _count: { id } }`, sedangkan pemanggilnya di
+     * util.controller.ts membaca `data.count` — yang selalu undefined, sehingga
+     * ringkasan face recognition tidak pernah menampilkan angka. Sekarang
+     * kolomnya benar-benar bernama `count` dan sudah berupa number.
+     */
     static async getFaceRecognitionSummary(streamId: string, startTime: string) {
-        let result = event.groupBy({
-            by: ['status'],
-            _count: { id: true },
-            where: {
-                stream_id: streamId,
-                event_time: {
-                    gte: startTime
-                },
-                type: { in: FACE_RECOGNITION_TYPES }
-            }
-        });
+        const rows = await prisma.$queryRaw<{ status: string, count: bigint }[]>`
+            SELECT count(*) AS count, e.status
+            FROM event e
+            WHERE ${where([
+                Prisma.sql`e.stream_id = ${streamId}`,
+                Prisma.sql`e.type = ANY(${FACE_RECOGNITION_TYPES}::text[])`,
+                ...eventTimeRange(startTime)
+            ])}
+            GROUP BY e.status
+        `
 
-        return result;
+        return rows.map(row => ({ ...row, count: Number(row.count) }))
     }
 
     static async getLicensePlateRecognitionSummary(streamId: string, startTime: string) {
@@ -719,19 +768,20 @@ export default class EventDAO {
         `
     }
 
+    /**
+     * CATATAN: method ini tidak dipanggil dari mana pun (sudah dicek di seluruh
+     * src/). Tetap dioptimalkan agar konsisten, tapi kandidat kuat untuk dihapus.
+     *
+     * Bentuk kembaliannya berubah dari `{ _count: { id } }` menjadi number,
+     * mengikuti getPeopleCount/getVehicleCount. Aman justru karena belum ada
+     * pemanggil yang bisa rusak.
+     */
     static async getGeneralAnalyticSummary(analytic: string, streamId: string, startTime: string) {
-        let result = event.aggregate({
-            _count: { id: true },
-            where: {
-                type: analytic,
-                stream_id: streamId,
-                event_time: {
-                    gte: startTime
-                },
-            }
-        });
-
-        return result;
+        return EventDAO.countWhere([
+            Prisma.sql`e.type = ${analytic}`,
+            Prisma.sql`e.stream_id = ${streamId}`,
+            ...eventTimeRange(startTime)
+        ])
     }
 
 }
