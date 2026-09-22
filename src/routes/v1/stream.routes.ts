@@ -15,6 +15,9 @@ export default function routesStream(router : Router) {
         .put(authAdmin, StreamController.update)
         .delete(authAdmin, StreamController.delete);
 
+    router.route('/streams/:node/:id/export-pdf')
+        .get(authAll, StreamController.exportStreamDetailPDF);
+
     router.route('/stream/pipeline/:code')
         .get(authAll, PipelineController.getByAnalyticId)
 

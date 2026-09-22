@@ -9,6 +9,12 @@ export default function eventRoutes(router : Router) {
     router.route('/event/export-data')
         .get(authAll, EventController.exportData);
 
+    router.route('/event/export-pdf')
+        .get(authAll, EventController.exportDataPdf);
+
+    router.route('/event/export-data-excel')
+        .get(authAll, EventController.exportDataExcel);
+
     router.route('/event/:event_id')
         .get(EventController.getByEventId);
 
