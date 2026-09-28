@@ -36,9 +36,19 @@ export default class StreamController {
 
             const mapSiteStream = await MapSiteStreamDAO.getByStreamIds(streams.map(stream => stream.id))
             const analytics = await PipelineDAO.getByStreamIds(streams.map(stream => stream.id))
+            const knownStreams = [];
+
             for (const stream of streams) {
-                // @ts-ignore
-                let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "GET")
+                let result;
+
+                try {
+                    result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "GET")
+                } catch (e: any) {
+                    if (e?.status === 404) continue;
+
+                    throw e;
+                }
+
                 // @ts-ignore
                 stream.stream_stats = result.stream_stats;
 
@@ -65,10 +75,12 @@ export default class StreamController {
                         stream.configs.push(analytic.configs);
                     }
                 })
+
+                knownStreams.push(stream);
             }
 
             // @ts-ignore
-            res.send(streams)
+            res.send(knownStreams)
         } catch (err) {
             console.log(err)
             return next(err);
