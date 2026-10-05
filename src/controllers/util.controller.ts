@@ -8,6 +8,10 @@ import {BadRequestError} from "../utils/error.utils";
 import AdminDAO from "../daos/admin.dao";
 import MapSiteStreamDAO from "../daos/map_site_stream.dao";
 import buildCameraDetailSummary from "../services/camera_detail_summary.service";
+import buildDashboardReport from "../services/dashboard_report.service";
+import * as DashboardSummary from "../services/dashboard_summary.service";
+import buildDashboardPDF from "../utils/dashboard_report.utils";
+import {collectPDF} from "../utils/pdf.utils";
 
 export default class UtilController {
     static async getDashboardSummary(req: Request, res: Response, next: NextFunction) {
@@ -32,280 +36,63 @@ export default class UtilController {
 
         
 
+            // @ts-ignore
+            const streams: string[] = stream ? stream.split(',') : [];
+
             if (!analytic || analytic === 'null') {
                 if (fetch === 'people_count') {
                     // @ts-ignore
-                    const peopleCount = await EventDAO.getPeopleCount(stream.split(','), start_date, end_date)
-
-                    // @ts-ignore
-                    output.people_count = peopleCount;
+                    output.people_count = await DashboardSummary.peopleCount(streams, start_date, end_date);
                 }
 
-                if(fetch === 'vehicle_count') {
-                    const vehicleCount = await EventDAO.getVehicleCount(
-                        // @ts-ignore
-                        stream.split(','),
-                        // @ts-ignore
-                        moment(start_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z'),
-                        // @ts-ignore
-                        end_date ? moment(end_date.replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined
-                    )
-
+                if (fetch === 'vehicle_count') {
                     // @ts-ignore
-                    output.vehicle_count = vehicleCount;
+                    output.vehicle_count = await DashboardSummary.vehicleCount(streams, start_date, end_date);
                 }
 
-
-                if(fetch === 'avg_vehicle_dwelling') {
+                if (fetch === 'avg_vehicle_dwelling') {
                     // @ts-ignore
-                    const avgVehicleDwelling = await EventDAO.getAvgDuration(stream.split(','), start_date, end_date)
-
-
-                    // @ts-ignore
-                    output.avg_vehicle_dwelling = avgVehicleDwelling[0].avg || 0;
+                    output.avg_vehicle_dwelling = await DashboardSummary.avgVehicleDwelling(streams, start_date, end_date);
                 }
 
-                if(fetch === 'people_and_vehicle_summary') {
+                if (fetch === 'people_and_vehicle_summary') {
                     // @ts-ignore
-                    const peopleAndVehicleCountGroupByTime = await EventDAO.getCountPeopleAndVehicleGroupByTime(stream.split(','), start_date, end_date, interval);
-
-                    // @ts-ignore
-                    output.people_and_vehicle_summary = {}
-
-                    // @ts-ignore
-                    peopleAndVehicleCountGroupByTime.forEach(data => {
-                        const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
-
-                        // @ts-ignore
-                        if (!output.people_and_vehicle_summary[key]) {
-                            // @ts-ignore
-                            (output.people_and_vehicle_summary[key]) = {'NFV4-MPAA': 0, 'NFV4-MVA': 0};
-                        }
-
-                        // @ts-ignore
-                        (output.people_and_vehicle_summary[key])[data.type] = parseInt(data.count);
-                    })
+                    output.people_and_vehicle_summary = await DashboardSummary.peopleAndVehicleSummary(streams, start_date, end_date, interval);
                 }
             } else if (analytic === 'NFV4-PC' || analytic === 'NFV4-VC' || analytic === 'NFV4-MPAA') {
-                const streams = await StreamDAO.getAll();
-
-                if(fetch === 'summary') {
+                if (fetch === 'summary') {
                     // @ts-ignore
-                    let countGroupByTime = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
+                    const {summary, summary_location} = await DashboardSummary.countingSummary(streams, start_date, end_date, analytic, interval);
 
                     // @ts-ignore
-                    countGroupByTime.forEach(data => {
-                        streams.forEach(stream => {
-                            if (data.stream_id === stream.id) {
-                                data.location = stream.name;
-                            }
-                        })
-                    })
-
+                    output.summary = summary;
                     // @ts-ignore
-                    output.summary = {}
-                    // @ts-ignore
-                    output.summary_location = {}
-
-
-                    // @ts-ignore
-                    countGroupByTime.forEach(data => {
-                        const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
-
-                        // @ts-ignore
-                        if (!output.summary[key]) {
-                            if (analytic === 'NFV4-VC') {
-                                // @ts-ignore
-                                output.summary[key] = {car: 0, motorcycle: 0, bus: 0, truck: 0}
-                            } else if (analytic === 'NFV4-MPAA') {
-                                // @ts-ignore
-                                output.summary[key] = {Male: 0, Female: 0}
-                            } else {
-                                // @ts-ignore
-                                output.summary[key] = 0
-                            }
-                        }
-
-                        if (analytic === 'NFV4-VC') {
-                            // @ts-ignore
-                            (output.summary[key])[data.status] += parseInt(data.count);
-                        } else if (analytic === 'NFV4-MPAA') {
-                            // @ts-ignore
-                            (output.summary[key])[data.gender] += parseInt(data.count);
-                        } else {
-                            // @ts-ignore
-                            (output.summary[key]) += parseInt(data.count);
-                        }
-
-                        // @ts-ignore
-                        if (!output.summary_location[data.location]) {
-                            // @ts-ignore
-                            output.summary_location[data.location] = 0
-                        }
-
-                        // @ts-ignore
-                        (output.summary_location[data.location]) += parseInt(data.count);
-                    })
+                    output.summary_location = summary_location;
                 }
 
-                if(fetch === 'detailed_summary_location') {
+                if (fetch === 'detailed_summary_location') {
                     // @ts-ignore
-                    let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
-
-                    // @ts-ignore
-                    countGroupByLocation.forEach(data => {
-                        streams.forEach(stream => {
-                            if (data.stream_id === stream.id) {
-                                data.location = stream.name;
-                            }
-                        })
-                    })
-
-                    // @ts-ignore
-                    output.detailed_summary_location = countGroupByLocation.map(data => ({
-                        ...data,
-                        count: parseInt(data.count)
-                    }))
-
-                    if (analytic === 'NFV4-VC') {
-                        // @ts-ignore
-                        output.detailed_summary_location = output.detailed_summary_location.map(data => {
-                            // @ts-ignore
-                            return {
-                                // @ts-ignore
-                                ...data, total_vehicles: output.detailed_summary_location.reduce((accumulator, value) => {
-                                    if (value.stream_id === data.stream_id && value.location === data.location) {
-                                        return accumulator + value.count;
-                                    }
-
-                                    return accumulator
-                                }, 0)
-                            }
-                        })
-
-                        // @ts-ignore
-                        output.detailed_summary_location.sort((a, b) => b.total_vehicles - a.total_vehicles)
-                    }
-
-                    if (analytic === 'NFV4-MPAA') {
-                        // @ts-ignore
-                        output.detailed_summary_location = output.detailed_summary_location.map(data => {
-                            // @ts-ignore
-                            return {
-                                // @ts-ignore
-                                ...data, total_people: output.detailed_summary_location.reduce((accumulator, value) => {
-                                    if (value.stream_id === data.stream_id && value.location === data.location) {
-                                        return accumulator + value.count;
-                                    }
-
-                                    return accumulator
-                                }, 0)
-                            }
-                        })
-
-                        // @ts-ignore
-                        output.detailed_summary_location.sort((a, b) => b.total_people - a.total_people)
-                    }
+                    output.detailed_summary_location = await DashboardSummary.detailedSummaryLocation(streams, start_date, end_date, analytic);
                 }
 
-                if(fetch === 'heatmap_data') {
+                if (fetch === 'heatmap_data') {
                     // @ts-ignore
-                    const countGroupByTimeAndStatus = await EventDAO.getCountGroupByTimeAndStatus(stream.split(','), analytic, start_date, end_date, interval)
-
-                    // @ts-ignore
-                    output.heatmap_data = []
-
-                    if (analytic === 'NFV4-VC') {
-                        // @ts-ignore
-                        countGroupByTimeAndStatus.forEach(data => {
-                            // @ts-ignore
-                            output.heatmap_data.push({
-                                label: data.status,
-                                event_time: data.interval_alias,
-                                count: parseInt(data.count)
-                            })
-                        })
-                    } else if (analytic === 'NFV4-MPAA') {
-                        // @ts-ignore
-                        countGroupByTimeAndStatus.forEach(data => {
-                            // @ts-ignore
-                            output.heatmap_data.push({
-                                label: data.gender,
-                                event_time: data.interval_alias,
-                                count: parseInt(data.count)
-                            })
-                        })
-                    } else {
-                        // @ts-ignore
-                        countGroupByTimeAndStatus.forEach(data => {
-                            // @ts-ignore
-                            output.heatmap_data.push({
-                                event_time: data.interval_alias,
-                                avg: Math.round(data.avg * 100) / 100,
-                            })
-                        })
-                    }
+                    output.heatmap_data = await DashboardSummary.heatmapData(streams, start_date, end_date, analytic, interval);
                 }
             } else {
-                const streams = await StreamDAO.getAll()
-
-                if(fetch === 'summary') {
+                if (fetch === 'summary') {
                     // @ts-ignore
-                    let avgGroupByTime = await EventDAO.getAvgGroupByTime(stream.split(','), start_date, end_date, interval);
-
-                    // @ts-ignore
-                    output.summary = {}
-
-                    // @ts-ignore
-                    avgGroupByTime.forEach(data => {
-                        const key = moment(data.interval_alias).format('DD-MM-YYYY HH:mm');
-
-                        // @ts-ignore
-                        output.summary[key] = {avg_dwelling_time: data.avg, total_vehicles: parseInt(data.count)}
-                    })
+                    output.summary = await DashboardSummary.dwellingSummary(streams, start_date, end_date, interval);
                 }
 
-                if(fetch === 'summary_location') {
+                if (fetch === 'summary_location') {
                     // @ts-ignore
-                    let avgGroupByLocation = await EventDAO.getAvgGroupByLocation(stream.split(','), start_date, end_date);
-
-                    // @ts-ignore
-                    avgGroupByLocation.forEach(data => {
-                        streams.forEach(stream => {
-                            if (data.stream_id === stream.id) {
-                                data.location = stream.name;
-                            }
-                        })
-                    })
-
-                    // @ts-ignore
-                    output.summary_location = {}
-
-                    // @ts-ignore
-                    avgGroupByLocation.forEach(data => {
-                        // @ts-ignore
-                        (output.summary_location[data.location]) = parseInt(data.count);
-                    });
+                    output.summary_location = await DashboardSummary.dwellingSummaryLocation(streams, start_date, end_date);
                 }
 
-                if(fetch === 'detailed_summary_location') {
+                if (fetch === 'detailed_summary_location') {
                     // @ts-ignore
-                    let countGroupByLocation = await EventDAO.getCountGroupLocation(stream.split(','), start_date, end_date, analytic);
-
-                    // @ts-ignore
-                    countGroupByLocation.forEach(data => {
-                        streams.forEach(stream => {
-                            if (data.stream_id === stream.id) {
-                                data.location = stream.name;
-                            }
-                        })
-                    })
-
-                    // @ts-ignore
-                    output.detailed_summary_location = countGroupByLocation.map(data => ({
-                        ...data,
-                        count: parseInt(data.count)
-                    }))
+                    output.detailed_summary_location = await DashboardSummary.detailedSummaryLocation(streams, start_date, end_date, analytic);
                 }
             }
 
@@ -315,6 +102,66 @@ export default class UtilController {
 
             return next(e);
         }
+    }
+
+    private static async exportDashboard(analytic: string | null, req: Request, res: Response, next: NextFunction) {
+        const {stream, start_date, end_date, interval} = req.query;
+
+        if (!stream) {
+            return next(new BadRequestError({stream: "Stream is not defined."}));
+        }
+
+        try {
+            // @ts-ignore
+            const streams: string[] = stream.split(',').filter(Boolean);
+
+            // @ts-ignore
+            const parsedInterval = interval && interval != '0' && !isNaN(parseInt(interval))
+                // @ts-ignore
+                ? parseInt(interval)
+                : 86400;
+
+            const context = await buildDashboardReport({
+                analytic,
+                streams,
+                startDate: start_date,
+                endDate: end_date === 'undefined' ? undefined : end_date,
+                interval: parsedInterval
+            });
+
+            const pdf = await collectPDF(buildDashboardPDF(context));
+
+            const filename = ['dashboard', context.title, moment().format('YYYYMMDD-HHmm')]
+                .map(part => String(part ?? '').replace(/[^a-zA-Z0-9-_]+/g, '_'))
+                .filter(Boolean)
+                .join('_');
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+            res.setHeader('Content-Length', pdf.length);
+
+            return res.send(pdf);
+        } catch (e) {
+            console.log(e);
+
+            return next(e);
+        }
+    }
+
+    static async exportGeneral(req: Request, res: Response, next: NextFunction) {
+        return UtilController.exportDashboard(null, req, res, next);
+    }
+
+    static async exportPeopleCounting(req: Request, res: Response, next: NextFunction) {
+        return UtilController.exportDashboard('NFV4-MPAA', req, res, next);
+    }
+
+    static async exportVehicleCounting(req: Request, res: Response, next: NextFunction) {
+        return UtilController.exportDashboard('NFV4-VC', req, res, next);
+    }
+
+    static async exportVehicleDweling(req: Request, res: Response, next: NextFunction) {
+        return UtilController.exportDashboard('NFV4-VD', req, res, next);
     }
 
     static async compare(req: Request, res: Response, next: NextFunction) {

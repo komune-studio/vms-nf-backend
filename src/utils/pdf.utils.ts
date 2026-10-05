@@ -5,6 +5,8 @@ export const INK = '#1D1E30';
 export const MUTED = '#666666';
 export const BORDER = '#E5E8EB';
 export const SOFT = '#F7F8FA';
+/** Jarak isi card ke border-nya. */
+export const CARD_PADDING = 14;
 
 export interface Tile {
     label: string
@@ -39,7 +41,7 @@ export function drawCard(doc: PDFKit.PDFDocument, y: number, height: number, tit
     doc.fillColor(INK)
         .font('Helvetica-Bold')
         .fontSize(11)
-        .text(title, MARGIN + 14, y + 13, {width: contentWidth(doc) - 28});
+        .text(title, MARGIN + CARD_PADDING, y + 13, {width: contentWidth(doc) - CARD_PADDING * 2});
 
     return y + 34;
 }
@@ -70,10 +72,12 @@ export function drawReportHeader(doc: PDFKit.PDFDocument, title: string, subtitl
 }
 
 
-export function drawTiles(doc: PDFKit.PDFDocument, y: number, tiles: Tile[], perRow: number): number {
+/** `inset` menjorokkan deretan tile ke dalam card; pakai 0 kalau digambar di luar card. */
+export function drawTiles(doc: PDFKit.PDFDocument, y: number, tiles: Tile[], perRow: number, inset = CARD_PADDING): number {
     if (tiles.length === 0) return y;
 
-    const width = contentWidth(doc);
+    const width = contentWidth(doc) - inset * 2;
+    const left = MARGIN + inset;
     const gap = 10;
     const tileWidth = (width - gap * (perRow - 1)) / perRow;
     const rowCount = Math.ceil(tiles.length / perRow);
@@ -85,7 +89,7 @@ export function drawTiles(doc: PDFKit.PDFDocument, y: number, tiles: Tile[], per
         const slice = tiles.slice(row * perRow, row * perRow + perRow);
 
         slice.forEach((tile, index) => {
-            const x = MARGIN + (tileWidth + gap) * index;
+            const x = left + (tileWidth + gap) * index;
 
             if (!tile.plain) doc.roundedRect(x, cursor, tileWidth, tileHeight, 5).fill(SOFT);
 
