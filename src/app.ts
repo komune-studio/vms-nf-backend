@@ -19,6 +19,8 @@ import CameraResolutionController from "./controllers/camera_resolution.controll
 import DashboardCustomizationDAO from "./daos/dashboard_customization.dao";
 import NotificationDAO from "./daos/notification.dao";
 import NotificationsUsersDAO from "./daos/notification_user.dao";
+import EventSummaryDAO from "./daos/event_summary.dao";
+import { startEventSummaryRefresh } from "./services/event_summary_refresh.service";
 
 dotenv.config();
 
@@ -83,6 +85,10 @@ app.use(handleErrors);
         await NotificationsUsersDAO.createTable();
         console.log("notifications_users table created successfully.");
 
+        console.log('Creating event_summary_hourly table')
+        await EventSummaryDAO.createTable();
+        console.log("event_summary_hourly table created successfully.");
+
         const isAppNameInitialized = await DashboardCustomizationDAO.getByKey("app_name")
 
         if(!isAppNameInitialized) {
@@ -102,6 +108,8 @@ app.use(handleErrors);
     const server = app.listen(PORT, async () => {
         console.log(`Server listening on port ${PORT}!`);
     });
+
+    startEventSummaryRefresh();
 
     if(process.env.RECORD_FACE_DETECTION) {
         await WebsocketService.initialize(server);

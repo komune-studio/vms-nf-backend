@@ -1,5 +1,6 @@
 import {NextFunction, Request, Response} from "express";
 import EventDAO from "../daos/event.dao";
+import EventAggregateService from "../services/event_aggregate.service";
 import {format, getTime, formatDistanceToNow} from 'date-fns';
 import moment from 'moment';
 import StreamDAO from "../daos/stream.dao";
@@ -173,7 +174,7 @@ export default class UtilController {
                 // @ts-ignore
                 interval = parseInt(interval);
             } else {
-                // @ts-ignore
+                // @ts-ignoren
                 interval = 86400
             }
 
@@ -185,7 +186,7 @@ export default class UtilController {
             const output = {};
 
             // @ts-ignore
-            const response = await EventDAO.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
+            const response = await EventAggregateService.getCountGroupByStatusAndTimeAndLocation(stream.split(','), start_date, end_date, analytic, interval);
 
 
             // Argumennya tidak bergantung pada baris mana pun, jadi nilainya sama
@@ -195,7 +196,7 @@ export default class UtilController {
             // untuk SETIAP baris hasil.
             const overallAvgDwelling = analytic === 'NFV4-VD' && response.length
                 // @ts-ignore
-                ? (await EventDAO.getAvgDuration(stream.split(','), start_date, end_date))[0]?.avg
+                ? (await EventAggregateService.getAvgDuration(stream.split(','), start_date, end_date))[0]?.avg
                 : undefined
 
             const totalAvgStream : any = {}

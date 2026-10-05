@@ -114,10 +114,10 @@ export default class EventController {
             // @ts-ignore
             const streams: string[] = stream ? stream.split(',') : [];
 
-            // @ts-ignore
-            let event = await EventDAO.getAllWithPagination(keyword, status, streams, analytic, startDate, endDate, download ? null : parseInt(page), download ? null : parseInt(limit));
-
             if (download) {
+                // @ts-ignore
+                const event = await EventDAO.getAllWithPagination(keyword, status, streams, analytic, startDate, endDate, null, null);
+
                 const fields = ['Result', 'Timestamp', 'Location'];
 
                 const docs = event.map(item => ({
@@ -133,16 +133,18 @@ export default class EventController {
                 return res.send(data)
             }
 
-            // @ts-ignore
-            let count = await EventDAO.getCountWithPagination(keyword, status, streams, analytic, startDate, endDate);
+            const { summary: additional_info, total, dataBefore } = await buildEventSummary(analytic, streams, startDate, endDate);
 
-            const additional_info = await buildEventSummary(analytic, streams, startDate, endDate);
+            // @ts-ignore
+            const event = await EventDAO.getAllWithPagination(keyword, status, streams, analytic, startDate, endDate, parseInt(page), parseInt(limit), dataBefore);
+
+            const count = await EventController.countTotal(keyword, status, streams, analytic, startDate, endDate, total);
 
             // @ts-ignore
             res.send({
                 ...additional_info,
-                total_page: Math.floor(((parseInt(count[0].count) - 1) / limit) + 1),
-                total_data: parseInt(count[0].count),
+                total_page: Math.floor(((count - 1) / limit) + 1),
+                total_data: count,
                 data: event.map(item => {
                     // @ts-ignore
                     return {
@@ -233,16 +235,15 @@ export default class EventController {
                 .filter(Boolean)
                 .sort((a: string, b: string) => a.localeCompare(b));
 
-            const total = await EventDAO.getCountWithPagination(keyword, status, streams, analytic, startDate, endDate);
-            const totalData = parseInt(total[0].count);
+            const { summary, total, dataBefore } = await buildEventSummary(analytic, streams, startDate, endDate);
+            const totalData = await EventController.countTotal(keyword, status, streams, analytic, startDate, endDate, total);
 
             const size = Math.min(requested, MAX_PDF_ROWS, totalData);
 
             const events = size > 0
-                ? await EventDAO.getAllWithPagination(keyword, status, streams, analytic, startDate, endDate, 1, size)
+                ? await EventDAO.getAllWithPagination(keyword, status, streams, analytic, startDate, endDate, 1, size, dataBefore)
                 : [];
 
-            const summary = await buildEventSummary(analytic, streams, startDate, endDate);
             const rows = events.map(item => EventController.toReportRow(item, analytic));
 
             const doc = buildEventListPDF({
@@ -276,6 +277,16 @@ export default class EventController {
         }
     }
 
+    // Total dari ringkasan sama dengan count pagination selama tidak ada keyword dan ada stream terpilih.
+    private static async countTotal(keyword: any, status: any, streams: string[], analytic: any, startDate: any, endDate: any, summaryTotal: number | null): Promise<number> {
+        const hasKeyword = keyword && keyword !== 'null';
+
+        if (summaryTotal !== null && !hasKeyword && streams.length > 0) return summaryTotal;
+
+        const count = await EventDAO.getCountWithPagination(keyword, status, streams, analytic, startDate, endDate);
+
+        return parseInt(count[0].count);
+    }
 
     private static toReportRow(item: any, analytic: any) {
         let resultText: string = item.result?.result ?? '';

@@ -64,16 +64,22 @@ const streamFilter = (streams: string[]) => Prisma.sql`e.stream_id = ANY(${strea
  * String tanpa penanda zona waktu diperlakukan sebagai UTC, menyamai perilaku
  * lama ketika literalnya diparse Postgres dengan session TimeZone = UTC.
  */
-const timestampParam = (value: string): Prisma.Sql => {
+export const parseTimestamp = (value: string): Date | null => {
     const normalized = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value.trim())
         ? value.trim()
         : `${value.trim().replace(' ', 'T')}Z`
 
     const parsed = new Date(normalized)
 
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+const timestampParam = (value: string): Prisma.Sql => {
+    const parsed = parseTimestamp(value)
+
     // Kalau formatnya tak dikenali JS, serahkan kembali ke Postgres: lebih
     // lambat, tapi lebih baik daripada diam-diam membuang filter waktunya.
-    return Number.isNaN(parsed.getTime()) ? Prisma.sql`${value}::timestamptz` : Prisma.sql`${parsed}`
+    return parsed ? Prisma.sql`${parsed}` : Prisma.sql`${value}::timestamptz`
 }
 
 /**
@@ -117,7 +123,7 @@ const eventTimeRange = (startTime?: string | null, endTime?: string | null): Pri
  * 'logic' sengaja ditulis sebagai literal, bukan parameter, supaya predikat
  * partial index pada detection->>'logic' bisa di-match oleh planner.
  */
-const analyticFilter = (analytic: string): Prisma.Sql => {
+export const analyticFilter = (analytic: string): Prisma.Sql => {
     if (analytic === 'NFV4-VC')
         return Prisma.sql`e.type = 'NFV4-MVA' AND e.detection->'pipeline_data'->>'logic' = 'counting'`
 
@@ -129,8 +135,8 @@ const analyticFilter = (analytic: string): Prisma.Sql => {
 
 const DWELLING = analyticFilter('NFV4-VD')
 
-const timeBucket = (interval: number) =>
-    Prisma.sql`to_timestamp(floor(extract('epoch' from e.event_time) / ${interval}::double precision) * ${interval}::double precision)`
+export const timeBucket = (interval: number, column: Prisma.Sql = Prisma.sql`e.event_time`) =>
+    Prisma.sql`to_timestamp(floor(extract('epoch' from ${column}) / ${interval}::double precision) * ${interval}::double precision)`
 
 /**
  * Kolom yang diekspos sebagai `status`. Dikembalikan sebagai ekspresi (bukan
@@ -601,7 +607,8 @@ export default class EventDAO {
         `
     }
 
-    static async getAllWithPagination(keyword: string | null, status: string | null, streams: string[], analytic: string | null, startDate: string, endDate: string, page: number, limit: number) {
+    // dataBefore: tidak ada event yang cocok di atas batas ini, jadi index scan mundur bisa mulai dari situ.
+    static async getAllWithPagination(keyword: string | null, status: string | null, streams: string[], analytic: string | null, startDate: string, endDate: string, page: number, limit: number, dataBefore: Date | null = null) {
         const conditions = EventDAO.paginationFilter(
             keyword === 'null' ? null : keyword,
             status === 'null' ? null : status,
@@ -610,6 +617,8 @@ export default class EventDAO {
             startDate,
             endDate
         )
+
+        if (dataBefore) conditions.push(Prisma.sql`e.event_time < ${dataBefore}`)
 
         // primary_image/secondary_image bertipe bytea dan paling mahal untuk
         // dibaca, jadi hanya diambil pada mode pagination (bukan export CSV).

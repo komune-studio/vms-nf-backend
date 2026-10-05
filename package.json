@@ -9,6 +9,7 @@
     "seed:status": "ts-node scripts/seed/seed_events.ts status",
     "seed:revert": "ts-node scripts/seed/seed_events.ts revert",
     "db:event-indexes": "ts-node scripts/db/event_indexes.ts",
+    "db:event-summary": "ts-node scripts/db/event_summary.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -1,5 +1,6 @@
 import moment from "moment";
 import EventDAO from "../daos/event.dao";
+import EventAggregateService from "./event_aggregate.service";
 import StreamDAO from "../daos/stream.dao";
 
 /**
@@ -33,20 +34,20 @@ export const peopleCount = (streams: string[], startDate: any, endDate: any) =>
  * zona waktu jadi spasi, dan moment tidak mengenali bentuk itu.
  */
 export const vehicleCount = (streams: string[], startDate: any, endDate: any) =>
-    EventDAO.getVehicleCount(
+    EventAggregateService.getVehicleCount(
         streams,
         moment(String(startDate).replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z'),
         endDate ? moment(String(endDate).replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined as any
     );
 
 export async function avgVehicleDwelling(streams: string[], startDate: any, endDate: any): Promise<number> {
-    const rows = await EventDAO.getAvgDuration(streams, startDate, endDate, '');
+    const rows = await EventAggregateService.getAvgDuration(streams, startDate, endDate, '');
 
     return rows[0]?.avg || 0;
 }
 
 export async function peopleAndVehicleSummary(streams: string[], startDate: any, endDate: any, interval: number): Promise<any> {
-    const rows = await EventDAO.getCountPeopleAndVehicleGroupByTime(streams, startDate, endDate, interval);
+    const rows = await EventAggregateService.getCountPeopleAndVehicleGroupByTime(streams, startDate, endDate, interval);
 
     const summary: any = {};
 
@@ -64,7 +65,7 @@ export async function peopleAndVehicleSummary(streams: string[], startDate: any,
 /** Mode `summary` untuk NFV4-PC / NFV4-VC / NFV4-MPAA. */
 export async function countingSummary(streams: string[], startDate: any, endDate: any, analytic: string, interval: number): Promise<any> {
     const rows = await withLocation(
-        await EventDAO.getCountGroupByStatusAndTimeAndLocation(streams, startDate, endDate, analytic, interval)
+        await EventAggregateService.getCountGroupByStatusAndTimeAndLocation(streams, startDate, endDate, analytic, interval)
     );
 
     const summary: any = {};
@@ -101,7 +102,7 @@ export async function countingSummary(streams: string[], startDate: any, endDate
 
 /** Mode `summary` untuk analitik dwelling. */
 export async function dwellingSummary(streams: string[], startDate: any, endDate: any, interval: number): Promise<any> {
-    const rows = await EventDAO.getAvgGroupByTime(streams, startDate, endDate, interval);
+    const rows = await EventAggregateService.getAvgGroupByTime(streams, startDate, endDate, interval);
 
     const summary: any = {};
 
@@ -116,7 +117,7 @@ export async function dwellingSummary(streams: string[], startDate: any, endDate
 
 /** Mode `summary_location` untuk analitik dwelling. */
 export async function dwellingSummaryLocation(streams: string[], startDate: any, endDate: any): Promise<any> {
-    const rows = await withLocation(await EventDAO.getAvgGroupByLocation(streams, startDate, endDate));
+    const rows = await withLocation(await EventAggregateService.getAvgGroupByLocation(streams, startDate, endDate));
 
     const summary_location: any = {};
 
@@ -128,7 +129,7 @@ export async function dwellingSummaryLocation(streams: string[], startDate: any,
 }
 
 export async function detailedSummaryLocation(streams: string[], startDate: any, endDate: any, analytic: any): Promise<any[]> {
-    const rows = await withLocation(await EventDAO.getCountGroupLocation(streams, startDate, endDate, analytic));
+    const rows = await withLocation(await EventAggregateService.getCountGroupLocation(streams, startDate, endDate, analytic));
 
     let detailed = rows.map((data: any) => ({...data, count: parseInt(data.count)}));
 
@@ -151,7 +152,7 @@ export async function detailedSummaryLocation(streams: string[], startDate: any,
 }
 
 export async function heatmapData(streams: string[], startDate: any, endDate: any, analytic: string, interval: number): Promise<any[]> {
-    const rows = await EventDAO.getCountGroupByTimeAndStatus(streams, analytic, startDate, endDate, interval);
+    const rows = await EventAggregateService.getCountGroupByTimeAndStatus(streams, analytic, startDate, endDate, interval);
 
     return rows.map((data: any) => {
         if (analytic === 'NFV4-VC') {
