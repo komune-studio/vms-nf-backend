@@ -37,6 +37,13 @@ export interface DashboardRankEntry {
     avg?: string
 }
 
+export interface DashboardRanking {
+    title: string
+    unit: string
+    hourly: boolean
+    entries: DashboardRankEntry[]
+}
+
 export interface DashboardReportContext {
     title: string
     startDate: string | null
@@ -51,9 +58,8 @@ export interface DashboardReportContext {
     columns: DashboardTableColumn[]
     rows: any[]
     spread: Buffer | null
-    ranking: DashboardRankEntry[]
-    rankingHourly: boolean
-    rankingUnit: string
+    /** Tab analitik: satu, di samping Detection Spread. Tab General: satu per analitik. */
+    rankings: DashboardRanking[]
     heatmap: RenderedImage | null
 }
 
@@ -128,9 +134,13 @@ function drawHalfCard(doc: PDFKit.PDFDocument, x: number, y: number, width: numb
     return y + 34;
 }
 
-function drawRanking(doc: PDFKit.PDFDocument, x: number, top: number, width: number, context: DashboardReportContext) {
-    const entries = context.ranking.slice(0, 3);
-    const rowHeight = 52;
+const RANKING_ROW_HEIGHT = 52;
+
+function drawRanking(doc: PDFKit.PDFDocument, x: number, top: number, width: number, ranking: DashboardRanking) {
+    const entries = ranking.entries.slice(0, 3);
+    const rowHeight = RANKING_ROW_HEIGHT;
+    const compact = width < 300;
+    const lineStep = compact ? 10 : 11;
 
     if (entries.length === 0) {
         doc.fillColor(MUTED).font('Helvetica').fontSize(10)
@@ -139,7 +149,7 @@ function drawRanking(doc: PDFKit.PDFDocument, x: number, top: number, width: num
     }
 
     const medals = ['#E8B923', '#B6BCC6', '#C98B5D'];
-    const valueWidth = 70;
+    const valueWidth = compact ? 60 : 70;
 
     entries.forEach((entry, index) => {
         const rowY = top + 14 + rowHeight * index;
@@ -150,30 +160,35 @@ function drawRanking(doc: PDFKit.PDFDocument, x: number, top: number, width: num
         doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(10)
             .text(String(index + 1), x + 1, rowY + 9.5, {width: 22, align: 'center'});
 
-        const textWidth = width - 34 - valueWidth * 2;
+        const textWidth = width - 34 - valueWidth * (compact ? 1 : 2);
 
         doc.fillColor(INK).font('Helvetica-Bold').fontSize(9.5)
             .text(date.format('ddd, DD MMM YYYY'), x + 34, rowY + 2, {width: textWidth, lineBreak: false});
 
-        let lineY = rowY + 15;
+        let lineY = rowY + (compact ? 14 : 15);
 
-        if (context.rankingHourly) {
+        if (ranking.hourly) {
             doc.fillColor(MUTED).font('Helvetica').fontSize(8)
                 .text(date.format('HH:mm - HH:59'), x + 34, lineY, {width: textWidth, lineBreak: false});
-            lineY += 11;
+            lineY += lineStep;
         }
 
         doc.fillColor(MUTED).font('Helvetica').fontSize(8)
             .text(`on ${entry.location}`, x + 34, lineY, {width: textWidth, ellipsis: true, lineBreak: false});
+
+        if (entry.avg && compact) {
+            doc.fillColor(MUTED).font('Helvetica').fontSize(8)
+                .text(`Avg. Time ${entry.avg}`, x + 34, lineY + lineStep, {width: textWidth, lineBreak: false});
+        }
 
         const totalX = x + width - valueWidth;
 
         doc.fillColor(INK).font('Helvetica-Bold').fontSize(11)
             .text(localeNumber(entry.total), totalX, rowY + 2, {width: valueWidth, align: 'right'});
         doc.fillColor(MUTED).font('Helvetica').fontSize(8)
-            .text(context.rankingUnit, totalX, rowY + 17, {width: valueWidth, align: 'right'});
+            .text(ranking.unit, totalX, rowY + 17, {width: valueWidth, align: 'right'});
 
-        if (entry.avg) {
+        if (entry.avg && !compact) {
             const avgX = totalX - valueWidth;
 
             doc.fillColor(INK).font('Helvetica-Bold').fontSize(11)
@@ -206,10 +221,27 @@ function drawSpreadAndRanking(doc: PDFKit.PDFDocument, y: number, context: Dashb
         doc.image(context.spread, MARGIN + CARD_PADDING, spreadTop, {width: innerWidth});
     }
 
-    const rankingTop = drawHalfCard(doc, rightX, top, cardWidth, height,
-        `Top Peak ${context.rankingHourly ? 'Time' : 'Days'}`);
+    const [ranking] = context.rankings;
+    const rankingTop = drawHalfCard(doc, rightX, top, cardWidth, height, ranking.title);
 
-    drawRanking(doc, rightX + CARD_PADDING, rankingTop, innerWidth, context);
+    drawRanking(doc, rightX + CARD_PADDING, rankingTop, innerWidth, ranking);
+
+    return top + height + 12;
+}
+
+function drawRankingRow(doc: PDFKit.PDFDocument, y: number, rankings: DashboardRanking[]): number {
+    const gap = 12;
+    const cardWidth = (contentWidth(doc) - gap * (rankings.length - 1)) / rankings.length;
+    const height = 34 + 10 + RANKING_ROW_HEIGHT * 3;
+
+    const top = ensureSpace(doc, y, height);
+
+    rankings.forEach((ranking, index) => {
+        const x = MARGIN + (cardWidth + gap) * index;
+        const contentTop = drawHalfCard(doc, x, top, cardWidth, height, ranking.title);
+
+        drawRanking(doc, x + CARD_PADDING, contentTop, cardWidth - CARD_PADDING * 2, ranking);
+    });
 
     return top + height + 12;
 }
@@ -360,6 +392,8 @@ export default function buildDashboardPDF(context: DashboardReportContext): PDFK
 
     if (context.spread) {
         y = drawSpreadAndRanking(doc, y, context);
+    } else if (context.rankings.length > 0) {
+        y = drawRankingRow(doc, y, context.rankings);
     }
 
     y = drawChart(doc, y, context);

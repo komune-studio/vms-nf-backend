@@ -5,7 +5,7 @@ import StreamDAO from "../daos/stream.dao";
 import EventDAO from "../daos/event.dao";
 import {analyticName} from "../utils/analytic.utils";
 import {ChartSeries, renderCartesianChart, renderDonut, renderHeatmap} from "../utils/chart.utils";
-import {DashboardRankEntry, DashboardReportContext, DashboardTableColumn} from "../utils/dashboard_report.utils";
+import {DashboardRanking, DashboardReportContext, DashboardTableColumn} from "../utils/dashboard_report.utils";
 import {localeNumber, numberOf} from "../utils/pdf.utils";
 import * as DashboardSummary from "./dashboard_summary.service";
 
@@ -109,10 +109,16 @@ const spreadChart = (summaryLocation: any): Buffer => renderDonut({
     colors: CHART_COLORS
 });
 
+const GENERAL_RANKINGS: [string, string][] = [
+    ['NFV4-MPAA', 'People'],
+    ['NFV4-VC', 'Vehicles'],
+    ['NFV4-VD', 'Vehicles']
+];
+
 const isSingleDay = (startDate: any, endDate: any): boolean =>
     moment(endDate || undefined).diff(moment(startDate), 'days') === 0;
 
-async function topPeak(streams: string[], analytic: string, startDate: any, endDate: any) {
+async function topPeak(streams: string[], analytic: string, startDate: any, endDate: any, unit: string): Promise<DashboardRanking> {
     const hourly = isSingleDay(startDate, endDate);
 
     const [rows, allStreams] = await Promise.all([
@@ -122,14 +128,17 @@ async function topPeak(streams: string[], analytic: string, startDate: any, endD
 
     const names = new Map(allStreams.map((stream: any) => [stream.id, stream.name]));
 
-    const ranking: DashboardRankEntry[] = rows.map((row: any) => ({
-        date: row.interval_alias,
-        location: names.get(row.stream_id) ?? '-',
-        total: numberOf(row.count),
-        avg: row.avg ? formatDuration(row.avg) : undefined
-    }));
-
-    return {ranking, rankingHourly: hourly};
+    return {
+        title: `Top Peak ${hourly ? 'Time' : 'Days'}`,
+        unit,
+        hourly,
+        entries: rows.map((row: any) => ({
+            date: row.interval_alias,
+            location: names.get(row.stream_id) ?? '-',
+            total: numberOf(row.count),
+            avg: row.avg ? formatDuration(row.avg) : undefined
+        }))
+    };
 }
 
 const WEEKLY_HEATMAP_FROM_DAYS = 30;
@@ -193,11 +202,18 @@ export default async function buildDashboardReport(request: DashboardReportReque
     };
 
     if (!analytic) {
-        const [people, vehicle, dwelling, rawSummary] = await Promise.all([
-            DashboardSummary.peopleCount(streams, startDate, endDate),
-            DashboardSummary.vehicleCount(streams, startDate, endDate),
-            DashboardSummary.avgVehicleDwelling(streams, startDate, endDate),
-            DashboardSummary.peopleAndVehicleSummary(streams, startDate, endDate, interval)
+        const [[people, vehicle, dwelling, rawSummary], rankings] = await Promise.all([
+            Promise.all([
+                DashboardSummary.peopleCount(streams, startDate, endDate),
+                DashboardSummary.vehicleCount(streams, startDate, endDate),
+                DashboardSummary.avgVehicleDwelling(streams, startDate, endDate),
+                DashboardSummary.peopleAndVehicleSummary(streams, startDate, endDate, interval)
+            ]),
+            Promise.all(GENERAL_RANKINGS.map(async ([id, unit]) => {
+                const ranking = await topPeak(streams, id, startDate, endDate, unit);
+
+                return {...ranking, title: `${ranking.title} · ${analyticName(id)}`};
+            }))
         ]);
 
         const summary = fillDays(rawSummary, startDate, endDate, interval);
@@ -226,19 +242,17 @@ export default async function buildDashboardReport(request: DashboardReportReque
             columns: [],
             rows: [],
             spread: null,
-            ranking: [],
-            rankingHourly: false,
-            rankingUnit: '',
+            rankings,
             heatmap: null
         };
     }
 
     if (analytic === 'NFV4-VD') {
-        const [rawSummary, summaryLocation, detailed, peak] = await Promise.all([
+        const [rawSummary, summaryLocation, detailed, ranking] = await Promise.all([
             DashboardSummary.dwellingSummary(streams, startDate, endDate, interval),
             DashboardSummary.dwellingSummaryLocation(streams, startDate, endDate),
             DashboardSummary.detailedSummaryLocation(streams, startDate, endDate, analytic),
-            topPeak(streams, analytic, startDate, endDate)
+            topPeak(streams, analytic, startDate, endDate, 'Vehicles')
         ]);
 
         const summary = fillDays(rawSummary, startDate, endDate, interval);
@@ -274,18 +288,17 @@ export default async function buildDashboardReport(request: DashboardReportReque
             ],
             rows: rowsPerCamera(detailed, sites, null),
             spread: spreadChart(summaryLocation),
-            ...peak,
-            rankingUnit: 'Vehicles',
+            rankings: [ranking],
             heatmap: null
         };
     }
 
     const isVehicle = analytic === 'NFV4-VC';
 
-    const [{summary: rawSummary, summary_location}, detailed, peak, heatmap] = await Promise.all([
+    const [{summary: rawSummary, summary_location}, detailed, ranking, heatmap] = await Promise.all([
         DashboardSummary.countingSummary(streams, startDate, endDate, analytic, interval),
         DashboardSummary.detailedSummaryLocation(streams, startDate, endDate, analytic),
-        topPeak(streams, analytic, startDate, endDate),
+        topPeak(streams, analytic, startDate, endDate, isVehicle ? 'Vehicles' : 'People'),
         isSingleDay(startDate, endDate) ? null : heatmapImage(streams, analytic, startDate, endDate)
     ]);
 
@@ -337,8 +350,7 @@ export default async function buildDashboardReport(request: DashboardReportReque
         ],
         rows: rowsPerCamera(detailed, sites, breakdownKey),
         spread: spreadChart(summary_location),
-        ...peak,
-        rankingUnit: isVehicle ? 'Vehicles' : 'People',
+        rankings: [ranking],
         heatmap
     };
 }
