@@ -20,6 +20,7 @@ import {
     Tile,
     tileHeightOf
 } from "./pdf.utils";
+import {RenderedImage} from "./chart.utils";
 
 
 
@@ -27,6 +28,13 @@ export interface DashboardTableColumn {
     key: string
     label: string
     type: 'count' | 'duration'
+}
+
+export interface DashboardRankEntry {
+    date: Date | string
+    location: string
+    total: number
+    avg?: string
 }
 
 export interface DashboardReportContext {
@@ -42,6 +50,11 @@ export interface DashboardReportContext {
     /** Kosong untuk tab General -- di layar pun tabelnya memang tidak ada. */
     columns: DashboardTableColumn[]
     rows: any[]
+    spread: Buffer | null
+    ranking: DashboardRankEntry[]
+    rankingHourly: boolean
+    rankingUnit: string
+    heatmap: RenderedImage | null
 }
 
 const ROW_HEIGHT = 22;
@@ -104,6 +117,120 @@ function drawChart(doc: PDFKit.PDFDocument, y: number, context: DashboardReportC
         doc.fillColor(MUTED).font('Helvetica').fontSize(10)
             .text('No Data Available', MARGIN + CARD_PADDING, contentTop + 10, {width: imageWidth, align: 'center'});
     }
+
+    return top + height + 12;
+}
+
+function drawHalfCard(doc: PDFKit.PDFDocument, x: number, y: number, width: number, height: number, title: string): number {
+    doc.roundedRect(x, y, width, height, 6).lineWidth(1).fillAndStroke('#FFFFFF', BORDER);
+    doc.fillColor(INK).font('Helvetica-Bold').fontSize(11).text(title, x + CARD_PADDING, y + 13, {width: width - CARD_PADDING * 2});
+
+    return y + 34;
+}
+
+function drawRanking(doc: PDFKit.PDFDocument, x: number, top: number, width: number, context: DashboardReportContext) {
+    const entries = context.ranking.slice(0, 3);
+    const rowHeight = 52;
+
+    if (entries.length === 0) {
+        doc.fillColor(MUTED).font('Helvetica').fontSize(10)
+            .text('No Data Available', x, top + 60, {width, align: 'center'});
+        return;
+    }
+
+    const medals = ['#E8B923', '#B6BCC6', '#C98B5D'];
+    const valueWidth = 70;
+
+    entries.forEach((entry, index) => {
+        const rowY = top + 14 + rowHeight * index;
+        // interval_alias berisi jam WIB tanpa zona waktu.
+        const date = moment.utc(entry.date);
+
+        doc.circle(x + 12, rowY + 14, 11).fill(medals[index]);
+        doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(10)
+            .text(String(index + 1), x + 1, rowY + 9.5, {width: 22, align: 'center'});
+
+        const textWidth = width - 34 - valueWidth * 2;
+
+        doc.fillColor(INK).font('Helvetica-Bold').fontSize(9.5)
+            .text(date.format('ddd, DD MMM YYYY'), x + 34, rowY + 2, {width: textWidth, lineBreak: false});
+
+        let lineY = rowY + 15;
+
+        if (context.rankingHourly) {
+            doc.fillColor(MUTED).font('Helvetica').fontSize(8)
+                .text(date.format('HH:mm - HH:59'), x + 34, lineY, {width: textWidth, lineBreak: false});
+            lineY += 11;
+        }
+
+        doc.fillColor(MUTED).font('Helvetica').fontSize(8)
+            .text(`on ${entry.location}`, x + 34, lineY, {width: textWidth, ellipsis: true, lineBreak: false});
+
+        const totalX = x + width - valueWidth;
+
+        doc.fillColor(INK).font('Helvetica-Bold').fontSize(11)
+            .text(localeNumber(entry.total), totalX, rowY + 2, {width: valueWidth, align: 'right'});
+        doc.fillColor(MUTED).font('Helvetica').fontSize(8)
+            .text(context.rankingUnit, totalX, rowY + 17, {width: valueWidth, align: 'right'});
+
+        if (entry.avg) {
+            const avgX = totalX - valueWidth;
+
+            doc.fillColor(INK).font('Helvetica-Bold').fontSize(11)
+                .text(entry.avg, avgX, rowY + 2, {width: valueWidth, align: 'right'});
+            doc.fillColor(MUTED).font('Helvetica').fontSize(8)
+                .text('Avg. Time', avgX, rowY + 17, {width: valueWidth, align: 'right'});
+        }
+
+        if (index < entries.length - 1) {
+            doc.moveTo(x, rowY + rowHeight - 8).lineTo(x + width, rowY + rowHeight - 8)
+                .lineWidth(0.5).strokeColor(BORDER).stroke();
+        }
+    });
+}
+
+function drawSpreadAndRanking(doc: PDFKit.PDFDocument, y: number, context: DashboardReportContext): number {
+    const gap = 12;
+    const cardWidth = (contentWidth(doc) - gap) / 2;
+    const innerWidth = cardWidth - CARD_PADDING * 2;
+    // 460 x 330 adalah ukuran logis donut di chart.utils.
+    const imageHeight = innerWidth * (330 / 460);
+    const height = 34 + imageHeight + 14;
+
+    const top = ensureSpace(doc, y, height);
+    const rightX = MARGIN + cardWidth + gap;
+
+    const spreadTop = drawHalfCard(doc, MARGIN, top, cardWidth, height, 'Detection Spread');
+
+    if (context.spread) {
+        doc.image(context.spread, MARGIN + CARD_PADDING, spreadTop, {width: innerWidth});
+    }
+
+    const rankingTop = drawHalfCard(doc, rightX, top, cardWidth, height,
+        `Top Peak ${context.rankingHourly ? 'Time' : 'Days'}`);
+
+    drawRanking(doc, rightX + CARD_PADDING, rankingTop, innerWidth, context);
+
+    return top + height + 12;
+}
+
+function drawHeatmap(doc: PDFKit.PDFDocument, y: number, heatmap: RenderedImage): number {
+    const width = contentWidth(doc);
+    const maxImageHeight = bottomLimit(doc) - MARGIN - 48;
+
+    let imageWidth = width - CARD_PADDING * 2;
+    let imageHeight = imageWidth * (heatmap.height / heatmap.width);
+
+    if (imageHeight > maxImageHeight) {
+        imageWidth = maxImageHeight * (heatmap.width / heatmap.height);
+        imageHeight = maxImageHeight;
+    }
+
+    const height = 34 + imageHeight + 14;
+    const top = ensureSpace(doc, y, height);
+    const contentTop = drawCard(doc, top, height, 'Heatmap');
+
+    doc.image(heatmap.buffer, MARGIN + (width - imageWidth) / 2, contentTop, {width: imageWidth});
 
     return top + height + 12;
 }
@@ -231,7 +358,15 @@ export default function buildDashboardPDF(context: DashboardReportContext): PDFK
         y = drawTable(doc, y, context);
     }
 
-    drawChart(doc, y, context);
+    if (context.spread) {
+        y = drawSpreadAndRanking(doc, y, context);
+    }
+
+    y = drawChart(doc, y, context);
+
+    if (context.heatmap) {
+        drawHeatmap(doc, y, context.heatmap);
+    }
 
     drawFooters(doc, `Dashboard · ${context.title}`);
 
