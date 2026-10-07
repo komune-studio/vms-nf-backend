@@ -35,8 +35,8 @@ export const peopleCount = (streams: string[], startDate: any, endDate: any) =>
 export const vehicleCount = (streams: string[], startDate: any, endDate: any) =>
     EventDAO.getVehicleCount(
         streams,
-        moment(String(startDate).replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z'),
-        endDate ? moment(String(endDate).replace(' ', '+')).format('YYYY-MM-DDTHH:mm:00Z') : undefined as any
+        moment(String(startDate).replace(' ', '+')).format('YYYY-MM-DDTHH:mm:ssZ'),
+        endDate ? moment(String(endDate).replace(' ', '+')).format('YYYY-MM-DDTHH:mm:ssZ') : undefined as any
     );
 
 export async function avgVehicleDwelling(streams: string[], startDate: any, endDate: any): Promise<number> {

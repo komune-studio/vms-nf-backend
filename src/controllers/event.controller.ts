@@ -108,7 +108,7 @@ export default class EventController {
 
         try {
             const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
-            const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+            const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:59Z') : null;
 
 
             // @ts-ignore
@@ -223,7 +223,7 @@ export default class EventController {
 
         try {
             const startDate = start_date ? moment(new Date(start_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
-            const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:00Z') : null;
+            const endDate = end_date ? moment(new Date(end_date)).format('YYYY-MM-DDTHH:mm:59Z') : null;
 
             const streams: string[] = stream ? stream.split(',').filter(Boolean) : [];
 
