@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  backend:
+    image: komunedashboard/backend:rtm
+    container_name: komune_backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NF_IP=192.168.1.50
+      - DB_PORT=5432
+      - VANILLA_PORT=4000
+      - VISIONAIRE_PORT=5000
+      - FREMISN_PORT=6000
+      - SECRET_KEY=aHsJ09wtn0286735384h.jHF42hynwMntgY
