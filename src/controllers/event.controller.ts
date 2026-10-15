@@ -95,7 +95,7 @@ export default class EventController {
     }
 
     static async getAll(req: Request, res: Response, next: NextFunction) {
-        let { keyword, status, stream, page, limit, analytic, start_date, end_date, download } = req.query;
+        let { keyword, status, stream, page, limit, analytic, start_date, end_date, download, summary } = req.query;
 
         download = download === 'true';
 
@@ -133,6 +133,21 @@ export default class EventController {
                 return res.send(data)
             }
 
+            const data = event.map(item => {
+                // @ts-ignore
+                return {
+                    ...item,
+                    id: parseInt(item.id),
+                    primary_image: Buffer.from(item.primary_image).toString('base64'),
+                    secondary_image: Buffer.from(item.secondary_image).toString('base64')
+                }
+            });
+
+            // summary=false: rows only, skips the full-range count and label summary.
+            if (summary === 'false') {
+                return res.send({ data });
+            }
+
             // @ts-ignore
             let count = await EventDAO.getCountWithPagination(keyword, status, streams, analytic, startDate, endDate);
 
@@ -143,15 +158,7 @@ export default class EventController {
                 ...additional_info,
                 total_page: Math.floor(((parseInt(count[0].count) - 1) / limit) + 1),
                 total_data: parseInt(count[0].count),
-                data: event.map(item => {
-                    // @ts-ignore
-                    return {
-                        ...item,
-                        id: parseInt(item.id),
-                        primary_image: Buffer.from(item.primary_image).toString('base64'),
-                        secondary_image: Buffer.from(item.secondary_image).toString('base64')
-                    }
-                })
+                data
             });
         } catch (e) {
             console.log(e)

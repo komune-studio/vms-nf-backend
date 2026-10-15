@@ -29,6 +29,13 @@ const RANKING_UNITS: Record<string, string> = {
     'NFV4-VD': 'vehicles'
 };
 
+// Seed streams (scripts/seed) have no running pipeline, so the engine 404s on them.
+const isSeedStream = (stream: any) => stream.custom_data?.seed === true;
+const SEED_ENGINE_RESULT = {
+    stream_stats: { fps: 0, frame_height: 0, frame_width: 0, last_error_msg: "Seed stream", state: "STOPPED" },
+    seats: []
+};
+
 export default class StreamController {
     static async getAll(req: Request, res: Response, next: NextFunction) {
         try {
@@ -44,9 +51,10 @@ export default class StreamController {
                 try {
                     result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${stream.node_num}/${stream.id}`, "GET")
                 } catch (e: any) {
-                    if (e?.status === 404) continue;
+                    if (e?.status !== 404) throw e;
+                    if (!isSeedStream(stream)) continue;
 
-                    throw e;
+                    result = SEED_ENGINE_RESULT;
                 }
 
                 // @ts-ignore
@@ -107,7 +115,14 @@ export default class StreamController {
                 return next(new NotFoundError("Stream not found.", "STREAM"));
             }
 
-            let result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}/${id}`, "GET")
+            let result: any;
+            try {
+                result = await request(`${process.env.NF_VISIONAIRE_API_URL}/streams/${node}/${id}`, "GET")
+            } catch (e: any) {
+                if (e?.status !== 404 || !isSeedStream(stream)) throw e;
+
+                result = SEED_ENGINE_RESULT;
+            }
 
             let pipelines = await PipelineDAO.getByStreamIds([id]);
             stream.pipelines = pipelines.map(pipeline => pipeline.analytic_id);
