@@ -88,7 +88,7 @@ function niceTicks(max: number, desired = 5): number[] {
     const step = (normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 2.5 ? 2.5 : normalized <= 5 ? 5 : 10) * magnitude;
 
     const ticks: number[] = [];
-    for (let value = 0; value <= max + step / 2; value += step) {
+    for (let value = 0; value < max + step; value += step) {
         ticks.push(Number(value.toFixed(10)));
     }
 
@@ -369,8 +369,15 @@ export function renderHeatmap(options: HeatmapOptions): RenderedImage {
     probe.font = `11px ${FONT}`;
     const yLabelWidth = Math.max(...yCategories.map(label => probe.measureText(String(label)).width));
 
+    let peak = 0;
+    data.forEach(row => row.forEach(value => {
+        const numeric = Number(value) || 0;
+        if (numeric > peak) peak = numeric;
+    }));
+
+    probe.font = `10px ${FONT}`;
     const plotLeft = yLabelWidth + 22;
-    const legendWidth = 58;
+    const legendWidth = Math.max(58, 16 + 12 + 5 + probe.measureText(valueFormat(peak)).width + 4);
     const plotRight = width - legendWidth;
     const cellWidth = (plotRight - plotLeft) / xCategories.length;
     const cellHeight = Math.max(20, Math.min(34, cellWidth * 0.85));
@@ -380,12 +387,6 @@ export function renderHeatmap(options: HeatmapOptions): RenderedImage {
     const height = plotTop + cellHeight * yCategories.length + bottomSpace;
 
     const {canvas, ctx} = beginCanvas(width, height);
-
-    let peak = 0;
-    data.forEach(row => row.forEach(value => {
-        const numeric = Number(value) || 0;
-        if (numeric > peak) peak = numeric;
-    }));
 
     const colorOf = (value: number): string => {
         const ratio = peak > 0 ? Math.min(1, Math.max(0, value / peak)) : 0;
@@ -452,6 +453,107 @@ export function renderHeatmap(options: HeatmapOptions): RenderedImage {
     });
 
     return {buffer: canvas.toBuffer('image/png'), width, height};
+}
+
+export interface DonutOptions {
+    slices: {label: string, value: number}[]
+    colors: string[]
+    width?: number
+    height?: number
+}
+
+export function renderDonut(options: DonutOptions): Buffer {
+    const width = options.width ?? 460;
+    const height = options.height ?? 330;
+    const slices = options.slices.filter(slice => (Number(slice.value) || 0) > 0);
+    const total = slices.reduce((sum, slice) => sum + slice.value, 0);
+
+    const {canvas, ctx} = beginCanvas(width, height);
+
+    if (total === 0) {
+        drawNoData(ctx, width, height);
+        return canvas.toBuffer('image/png');
+    }
+
+    const colorOf = (index: number) => options.colors[index % options.colors.length];
+
+    const legendWidth = width * 0.4;
+    const rowHeight = Math.min(24, (height - 20) / slices.length);
+    const legendTop = (height - rowHeight * slices.length) / 2;
+    const swatch = Math.min(10, rowHeight - 6);
+
+    ctx.font = `10px ${FONT}`;
+    const valueWidth = Math.max(...slices.map(slice => ctx.measureText(formatCount(slice.value)).width));
+    const valueX = legendWidth - 8;
+    const labelX = swatch + 10;
+    const labelMax = valueX - valueWidth - 12 - labelX;
+
+    slices.forEach((slice, index) => {
+        const middle = legendTop + rowHeight * (index + 0.5);
+
+        ctx.fillStyle = colorOf(index);
+        roundedRect(ctx, 0, middle - swatch / 2, swatch, swatch, 3);
+        ctx.fill();
+
+        let label = slice.label;
+        while (label.length > 1 && ctx.measureText(label).width > labelMax) label = label.slice(0, -1);
+        if (label !== slice.label) label = `${label.slice(0, -1)}…`;
+
+        ctx.fillStyle = TEXT_COLOR;
+        ctx.textAlign = 'left';
+        ctx.fillText(label, labelX, middle + 3.5);
+
+        ctx.textAlign = 'right';
+        ctx.fillText(formatCount(slice.value), valueX, middle + 3.5);
+    });
+
+    const centerX = legendWidth + (width - legendWidth) / 2;
+    const centerY = height / 2;
+    const outer = Math.min((width - legendWidth) / 2, height / 2) - 6;
+    const inner = outer * 0.62;
+
+    let angle = -Math.PI / 2;
+
+    slices.forEach((slice, index) => {
+        const sweep = (slice.value / total) * Math.PI * 2;
+
+        ctx.fillStyle = colorOf(index);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outer, angle, angle + sweep);
+        ctx.arc(centerX, centerY, inner, angle + sweep, angle, true);
+        ctx.closePath();
+        ctx.fill();
+
+        if (slices.length > 1) {
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        const percent = slice.value / total * 100;
+
+        if (percent >= 4) {
+            const middle = angle + sweep / 2;
+            const radius = (outer + inner) / 2;
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = `bold 11px ${FONT}`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`${percent.toFixed(1)}%`, centerX + Math.cos(middle) * radius, centerY + Math.sin(middle) * radius + 4);
+        }
+
+        angle += sweep;
+    });
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = MUTED_COLOR;
+    ctx.font = `13px ${FONT}`;
+    ctx.fillText('Total', centerX, centerY - 6);
+    ctx.fillStyle = TEXT_COLOR;
+    ctx.font = `bold 20px ${FONT}`;
+    ctx.fillText(formatCount(total), centerX, centerY + 18);
+
+    return canvas.toBuffer('image/png');
 }
 
 interface HeatmapLegendContext {

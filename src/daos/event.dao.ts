@@ -135,8 +135,11 @@ export const analyticFilter = (analytic: string): Prisma.Sql => {
 
 const DWELLING = analyticFilter('NFV4-VD')
 
+// Geser ke WIB (UTC+7) supaya bucket harian mulai 00:00 WIB.
+const WIB_OFFSET_SECONDS = 7 * 3600
+
 export const timeBucket = (interval: number, column: Prisma.Sql = Prisma.sql`e.event_time`) =>
-    Prisma.sql`to_timestamp(floor(extract('epoch' from ${column}) / ${interval}::double precision) * ${interval}::double precision)`
+    Prisma.sql`to_timestamp(floor((extract('epoch' from ${column}) + ${WIB_OFFSET_SECONDS}) / ${interval}::double precision) * ${interval}::double precision - ${WIB_OFFSET_SECONDS})`
 
 /**
  * Kolom yang diekspos sebagai `status`. Dikembalikan sebagai ekspresi (bukan

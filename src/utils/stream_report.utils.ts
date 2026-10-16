@@ -60,9 +60,9 @@ const periodText = (context: StreamReportContext): string => {
 
 function drawInfo(doc: PDFKit.PDFDocument, y: number, context: StreamReportContext): number {
     const entries: Array<[string, string]> = [
-        ['Address', context.address || '-'],
+        // ['Address', context.address || '-'],
         ['Site', context.site || '-'],
-        ['License', context.license || '-'],
+        // ['License', context.license || '-'],
         ['Analytic', context.analyticName],
         ['Line', context.line || 'All Line'],
         ['Coordinates', context.latitude && context.longitude ? `${context.latitude}, ${context.longitude}` : '-'],
