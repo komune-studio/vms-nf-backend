@@ -3,6 +3,9 @@ import EventSummaryDAO, { SummaryRow, SUMMARIZED_ANALYTICS } from "../daos/event
 import { getSummarizedUntil } from "./event_summary_refresh.service";
 
 const HOUR_MS = 3600 * 1000;
+const WIB_OFFSET_MS = 7 * HOUR_MS;
+
+const RANKING_INTERVALS: Record<string, number> = { hours: 3600, days: 86400 };
 
 interface Totals {
     count: number;
@@ -193,6 +196,30 @@ export default class EventAggregateService {
         return rollup(loaded.rows, row => [row.bucket.getTime()])
             .map(({ key, totals }) => ({ count: totals.count, avg: avgOf(totals), interval_alias: new Date(key[0]) }))
             .sort(byIntervalAsc);
+    }
+
+    static async getRanking(streams: string[], analytic: string, startTime: any, endTime: any, interval: string) {
+        const seconds = RANKING_INTERVALS[interval];
+        const end = endTime && endTime !== 'undefined' ? endTime : null;
+        const loaded = seconds ? await load(analytic, streams, startTime, end, seconds) : null;
+
+        if (!loaded) return EventDAO.getRanking(streams, analytic, startTime, endTime, interval);
+
+        const rows = rollup(loaded.rows.filter(row => analytic !== 'NFV4-MPAA' || row.label !== null), row => [row.stream_id, row.bucket.getTime()])
+            .map(({ key, totals }) => ({
+                avg: avgOf(totals),
+                count: totals.count,
+                interval_alias: new Date(key[1] + WIB_OFFSET_MS),
+                stream_id: key[0]
+            }));
+
+        const tieBreak = (a: any, b: any) => a.interval_alias - b.interval_alias || a.stream_id.localeCompare(b.stream_id);
+
+        if (analytic === 'NFV4-VD') {
+            return rows.sort((a, b) => descNullsFirst(a.avg, b.avg) || tieBreak(a, b)).slice(0, 3);
+        }
+
+        return rows.sort((a, b) => b.count - a.count || tieBreak(a, b)).slice(0, 3).map(({ avg, ...row }) => row);
     }
 
     static async getAvgGroupByLocation(streams: string[], startTime: any, endTime: any) {

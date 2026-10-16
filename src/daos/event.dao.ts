@@ -551,7 +551,7 @@ export default class EventDAO {
             FROM event e
             WHERE ${where(conditions)}
             GROUP BY interval_alias, e.stream_id
-            ORDER BY ${order} DESC
+            ORDER BY ${order} DESC, interval_alias, e.stream_id
             LIMIT 3
         `
     }

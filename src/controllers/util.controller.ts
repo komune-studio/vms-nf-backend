@@ -277,7 +277,7 @@ export default class UtilController {
             const streams = await StreamDAO.getAll();
 
             // @ts-ignore
-            const response = await EventDAO.getRanking(stream.split(','), analytic_id, start_date, end_date, interval);
+            const response = await EventAggregateService.getRanking(stream.split(','), analytic_id, start_date, end_date, interval);
 
 
 
