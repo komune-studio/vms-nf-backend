@@ -1,4 +1,4 @@
-import EventDAO from "../daos/event.dao";
+import EventAggregateService from "./event_aggregate.service";
 import StreamDAO from "../daos/stream.dao";
 
 
@@ -36,7 +36,7 @@ export default async function buildExportData(analytics: string[], streams: stri
             type: 'count'
         }));
 
-        const response = await EventDAO.getCountGroupLocation(streams, startDate, endDate, 'NFV4-VC');
+        const response = await EventAggregateService.getCountGroupLocation(streams, startDate, endDate, 'NFV4-VC');
 
         rows.forEach(row => {
             VEHICLE_LABELS.forEach(key => { row[key] = 0; });
@@ -55,7 +55,7 @@ export default async function buildExportData(analytics: string[], streams: stri
             {key: 'female', label: 'Female', group: 'People Counting', type: 'count'}
         );
 
-        const response = await EventDAO.getCountGroupLocation(streams, startDate, endDate, 'NFV4-MPAA');
+        const response = await EventAggregateService.getCountGroupLocation(streams, startDate, endDate, 'NFV4-MPAA');
 
         rows.forEach(row => {
             row.male = 0;
@@ -72,7 +72,7 @@ export default async function buildExportData(analytics: string[], streams: stri
     if (analytics.includes('NFV4-PC')) {
         columns.push({key: 'people', label: 'People', group: 'People Counting', type: 'count'});
 
-        const response = await EventDAO.getCountGroupLocation(streams, startDate, endDate, 'NFV4-PC');
+        const response = await EventAggregateService.getCountGroupLocation(streams, startDate, endDate, 'NFV4-PC');
 
         rows.forEach(row => {
             row.people = 0;
@@ -88,7 +88,7 @@ export default async function buildExportData(analytics: string[], streams: stri
     if (analytics.includes('NFV4-VD')) {
         columns.push({key: 'average', label: 'Average', group: 'Vehicle Dwelling', type: 'duration'});
 
-        const response = await EventDAO.getCountGroupLocation(streams, startDate, endDate, 'NFV4-VD');
+        const response = await EventAggregateService.getCountGroupLocation(streams, startDate, endDate, 'NFV4-VD');
 
         rows.forEach(row => {
             row.average = 0;
