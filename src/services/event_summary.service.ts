@@ -1,5 +1,6 @@
 import EventDAO from "../daos/event.dao";
 import EventAggregateService from "./event_aggregate.service";
+import { SUMMARIZED_ANALYTICS } from "../daos/event_summary.dao";
 
 
 export interface EventSummary {
@@ -12,9 +13,16 @@ export default async function buildEventSummary(
     analytic: any,
     streams: string[],
     startDate: any,
-    endDate: any
+    endDate: any,
+    keyword: any = null,
+    status: any = null
 ): Promise<EventSummary> {
-    const summarized = await EventAggregateService.getLabelSummary(analytic, streams, startDate, endDate);
+    const hasKeyword = keyword && keyword !== 'null';
+
+    // event_summary_hourly tidak bisa difilter keyword, jadi hitung dari event.
+    const summarized = hasKeyword && SUMMARIZED_ANALYTICS.includes(analytic)
+        ? {labels: await EventDAO.getLabelCountWithPagination(keyword, status, streams, analytic, startDate, endDate), dataBefore: null}
+        : await EventAggregateService.getLabelSummary(analytic, streams, startDate, endDate);
     const labels = summarized?.labels ?? null;
     const dataBefore = summarized?.dataBefore ?? null;
     const total = labels ? labels.reduce((sum, row) => sum + row.count, 0) : null;

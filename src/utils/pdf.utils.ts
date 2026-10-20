@@ -93,7 +93,7 @@ export function drawTiles(doc: PDFKit.PDFDocument, y: number, tiles: Tile[], per
 
             if (!tile.plain) doc.roundedRect(x, cursor, tileWidth, tileHeight, 5).fill(SOFT);
 
-            const padding = tile.plain ? 14 : 12;
+            const padding = tile.plain ? 0 : 12;
 
             doc.fillColor(MUTED).font('Helvetica').fontSize(8.5)
                 .text(tile.label, x + padding, cursor + 10, {width: tileWidth - padding * 2, ellipsis: true, lineBreak: false});

@@ -618,6 +618,32 @@ export default class EventDAO {
         `
     }
 
+    static async getLabelCountWithPagination(keyword: string | null, status: string | null, streams: string[], analytic: string, startDate: string, endDate: string) {
+        const conditions = EventDAO.paginationFilter(
+            keyword === 'null' ? null : keyword,
+            status === 'null' ? null : status,
+            streams,
+            analytic,
+            startDate,
+            endDate
+        )
+
+        const label = analytic === 'NFV4-VC' ? VEHICLE_LABEL
+            : analytic === 'NFV4-VD' ? DWELLING_LABEL
+            : analytic === 'NFV4-MPAA' ? GENDER
+            : Prisma.sql`NULL::text`
+
+        const duration = analytic === 'NFV4-VD' ? DURATION : Prisma.sql`NULL::float`
+
+        return prisma.$queryRaw<{ label: string | null, count: number, duration_sum: number | null, duration_count: number }[]>`
+            SELECT ${label} AS label, count(*)::float8 AS count,
+                   sum(${duration}) AS duration_sum, count(${duration})::float8 AS duration_count
+            FROM event e
+            WHERE ${where(conditions)}
+            GROUP BY 1
+        `
+    }
+
     // dataBefore: tidak ada event yang cocok di atas batas ini, jadi index scan mundur bisa mulai dari situ.
     static async getAllWithPagination(keyword: string | null, status: string | null, streams: string[], analytic: string | null, startDate: string, endDate: string, page: number, limit: number, dataBefore: Date | null = null) {
         const conditions = EventDAO.paginationFilter(

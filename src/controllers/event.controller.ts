@@ -148,7 +148,7 @@ export default class EventController {
                 return res.send({ data: event.map(formatEvent) });
             }
 
-            const { summary: additional_info, total, dataBefore } = await buildEventSummary(analytic, streams, startDate, endDate);
+            const { summary: additional_info, total, dataBefore } = await buildEventSummary(analytic, streams, startDate, endDate, keyword, status);
 
             // @ts-ignore
             const event = await EventDAO.getAllWithPagination(keyword, status, streams, analytic, startDate, endDate, parseInt(page), parseInt(limit), dataBefore);
@@ -242,7 +242,7 @@ export default class EventController {
                 .filter(Boolean)
                 .sort((a: string, b: string) => a.localeCompare(b));
 
-            const { summary, total, dataBefore } = await buildEventSummary(analytic, streams, startDate, endDate);
+            const { summary, total, dataBefore } = await buildEventSummary(analytic, streams, startDate, endDate, keyword, status);
             const totalData = await EventController.countTotal(keyword, status, streams, analytic, startDate, endDate, total);
 
             const size = Math.min(requested, MAX_PDF_ROWS, totalData);
@@ -284,11 +284,11 @@ export default class EventController {
         }
     }
 
-    // Total dari ringkasan sama dengan count pagination selama tidak ada keyword dan ada stream terpilih.
+    // Total dari ringkasan sama dengan count pagination kalau ada keyword atau ada stream terpilih.
     private static async countTotal(keyword: any, status: any, streams: string[], analytic: any, startDate: any, endDate: any, summaryTotal: number | null): Promise<number> {
         const hasKeyword = keyword && keyword !== 'null';
 
-        if (summaryTotal !== null && !hasKeyword && streams.length > 0) return summaryTotal;
+        if (summaryTotal !== null && (hasKeyword || streams.length > 0)) return summaryTotal;
 
         const count = await EventDAO.getCountWithPagination(keyword, status, streams, analytic, startDate, endDate);
 
