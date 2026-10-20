@@ -41,6 +41,9 @@ const DURATION = Prisma.sql`cast(e.detection->'pipeline_data'->>'duration' as fl
 const ESTIMATION = Prisma.sql`cast(e.detection->'pipeline_data'->>'estimation' as int)`
 const AREA_NAME = Prisma.sql`e.detection->'pipeline_data'->>'area_name'`
 const VEHICLE_LABEL = Prisma.sql`e.result->>'label'`
+const DWELLING_LABEL = Prisma.sql`e.detection->'pipeline_data'->>'label'`
+
+export const VEHICLE_LABELS = ['car', 'motorcycle', 'truck', 'bus'];
 
 const where = (conditions: Prisma.Sql[]) => Prisma.join(conditions, ' AND ')
 
@@ -323,7 +326,12 @@ export default class EventDAO {
         // stream_id di versi lama terduplikasi di SELECT dan GROUP BY.
         const groups: Prisma.Sql[] = [Prisma.sql`e.stream_id`]
 
-        if (analytic === 'NFV4-VD') columns.push(Prisma.sql`avg(${DURATION}) AS avg`)
+        if (analytic === 'NFV4-VD') {
+            columns.push(Prisma.sql`avg(${DURATION}) AS avg`)
+
+            VEHICLE_LABELS.forEach(label =>
+                columns.push(Prisma.sql`(count(*) FILTER (WHERE ${DWELLING_LABEL} = ${label}))::int AS ${Prisma.raw(label)}`))
+        }
 
         columns.push(Prisma.sql`e.stream_id`)
 

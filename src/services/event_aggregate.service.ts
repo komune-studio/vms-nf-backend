@@ -1,4 +1,4 @@
-import EventDAO, { parseTimestamp } from "../daos/event.dao";
+import EventDAO, { parseTimestamp, VEHICLE_LABELS } from "../daos/event.dao";
 import EventSummaryDAO, { SummaryRow, SUMMARIZED_ANALYTICS } from "../daos/event_summary.dao";
 import { getSummarizedUntil } from "./event_summary_refresh.service";
 
@@ -159,8 +159,17 @@ export default class EventAggregateService {
         if (!loaded) return EventDAO.getCountGroupLocation(streams, startTime, endTime, analytic);
 
         if (analytic === 'NFV4-VD') {
+            const perLabel = rollup(loaded.rows, row => [row.stream_id, row.label]);
+            const countOf = (streamId: string, label: string) =>
+                perLabel.find(({ key }) => key[0] === streamId && key[1] === label)?.totals.count ?? 0;
+
             return rollup(loaded.rows, row => [row.stream_id])
-                .map(({ key, totals }) => ({ count: totals.count, avg: avgOf(totals), stream_id: key[0] }))
+                .map(({ key, totals }) => ({
+                    count: totals.count,
+                    avg: avgOf(totals),
+                    stream_id: key[0],
+                    ...Object.fromEntries(VEHICLE_LABELS.map(label => [label, countOf(key[0], label)]))
+                }))
                 .sort((a, b) => descNullsFirst(a.avg, b.avg));
         }
 
@@ -213,7 +222,7 @@ export default class EventAggregateService {
                 stream_id: key[0]
             }));
 
-        const tieBreak = (a: any, b: any) => a.interval_alias - b.interval_alias || a.stream_id.localeCompare(b.stream_id);
+        const  tieBreak = (a: any, b: any) => a.interval_alias - b.interval_alias || a.stream_id.localeCompare(b.stream_id);
 
         if (analytic === 'NFV4-VD') {
             return rows.sort((a, b) => descNullsFirst(a.avg, b.avg) || tieBreak(a, b)).slice(0, 3);

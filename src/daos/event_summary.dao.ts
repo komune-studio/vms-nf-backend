@@ -17,6 +17,7 @@ END`
 const LABEL = Prisma.sql`CASE
     WHEN e.type = 'NFV4-MPAA' THEN e.detection->'pipeline_data'->'attributes'->'gender'->>'label'
     WHEN ${LOGIC} = 'counting' THEN e.result->>'label'
+    WHEN ${LOGIC} = 'dwelling' THEN e.detection->'pipeline_data'->>'label'
 END`
 
 const DURATION = Prisma.sql`CASE
